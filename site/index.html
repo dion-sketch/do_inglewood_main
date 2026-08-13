@@ -798,6 +798,18 @@ const PB = {}; P.forEach(p=>PB[p.k]=p);
 
 /* ============ LOAD BUSINESSES FROM SUPABASE (falls back to built-in list) ============ */
 const CATIMG = {"Mexican":FB.mexican,"Soul Food":FB.soul,"Seafood":FB.seafood,"American":FB.american,"Caribbean":FB.caribbean,"Lounge":FB.lounge,"Casino":FB.casino,"Brunch":FB.brunch,"Dessert":FB.dessert,"Coffee":FB.coffee,"Hotels":FB.hotel,"Event Space":FB.event,"Movie":FB.event,"Stadium":FB.event,"Landmark":FB.event,"Park":FB.event,"Florist":FB.dessert};
+/* Interim photo variety: until each business has its own real photo (photo_url),
+   spread the verified category images so same-category spots don't all repeat.
+   A real photo_url from the database always wins once we add them. */
+const IMG_FOOD  = [FB.mexican,FB.soul,FB.seafood,FB.american,FB.caribbean,FB.brunch,FB.dessert,FB.coffee];
+const IMG_VENUE = [FB.lounge,FB.bar,FB.casino,FB.sports,FB.hotel,FB.event];
+const FOODCATS  = ["Mexican","Soul Food","Seafood","American","Caribbean","Brunch","Dessert","Coffee","Food"];
+function hashStr(s){var h=0;s=String(s||'');for(var i=0;i<s.length;i++){h=(h*31+s.charCodeAt(i))|0;}return Math.abs(h);}
+function pickImg(r){
+  if(r.photo_url) return r.photo_url;                 // real per-venue photo wins
+  var pool = FOODCATS.indexOf(r.category)>=0 ? IMG_FOOD : IMG_VENUE;
+  return pool[hashStr(r.id||r.name) % pool.length];
+}
 function dbToApp(r){
   return {
     k:r.id, n:r.name, cat:r.category, tags:r.tags||[],
@@ -805,7 +817,7 @@ function dbToApp(r){
     pid:r.google_place_id||"", r:r.rating, rc:r.rating_count,
     price:r.price_level, cpp:r.avg_per_person||0, hrs:r.hours,
     q:r.review_quote, tier:r.tier||1, special:r.special||null,
-    img:r.photo_url || CATIMG[r.category] || FB.event
+    img: pickImg(r)
   };
 }
 async function loadBusinesses(){
