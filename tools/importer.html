@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Do Inglewood — Business Importer</title>
+<style>
+  :root{--bg:#0d0d12;--card:#16161d;--line:#26262f;--pink:#ff2e7e;--gold:#f5c542;--muted:#9a9aa6;--txt:#f2f2f5;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;padding:26px;line-height:1.5;}
+  .wrap{max-width:820px;margin:0 auto;}
+  h1{font-size:24px;margin:0 0 4px;}
+  h1 span{background:linear-gradient(90deg,var(--pink),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  p.sub{color:var(--muted);margin:0 0 20px;font-size:14px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px;}
+  label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;}
+  input[type=password],input[type=text]{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:#0f0f15;color:var(--txt);font-size:14px;}
+  button{border:0;border-radius:10px;padding:13px 20px;font-size:15px;font-weight:700;cursor:pointer;}
+  .primary{background:linear-gradient(90deg,var(--pink),var(--gold));color:#111;width:100%;margin-top:14px;}
+  .ghost{background:#22222c;color:var(--txt);}
+  button:disabled{opacity:.5;cursor:not-allowed;}
+  #log{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:#0f0f15;border:1px solid var(--line);border-radius:10px;padding:12px;height:210px;overflow:auto;white-space:pre-wrap;}
+  .stat{display:flex;gap:18px;margin:12px 0;font-size:14px;}
+  .stat b{color:var(--gold);font-size:20px;display:block;}
+  textarea{width:100%;height:200px;border-radius:10px;border:1px solid var(--line);background:#0f0f15;color:#cfeecf;font-family:ui-monospace,Menlo,monospace;font-size:11px;padding:12px;}
+  .step{background:#0f0f15;border-left:3px solid var(--pink);padding:10px 14px;border-radius:6px;margin-top:10px;font-size:13px;color:#d9d9e0;}
+  .err{color:#ff7a7a;}
+  .ok{color:#7ee787;}
+  a{color:var(--pink);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Do <span>Inglewood</span> — Business Importer</h1>
+  <p class="sub">Finds every business in Inglewood from Google and builds one SQL block you paste into Supabase. Runs entirely in your browser — your key is never sent anywhere but Google.</p>
+
+  <div class="card">
+    <label>Your Google API key (starts with AIza…)</label>
+    <input id="key" type="password" placeholder="AIza…" autocomplete="off">
+    <div style="font-size:12px;color:var(--muted);margin-top:8px">The key needs <b>Places API (New)</b> enabled. For this one-time run it must not be blocked by an HTTP-referrer restriction (you can re-restrict it after).</div>
+    <button class="primary" id="go">Find all Inglewood businesses</button>
+  </div>
+
+  <div class="card">
+    <div class="stat">
+      <div><b id="c-found">0</b>found (new)</div>
+      <div><b id="c-dupe">0</b>skipped (already in DB)</div>
+      <div><b id="c-q">0</b>searches done</div>
+    </div>
+    <div id="log">Ready. Paste your key above and press the button.</div>
+  </div>
+
+  <div class="card" id="out-card" style="display:none">
+    <label>✅ Copy ALL of this and paste it into Supabase → SQL Editor → New query → Run</label>
+    <textarea id="out" readonly></textarea>
+    <button class="ghost" id="copy" style="margin-top:10px">Copy SQL</button>
+    <div class="step">After it runs in Supabase, refresh your live site — the new businesses appear in Explore automatically. (Photos come in the next step.)</div>
+  </div>
+</div>
+
+<script>
+/* ---- Fixed config: your Supabase project (public read only, safe) ---- */
+const SUPABASE_URL = "https://eojlkqxnwzoelwvrxgzc.supabase.co";
+const SUPABASE_KEY = "sb_publishable_WeSqJHxHWza5rgyq8XcF0g_bYF7VE7R";
+
+/* Inglewood bounding box (keeps results inside the city) */
+const RECT = { low:{latitude:33.913,longitude:-118.377}, high:{latitude:33.987,longitude:-118.328} };
+
+/* Category sweep — each becomes a Google text search, tagged with a clean category */
+const QUERIES = [
+  ["restaurants","Food"],["mexican restaurant","Mexican"],["seafood restaurant","Seafood"],
+  ["soul food","Soul Food"],["caribbean restaurant","Caribbean"],["fast food","Food"],
+  ["pizza","Food"],["burgers","Food"],["chicken wings","Food"],["bbq","Food"],
+  ["breakfast brunch","Brunch"],["coffee shop","Coffee"],["cafe","Coffee"],["bakery","Dessert"],
+  ["dessert","Dessert"],["ice cream","Dessert"],["juice bar","Coffee"],["bar","Lounges"],
+  ["lounge","Lounges"],["night club","Lounges"],["hookah lounge","Lounges"],["hotel","Hotels"],
+  ["casino","Casino"],["hair salon","Beauty"],["barber shop","Beauty"],["nail salon","Beauty"],
+  ["beauty supply","Beauty"],["spa","Beauty"],["tattoo shop","Services"],["gym","Fitness"],
+  ["auto repair","Services"],["car wash","Services"],["gas station","Services"],
+  ["grocery store","Grocery"],["liquor store","Grocery"],["pharmacy","Services"],
+  ["clothing store","Shopping"],["shoe store","Shopping"],["smoke shop","Shopping"],
+  ["florist","Shopping"],["laundromat","Services"],["church","Community"],["park","Park"],
+  ["bank","Services"],["dentist","Health"],["medical clinic","Health"],["insurance agency","Services"],
+  ["real estate agency","Services"],["cell phone store","Shopping"],["furniture store","Shopping"]
+];
+
+const $=id=>document.getElementById(id);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function log(msg,cls){ const l=$('log'); l.innerHTML+='\n'+(cls?'<span class="'+cls+'">'+msg+'</span>':msg); l.scrollTop=l.scrollHeight; }
+function esc(s){ return String(s==null?'':s).replace(/'/g,"''"); }
+function mapPrice(p){ return {PRICE_LEVEL_FREE:'$',PRICE_LEVEL_INEXPENSIVE:'$',PRICE_LEVEL_MODERATE:'$$',PRICE_LEVEL_EXPENSIVE:'$$$',PRICE_LEVEL_VERY_EXPENSIVE:'$$$$'}[p]||null; }
+function cleanAddr(a){ return String(a||'').replace(/,?\s*USA$/,'').trim(); }
+
+async function existingPlaceIds(){
+  try{
+    const r=await fetch(SUPABASE_URL+'/rest/v1/di_businesses?select=google_place_id',{headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const rows=await r.json();
+    return new Set(rows.map(x=>x.google_place_id).filter(Boolean));
+  }catch(e){ log('Could not read existing businesses ('+e.message+') — continuing without dedupe.','err'); return new Set(); }
+}
+
+async function searchPage(key,q,pageToken){
+  const body={ textQuery:q+' in Inglewood CA', pageSize:20, locationRestriction:{rectangle:RECT} };
+  if(pageToken) body.pageToken=pageToken;
+  const r=await fetch('https://places.googleapis.com/v1/places:searchText',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'X-Goog-Api-Key':key,
+      'X-Goog-FieldMask':'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.priceLevel,places.nationalPhoneNumber,places.websiteUri,places.photos,nextPageToken'
+    },
+    body:JSON.stringify(body)
+  });
+  if(!r.ok){ const t=await r.text(); throw new Error('HTTP '+r.status+' — '+t.slice(0,200)); }
+  return r.json();
+}
+
+async function run(){
+  const key=$('key').value.trim();
+  if(!key){ alert('Paste your Google API key first.'); return; }
+  $('go').disabled=true;
+  $('log').innerHTML='Starting…';
+  const seen=await existingPlaceIds();
+  log('Loaded '+seen.size+' existing businesses to skip.','ok');
+  const found=new Map(); let dupe=0, qdone=0;
+
+  for(const [q,cat] of QUERIES){
+    let token=null, page=0;
+    do{
+      try{
+        const data=await searchPage(key,q,token);
+        const places=data.places||[];
+        for(const p of places){
+          if(!p.id) continue;
+          if(seen.has(p.id)){ dupe++; continue; }
+          if(found.has(p.id)) continue;
+          found.set(p.id,{
+            id:p.id,
+            name:p.displayName&&p.displayName.text||'',
+            cat:cat,
+            addr:cleanAddr(p.formattedAddress),
+            ph:p.nationalPhoneNumber||'',
+            web:p.websiteUri||'',
+            rating:(p.rating!=null?p.rating:null),
+            rc:(p.userRatingCount!=null?p.userRatingCount:null),
+            price:mapPrice(p.priceLevel),
+            photo_ref:(p.photos&&p.photos[0]&&p.photos[0].name)||''
+          });
+        }
+        token=data.nextPageToken||null; page++;
+        await sleep(token?600:250);
+      }catch(e){
+        log('“'+q+'” failed: '+e.message,'err');
+        token=null;
+        if(String(e.message).indexOf('403')>=0||/API key|referer|referrer|PERMISSION/i.test(e.message)){
+          log('⛔ Stopping — this looks like a key/permission problem. Fix the key (enable Places API New, remove referrer restriction) and run again.','err');
+          $('go').disabled=false; return;
+        }
+      }
+    } while(token && page<3);
+    qdone++;
+    $('c-found').textContent=found.size; $('c-dupe').textContent=dupe; $('c-q').textContent=qdone;
+    log('✓ '+q+' — total unique new: '+found.size);
+  }
+
+  if(!found.size){ log('No new businesses found. If every search errored, it is the key. Otherwise everything may already be imported.','err'); $('go').disabled=false; return; }
+
+  // Build SQL
+  const rows=[...found.values()];
+  let sql='-- Do Inglewood — imported '+rows.length+' businesses from Google\n';
+  sql+='alter table di_businesses add column if not exists photo_ref text;\n\n';
+  const chunkSize=200;
+  for(let i=0;i<rows.length;i+=chunkSize){
+    const chunk=rows.slice(i,i+chunkSize);
+    sql+='insert into di_businesses (id,name,category,address,phone,website,google_place_id,rating,rating_count,price_level,tier,photo_ref) values\n';
+    sql+=chunk.map(b=>`('${esc(b.id)}','${esc(b.name)}','${esc(b.cat)}','${esc(b.addr)}','${esc(b.ph)}',${b.web?`'${esc(b.web)}'`:'null'},'${esc(b.id)}',${b.rating==null?'null':b.rating},${b.rc==null?'null':b.rc},${b.price?`'${esc(b.price)}'`:'null'},1,${b.photo_ref?`'${esc(b.photo_ref)}'`:'null'})`).join(',\n');
+    sql+='\non conflict (id) do nothing;\n\n';
+  }
+  $('out').value=sql;
+  $('out-card').style.display='';
+  log('🎉 Done. '+rows.length+' new businesses ready. Copy the SQL below into Supabase.','ok');
+  $('go').disabled=false;
+}
+
+$('go').onclick=run;
+$('copy').onclick=()=>{ $('out').select(); document.execCommand('copy'); $('copy').textContent='Copied ✓'; setTimeout(()=>$('copy').textContent='Copy SQL',1500); };
+</script>
+</body>
+</html>
