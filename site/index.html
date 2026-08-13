@@ -798,17 +798,45 @@ const PB = {}; P.forEach(p=>PB[p.k]=p);
 
 /* ============ LOAD BUSINESSES FROM SUPABASE (falls back to built-in list) ============ */
 const CATIMG = {"Mexican":FB.mexican,"Soul Food":FB.soul,"Seafood":FB.seafood,"American":FB.american,"Caribbean":FB.caribbean,"Lounge":FB.lounge,"Casino":FB.casino,"Brunch":FB.brunch,"Dessert":FB.dessert,"Coffee":FB.coffee,"Hotels":FB.hotel,"Event Space":FB.event,"Movie":FB.event,"Stadium":FB.event,"Landmark":FB.event,"Park":FB.event,"Florist":FB.dessert};
-/* Interim photo variety: until each business has its own real photo (photo_url),
-   spread the verified category images so same-category spots don't all repeat.
-   A real photo_url from the database always wins once we add them. */
-const IMG_FOOD  = [FB.mexican,FB.soul,FB.seafood,FB.american,FB.caribbean,FB.brunch,FB.dessert,FB.coffee];
-const IMG_VENUE = [FB.lounge,FB.bar,FB.casino,FB.sports,FB.hotel,FB.event];
-const FOODCATS  = ["Mexican","Soul Food","Seafood","American","Caribbean","Brunch","Dessert","Coffee","Food"];
+/* Branded placeholder tiles — each business gets a unique, clean gradient
+   thumbnail with its own initials (no stock photos, no repeats, never breaks).
+   As soon as a real photo_url is added to a business, that photo shows instead. */
 function hashStr(s){var h=0;s=String(s||'');for(var i=0;i<s.length;i++){h=(h*31+s.charCodeAt(i))|0;}return Math.abs(h);}
+function xmlEsc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function initials(name){
+  var w=String(name||'').replace(/[^A-Za-z0-9 ]/g,' ').trim().split(/\s+/).filter(Boolean);
+  if(!w.length)return 'DO';
+  if(w.length===1)return w[0].slice(0,2).toUpperCase();
+  return (w[0].charAt(0)+w[1].charAt(0)).toUpperCase();
+}
+var TILE_COLORS=[['#FF2E7E','#7A1FA2'],['#F5C542','#FF6A00'],['#00C2A8','#0077B6'],['#FF6A00','#FF2E7E'],['#845EC2','#2C73D2'],['#00B894','#0652DD'],['#E84393','#6C5CE7'],['#F39C12','#C0392B'],['#0FB9B1','#2C3A47'],['#EE5A24','#B53471']];
+function tileImg(name,seed,sub){
+  var g=TILE_COLORS[hashStr(seed||name)%TILE_COLORS.length];
+  var ini=xmlEsc(initials(name)), s=xmlEsc(String(sub||'').toUpperCase());
+  var svg='<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">'
+    +'<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+g[0]+'"/><stop offset="1" stop-color="'+g[1]+'"/></linearGradient></defs>'
+    +'<rect width="600" height="400" fill="url(#g)"/>'
+    +'<circle cx="300" cy="185" r="150" fill="#ffffff" fill-opacity="0.10"/>'
+    +'<text x="300" y="238" font-family="Arial,Helvetica,sans-serif" font-size="150" font-weight="bold" fill="#ffffff" text-anchor="middle">'+ini+'</text>'
+    +(s?'<text x="300" y="348" font-family="Arial,Helvetica,sans-serif" font-size="30" letter-spacing="3" font-weight="bold" fill="#ffffff" fill-opacity="0.85" text-anchor="middle">'+s+'</text>':'')
+    +'</svg>';
+  return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg);
+}
+function venueTile(title,seed){
+  var g=TILE_COLORS[hashStr(seed)%TILE_COLORS.length];
+  var t=xmlEsc(title);
+  var svg='<svg xmlns="http://www.w3.org/2000/svg" width="800" height="360" viewBox="0 0 800 360">'
+    +'<defs><linearGradient id="v" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+g[0]+'"/><stop offset="1" stop-color="'+g[1]+'"/></linearGradient></defs>'
+    +'<rect width="800" height="360" fill="url(#v)"/>'
+    +'<circle cx="650" cy="90" r="150" fill="#ffffff" fill-opacity="0.08"/>'
+    +'<text x="46" y="150" font-family="Arial,Helvetica,sans-serif" font-size="26" letter-spacing="5" font-weight="bold" fill="#ffffff" fill-opacity="0.82">EVENT SPACE</text>'
+    +'<text x="44" y="224" font-family="Arial,Helvetica,sans-serif" font-size="60" font-weight="bold" fill="#ffffff">'+t+'</text>'
+    +'</svg>';
+  return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg);
+}
 function pickImg(r){
   if(r.photo_url) return r.photo_url;                 // real per-venue photo wins
-  var pool = FOODCATS.indexOf(r.category)>=0 ? IMG_FOOD : IMG_VENUE;
-  return pool[hashStr(r.id||r.name) % pool.length];
+  return tileImg(r.name, r.id||r.name, r.category);
 }
 function dbToApp(r){
   return {
@@ -932,7 +960,7 @@ let lastList='home';
 function webUrl(w){ return !w?'#':(/^https?:\/\//i.test(w)?w:'https://'+w); }
 function prettyWeb(w){ return String(w).replace(/^https?:\/\//i,'').replace(/\/+$/,''); }
 function telHref(ph){ return 'tel:'+String(ph).replace(/[^+0-9]/g,''); }
-function openDirections(k){ var p=PB[k]; if(!p)return; window.open('https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(p.n+', '+(p.addr||'')+' Inglewood CA'),'_blank'); }
+function openDirections(k){ var p=PB[k]; if(!p)return; var u='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(p.n+', '+(p.addr||'')+' Inglewood CA'); if(p.pid)u+='&destination_place_id='+encodeURIComponent(p.pid); window.open(u,'_blank'); }
 function openListing(k,from){
   lastList=from||'home';const p=PB[k];
   document.getElementById('ldhero').style.backgroundImage=`url('${p.img}')`;
@@ -950,6 +978,7 @@ function openListing(k,from){
       ${p.cpp?`<div class="ldrow"><span class="k">Avg / person</span><span class="v">~$${p.cpp}${p.tier<2?' <span style="color:var(--muted);font-size:11px">· estimated</span>':''}</span></div>`:''}
       ${p.q?`<div class="quote">&ldquo;${p.q}&rdquo;</div>`:''}
     </div>
+    <iframe title="Map of ${xmlEsc(p.n)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" style="width:100%;height:180px;border:0;border-radius:14px;margin-top:14px;display:block" src="https://www.google.com/maps?q=${encodeURIComponent(p.n+', '+(p.addr||'')+', Inglewood CA')}&output=embed"></iframe>
     <div style="display:flex;gap:9px;margin-top:16px">
       <button class="btn btn-primary" style="font-size:15px;padding:13px" onclick="go('build');resetBuild();">Build a Plan Around This</button>
       <button class="tbtn pink" style="padding:0 16px" onclick="openDirections('${p.k}')">Directions</button>
@@ -1412,7 +1441,7 @@ function obNext(){
 }
 
 /* HERO ROTATOR */
-const heroSlides=[FB.event,FB.lounge,FB.casino,FB.bar];
+const heroSlides=[venueTile('SoFi Stadium','sofihero'),venueTile('Kia Forum','forumhero'),venueTile('Intuit Dome','intuithero'),venueTile('YouTube Theater','ythero')];
 function buildHero(){
   const h=document.getElementById('heroimg');
   heroSlides.forEach((s,i)=>{const d=document.createElement('div');d.className='slide'+(i===0?' on':'');d.style.backgroundImage=`url('${s}')`;h.insertBefore(d,h.firstChild);});
