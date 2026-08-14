@@ -87,6 +87,7 @@
   .chip{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 7px;border-radius:6px;}
   .chip-import{background:rgba(154,154,165,.15);color:#b9b9c4;border:1px solid rgba(154,154,165,.3);}
   .chip-verified{background:rgba(54,211,154,.15);color:var(--green);border:1px solid rgba(54,211,154,.35);}
+  .chip-sponsored{background:linear-gradient(90deg,rgba(255,46,126,.22),rgba(245,197,66,.22));color:var(--gold);border:1px solid var(--gold);font-weight:700;}
   .chip-special{background:var(--grad);color:#1a0010;}
   .badge-tl{position:absolute;top:8px;left:8px;}
   .badge-tr{position:absolute;top:8px;right:8px;}
@@ -895,8 +896,10 @@ function matchFilter(p,f){
 }
 
 function starline(p){ if(p.r==null||p.r===''){return '<span style="color:var(--muted)">New spot</span>';} return `<span class="star">&#9733;</span> ${p.r} · ${p.rc>999?(p.rc/1000).toFixed(1)+'k':(p.rc||0)}`;}
+function isSponsored(p){ return !!(p && p.tier>=3); }
 function tierBadge(p){
   if(p.tags && p.tags.indexOf('Coming Soon')>=0)return '<span class="chip chip-special badge-tr">&#128197; Coming Soon</span>';
+  if(isSponsored(p))return '<span class="chip chip-sponsored badge-tr">&#11088; Sponsored</span>';
   if(p.special)return '<span class="chip chip-special badge-tr">&#127863; Special</span>';
   if(p.tier>=2)return '<span class="chip chip-verified badge-tr">Verified</span>';
   return '<span class="chip chip-import badge-tl">Imported</span>';
@@ -914,8 +917,9 @@ function cardHTML(p){
 function buildHome(){
   const popIds=['twohommes','sixseven','dulans','nile','meeting','conis'];
   const nearIds=['sofi','forum','intuit','anthem','casino','crestridge'];
-  // Popping: curated favourites that have photos, topped up with other high-rated photo'd spots
-  var pop=popIds.filter(k=>PB[k]&&hasPhoto(PB[k])).map(k=>PB[k]);
+  // Popping: PAID sponsored spots first, then curated favourites, topped up with high-rated photo'd spots
+  var sponsored=P.filter(p=>isSponsored(p)&&hasPhoto(p));
+  var pop=sponsored.concat(popIds.filter(k=>PB[k]&&hasPhoto(PB[k])).map(k=>PB[k]).filter(p=>sponsored.indexOf(p)<0));
   if(pop.length<6){ for(var k in PB){ if(pop.length>=10)break; var b=PB[k]; if(hasPhoto(b)&&pop.indexOf(b)<0&&(b.tier>=2||(b.r||0)>=4.4)) pop.push(b); } }
   document.getElementById('popping-cards').innerHTML=pop.map(cardHTML).join('');
   document.getElementById('near-cards').innerHTML=nearIds.filter(k=>PB[k]&&hasPhoto(PB[k])).map(k=>cardHTML(PB[k])).join('');
@@ -944,6 +948,7 @@ function filterTo(f){go('explore');curFilter=f;buildFilters();renderExplore();}
 function isComingSoon(p){ return p.tags && p.tags.indexOf('Coming Soon')>=0; }
 function listBadge(p){
   if(isComingSoon(p)) return '<span class="chip chip-special">&#128197; Coming Soon</span>';
+  if(isSponsored(p)) return '<span class="chip chip-sponsored">&#11088; Sponsored</span>';
   if(p.special) return '<span class="chip chip-special">&#127863; Special</span>';
   if(p.tier>=2) return '<span class="chip chip-verified">Verified</span>';
   return '<span class="chip chip-import">Imported</span>';
@@ -954,6 +959,8 @@ function exploreMatches(){
   var list=P.filter(p=>matchFilter(p,curFilter));
   if(q){ list=list.filter(function(p){ return (p.n+' '+p.cat+' '+((p.tags||[]).join(' '))+' '+(p.addr||'')).toLowerCase().indexOf(q)>=0; }); }
   else { list=list.filter(hasPhoto); }   // browsing shows only spots WITH a real photo; a search still finds every spot
+  // Paid (Premium) businesses surface to the top — the promoted-spot they're paying for
+  list=list.slice().sort(function(a,b){ return (isSponsored(b)?1:0)-(isSponsored(a)?1:0); });
   return list;
 }
 function paintExplore(list){
