@@ -850,11 +850,19 @@ function dbToApp(r){
 }
 async function loadBusinesses(){
   try{
-    const { data, error } = await SB.from('di_businesses').select('*');
-    if(error) throw error;
-    if(data && data.length){
+    // Page through in blocks of 1000 so ALL businesses load (Supabase caps each request at 1000)
+    let all=[], from=0; const step=1000;
+    while(true){
+      const { data, error } = await SB.from('di_businesses').select('*').range(from, from+step-1);
+      if(error) throw error;
+      if(!data || !data.length) break;
+      all=all.concat(data);
+      if(data.length<step) break;
+      from+=step;
+    }
+    if(all.length){
       P.length = 0;
-      data.forEach(r=>P.push(dbToApp(r)));
+      all.forEach(r=>P.push(dbToApp(r)));
       for(const k in PB){ delete PB[k]; }
       P.forEach(p=>PB[p.k]=p);
       console.log('✓ Loaded '+P.length+' businesses live from Supabase');
