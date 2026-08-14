@@ -619,7 +619,7 @@
 
       <div class="tier feat">
         <div class="tname">Verified <span class="chip chip-verified" style="vertical-align:middle">Most Popular</span></div>
-        <div class="tprice">$29<span>/mo</span></div>
+        <div class="tprice">$89<span>/mo</span></div>
         <ul>
           <li>Everything in Free</li>
           <li>Verified badge on your page</li>
@@ -632,16 +632,16 @@
       </div>
 
       <div class="tier">
-        <div class="tname">Spotlight</div>
-        <div class="tprice">$89<span>/mo</span></div>
+        <div class="tname">Premium</div>
+        <div class="tprice">$220<span>/mo</span></div>
         <ul>
           <li>Everything in Verified</li>
           <li>Push live specials to the top of Do Plans</li>
-          <li>Featured Spotlight placement</li>
+          <li>Featured placement — home banner &amp; top of Explore</li>
           <li>Event-weekend promotion</li>
           <li>Full analytics — views, plan adds, clicks</li>
         </ul>
-        <button class="tb-paid" onclick="openClaimForm(null,3)">Go Spotlight</button>
+        <button class="tb-paid" onclick="openClaimForm(null,3)">Go Premium</button>
       </div>
       <div class="disclaimer" style="margin:0 20px 16px;">Claim your listing free for 60 days. Then choose a plan to keep your business visible, verified, and built into Do Plans.</div>
     </div>
@@ -1011,7 +1011,7 @@ function openListing(k,from){
       <button class="btn btn-primary" style="font-size:15px;padding:13px" onclick="go('build');resetBuild();">Build a Plan Around This</button>
       <button class="tbtn pink" style="padding:0 16px" onclick="openDirections('${p.k}')">Directions</button>
     </div>
-    ${p.tier<2?`<div class="claimbox"><b>Is this your business?</b><span>Claim it to manage your info, hours, and photos. Free to start.</span><button class="claimbtn" onclick="openClaimForm('${p.k}',1)">Claim This Business</button></div>`
+    ${p.tier<2?`<div class="claimbox"><b>Is this your business?</b><span>Claim it to manage your info, hours &amp; photos, and get the Verified badge.</span><button class="claimbtn" onclick="openClaimForm('${p.k}',2)">Claim &amp; Verify &rarr;</button></div>`
     :`<div class="disclaimer"><b style="color:var(--green)">&#10003; Verified business.</b> This page is managed by the owner.</div>`}
     ${p.tier<2?'<div class="disclaimer">Imported from public information. Prices, hours, and offers may change — confirm before you go.</div>':''}
   `;
@@ -1260,12 +1260,18 @@ function swapStop(key){
 const views=['home','explore','events','build','loading','results','detail','listing','claim','claimform','saved'];
 
 /* ============ BUSINESS CLAIM FLOW ============ */
+// Stripe checkout links (test). Each carries the business id via client_reference_id,
+// so in Stripe you see exactly which business paid for which tier.
+const STRIPE_LINKS = {
+  2: 'https://buy.stripe.com/test_aFacN6bgU4mb4lxbKIa3u01', // Verified — $89/mo
+  3: 'https://buy.stripe.com/test_aFa3cw1Gk5qfdW76qoa3u00'  // Premium  — $220/mo
+};
 function openClaimForm(bizKey, tier){
   var dl=document.getElementById('cf_bizlist');
   dl.innerHTML=P.map(function(p){return '<option value="'+String(p.n).replace(/"/g,'&quot;')+'"></option>';}).join('');
   document.getElementById('cf_biz').value=(bizKey && PB[bizKey])?PB[bizKey].n:'';
   window._claimTier=tier||2;
-  var notes={1:'Free claim — take control of your contact info & hours.',2:'Verified ($29/mo) — add photos, menu, set prices, show first in your category.',3:'Spotlight ($89/mo) — push specials to the top, featured placement, full analytics.'};
+  var notes={1:'Free claim — take control of your contact info & hours.',2:'Verified ($89/mo) — add photos, menu, set prices, show first in your category. Secure checkout follows.',3:'Premium ($220/mo) — everything in Verified plus featured placement, specials & full analytics. Secure checkout follows.'};
   document.getElementById('claimTierNote').textContent=notes[window._claimTier]||'';
   go('claimform');
 }
@@ -1287,18 +1293,25 @@ async function submitClaim(){
   if(!first||!last){ toast('Enter your first and last name'); return; }
   if(!email){ toast('Enter your email'); return; }
   if(!attest){ toast('Please check the certification box'); return; }
+  var tier=window._claimTier||2;
+  // Save the claim (best-effort — never block checkout if the record fails)
   try{
-    var res=await SB.from('di_claims').insert({
-      business_id:bizKey, requested_tier:window._claimTier||2, status:'pending',
+    await SB.from('di_claims').insert({
+      business_id:bizKey, requested_tier:tier, status:'pending',
       contact_first_name:first, contact_last_name:last, role:role,
       contact_email:email, contact_phone:phone, attested:true
     });
-    if(res.error) throw res.error;
+  }catch(e){ console.warn('claim insert failed (continuing to checkout)', e); }
+  ['cf_biz','cf_first','cf_last','cf_phone','cf_email'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('cf_attest').checked=false;
+  if(tier>=2 && STRIPE_LINKS[tier]){
+    var url=STRIPE_LINKS[tier]+'?client_reference_id='+encodeURIComponent(bizKey)+'&prefilled_email='+encodeURIComponent(email);
+    toast('Opening secure checkout…');
+    setTimeout(function(){ window.location.href=url; }, 700);
+  }else{
     toast('Claim submitted ✓ We’ll review within 72 hours');
-    ['cf_biz','cf_first','cf_last','cf_phone','cf_email'].forEach(function(id){document.getElementById(id).value='';});
-    document.getElementById('cf_attest').checked=false;
     setTimeout(function(){ go('home'); }, 1300);
-  }catch(e){ console.error('claim insert failed', e); toast('Could not submit — '+(e.message||'try again')); }
+  }
 }
 /* ============ EVENTS / CALENDAR ============ */
 function evEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
