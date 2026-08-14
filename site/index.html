@@ -1489,11 +1489,22 @@ function obNext(){
 }
 
 /* HERO ROTATOR */
-const heroSlides=[venueTile('SoFi Stadium','sofihero'),venueTile('Kia Forum','forumhero'),venueTile('Intuit Dome','intuithero'),venueTile('YouTube Theater','ythero')];
+var heroTimer=null;
 function buildHero(){
   const h=document.getElementById('heroimg');
-  heroSlides.forEach((s,i)=>{const d=document.createElement('div');d.className='slide'+(i===0?' on':'');d.style.backgroundImage=`url('${s}')`;h.insertBefore(d,h.firstChild);});
-  let hi=0;setInterval(()=>{const sl=h.querySelectorAll('.slide');sl[hi].classList.remove('on');hi=(hi+1)%sl.length;sl[hi].classList.add('on');},3200);
+  Array.prototype.slice.call(h.querySelectorAll('.slide')).forEach(function(s){s.remove();});
+  if(heroTimer){clearInterval(heroTimer);heroTimer=null;}
+  // Prefer REAL photos of the marquee venues; branded tiles only as a last resort.
+  var slides=[];
+  ['sofi','intuit','forum'].forEach(function(id){ var p=PB[id]; if(p&&p.img&&p.img.indexOf('http')===0) slides.push({img:p.img,name:p.n}); });
+  for(var k in PB){ if(slides.length>=6)break; var b=PB[k]; if(!b||!b.img||b.img.indexOf('http')!==0)continue; var t=b.tags||[];
+    if(b.exp||b.cat==='Stadium'||b.cat==='Event Space'||t.indexOf('Stadium')>=0||t.indexOf('Event')>=0||t.indexOf('Experience')>=0){
+      if(!slides.some(function(s){return s.name===b.n;})) slides.push({img:b.img,name:b.n}); } }
+  if(!slides.length){ slides=[{img:venueTile('SoFi Stadium','a'),name:'SoFi Stadium'},{img:venueTile('Kia Forum','b'),name:'Kia Forum'},{img:venueTile('Intuit Dome','c'),name:'Intuit Dome'},{img:venueTile('YouTube Theater','d'),name:'YouTube Theater'}]; }
+  var capEl=h.querySelector('.cap'), capB=h.querySelector('.cap b');
+  slides.forEach(function(s,i){var d=document.createElement('div');d.className='slide'+(i===0?' on':'');d.style.backgroundImage='url("'+s.img+'")';if(capEl)h.insertBefore(d,capEl);else h.insertBefore(d,h.firstChild);});
+  if(capB&&slides[0])capB.textContent=slides[0].name;
+  if(slides.length>1){ var hi=0; heroTimer=setInterval(function(){ var sl=h.querySelectorAll('.slide'); if(!sl.length)return; sl[hi].classList.remove('on'); hi=(hi+1)%sl.length; sl[hi].classList.add('on'); if(capB&&slides[hi])capB.textContent=slides[hi].name; },3600); }
 }
 
 function openMenu(){document.getElementById('menuOverlay').classList.add('on');}
