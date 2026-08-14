@@ -277,8 +277,21 @@
   .ob-foot{padding:18px 28px 34px;}
 
   /* ============ CALENDAR / EVENTS ============ */
-  .datestrip{display:flex;gap:8px;overflow-x:auto;padding:12px 16px 6px;scrollbar-width:none;}
+  .datestrip{display:flex;gap:8px;overflow-x:auto;padding:12px 16px 6px;scrollbar-width:none;position:relative;}
   .datestrip::-webkit-scrollbar{display:none;}
+  .monthjump{display:flex;gap:8px;overflow-x:auto;padding:12px 16px 0;scrollbar-width:none;}
+  .monthjump::-webkit-scrollbar{display:none;}
+  .mpill{flex:0 0 auto;padding:6px 14px;border-radius:20px;background:var(--panel);border:1px solid var(--line);font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;white-space:nowrap;}
+  .mpill:hover{color:var(--gold);border-color:var(--gold);}
+  .uphead{font-family:'Barlow Condensed';font-weight:800;font-size:21px;margin:24px 16px 4px;}
+  .uprow{display:flex;gap:12px;padding:12px 16px;border-top:1px solid var(--line);cursor:pointer;align-items:flex-start;}
+  .uprow:hover,.uprow.sel{background:var(--panel);}
+  .upd{flex:0 0 42px;text-align:center;}
+  .upd b{display:block;font-size:20px;font-weight:800;line-height:1;color:var(--gold);}
+  .upd span{font-size:11px;text-transform:uppercase;color:var(--muted);}
+  .upl{flex:1;min-width:0;}
+  .upe{font-size:13px;margin:3px 0;}
+  .upe span{color:var(--muted);}
   .dchip{flex:0 0 auto;width:52px;text-align:center;padding:9px 0;border-radius:14px;background:var(--panel);border:1px solid var(--line);cursor:pointer;transition:.15s;}
   .dchip .dw{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);}
   .dchip .dn{font-size:19px;font-weight:800;margin-top:2px;font-variant-numeric:tabular-nums;}
@@ -417,6 +430,7 @@
     <!-- EVENTS / CALENDAR -->
     <div class="view" id="view-events">
       <div class="head-bar"><div class="back" onclick="go('home')">&#8249;</div><div class="logo-mini" role="img" aria-label="Do Inglewood" title="Home" onclick="go('home')"></div><span class="htitle">What's Happening</span></div>
+      <div class="monthjump" id="monthjump"></div>
       <div class="datestrip" id="datestrip"></div>
       <div id="events-list"></div>
       <div class="ev-note">Marquee events are pulled from Inglewood's venues &amp; the City calendar. Businesses can post their own game-day specials &amp; nights here. Confirm times with the venue before you go.</div>
@@ -1317,21 +1331,36 @@ function isoOf(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'
 function timeVal(t){if(!t)return 0;var m=String(t).match(/(\d+):(\d+)\s*(AM|PM)/i);if(!m)return 0;var h=(+m[1])%12+(/pm/i.test(m[3])?12:0);return h*60+(+m[2]);}
 function eventsOn(iso){return EV.filter(e=>e.date===iso).sort((a,b)=>timeVal(a.time)-timeVal(b.time));}
 let selDate=null;
+function monthKey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+function jumpMonth(y,m){
+  var evDates=EV.map(function(e){return e.date;}).filter(function(ds){var d=parseD(ds);return d.getFullYear()===y&&d.getMonth()===m;}).sort();
+  var target;
+  if(evDates.length){ target=evDates[0]; }
+  else { var d=new Date(y,m,1); var t=new Date();t.setHours(0,0,0,0); if(d<t)d=t; target=isoOf(d); }
+  selectDay(target);
+}
 function renderEvents(){
   var today=new Date();today.setHours(0,0,0,0);
-  if(!selDate){
-    var upcoming=EV.map(e=>e.date).filter(d=>parseD(d)>=today).sort();
-    selDate=upcoming.length?upcoming[0]:isoOf(today);
-  }
-  var strip='';
-  for(var i=0;i<28;i++){
+  var futureDates=EV.map(function(e){return e.date;}).filter(function(d){return parseD(d)>=today;}).sort();
+  if(!selDate){ selDate=futureDates.length?futureDates[0]:isoOf(today); }
+  // Strip spans from today through the last event (so a full season of games is browsable), capped ~13 months
+  var lastEv=futureDates.length?parseD(futureDates[futureDates.length-1]):today;
+  var span=Math.min(400, Math.max(28, Math.round((lastEv-today)/86400000)+3));
+  var strip='', pills='', mseen={};
+  for(var i=0;i<span;i++){
     var d=new Date(today);d.setDate(today.getDate()+i);var iso=isoOf(d);
     var has=eventsOn(iso).length;
-    strip+='<div class="dchip'+(iso===selDate?' sel':'')+(has?'':' empty')+'" onclick="selectDay(\''+iso+'\')">'+
+    strip+='<div id="dchip-'+iso+'" class="dchip'+(iso===selDate?' sel':'')+(has?'':' empty')+'" onclick="selectDay(\''+iso+'\')">'+
       '<div class="dw">'+d.toLocaleDateString(undefined,{weekday:'short'})+'</div>'+
       '<div class="dn">'+d.getDate()+'</div>'+(has?'<div class="dot"></div>':'')+'</div>';
+    var mk=monthKey(d);
+    if(!mseen[mk]){ mseen[mk]=1;
+      var lbl=d.toLocaleDateString(undefined,{month:'short'})+(d.getFullYear()!==today.getFullYear()?" '"+String(d.getFullYear()).slice(2):'');
+      pills+='<div class="mpill" onclick="jumpMonth('+d.getFullYear()+','+d.getMonth()+')">'+lbl+'</div>';
+    }
   }
   document.getElementById('datestrip').innerHTML=strip;
+  document.getElementById('monthjump').innerHTML=pills;
   var evs=eventsOn(selDate), dd=parseD(selDate);
   var head='<div class="dayhead">'+dd.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})+
     ' <span>· '+(evs.length||'no')+' event'+(evs.length===1?'':'s')+'</span></div>';
@@ -1349,7 +1378,18 @@ function renderEvents(){
       '</div>';
     }).join('');
   }
-  document.getElementById('events-list').innerHTML=head+body;
+  // "All upcoming" — every future event in order, so nothing is hidden past the strip
+  var up='', seenD={};
+  futureDates.forEach(function(ds){
+    if(seenD[ds])return; seenD[ds]=1;
+    var d2=parseD(ds), inner='';
+    eventsOn(ds).forEach(function(e){ inner+='<div class="upe">'+evEmoji(e.category)+' '+evEsc(e.title)+' <span>· '+evEsc(e.venue||'')+'</span></div>'; });
+    up+='<div class="uprow'+(ds===selDate?' sel':'')+'" onclick="selectDay(\''+ds+'\')"><div class="upd"><b>'+d2.getDate()+'</b><span>'+d2.toLocaleDateString(undefined,{month:'short'})+'</span></div><div class="upl">'+inner+'</div></div>';
+  });
+  if(up) up='<div class="uphead">All upcoming</div>'+up;
+  document.getElementById('events-list').innerHTML=head+body+up;
+  var strEl=document.getElementById('datestrip'), sc=document.getElementById('dchip-'+selDate);
+  if(strEl&&sc){ strEl.scrollLeft=sc.offsetLeft-strEl.clientWidth/2+sc.clientWidth/2; }
 }
 function selectDay(iso){selDate=iso;renderEvents();document.getElementById('screen').scrollTop=0;}
 function planAround(id){
