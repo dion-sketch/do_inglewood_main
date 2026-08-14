@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Do Inglewood — Admin</title>
+<style>
+  :root{--bg:#0d0d12;--card:#16161d;--line:#26262f;--pink:#ff2e7e;--gold:#f5c542;--green:#36d39a;--muted:#9a9aa6;--txt:#f2f2f5;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;padding:24px;line-height:1.5;}
+  .wrap{max-width:960px;margin:0 auto;}
+  h1{font-size:24px;margin:0 0 2px;} h1 span{background:linear-gradient(90deg,var(--pink),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  p.sub{color:var(--muted);margin:0 0 18px;font-size:14px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px;}
+  label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;}
+  input[type=password],input[type=text]{width:100%;padding:11px;border-radius:9px;border:1px solid var(--line);background:#0f0f15;color:var(--txt);font-size:14px;}
+  button{border:0;border-radius:9px;padding:9px 15px;font-size:13px;font-weight:700;cursor:pointer;background:#22222c;color:var(--txt);}
+  button.primary{background:linear-gradient(90deg,var(--pink),var(--gold));color:#111;}
+  button.g{background:rgba(54,211,154,.18);color:var(--green);border:1px solid rgba(54,211,154,.4);}
+  button.r{background:rgba(255,90,90,.16);color:#ff7a7a;border:1px solid rgba(255,90,90,.4);}
+  button:disabled{opacity:.5;cursor:not-allowed;}
+  .tabs{display:flex;gap:8px;margin-bottom:14px;}
+  .tab{padding:9px 16px;border-radius:20px;background:var(--card);border:1px solid var(--line);cursor:pointer;font-weight:700;font-size:13px;color:var(--muted);}
+  .tab.on{background:var(--gold);color:#1a1400;border-color:var(--gold);}
+  .row{display:flex;gap:10px;align-items:center;padding:11px 0;border-top:1px solid var(--line);font-size:13px;flex-wrap:wrap;}
+  .row:first-child{border-top:0;}
+  .grow{flex:1;min-width:160px;}
+  .nm{font-weight:700;font-size:14px;}
+  .mut{color:var(--muted);font-size:12px;}
+  select{padding:8px;border-radius:8px;background:#0f0f15;color:var(--txt);border:1px solid var(--line);font-size:13px;}
+  .warn{background:#2a1e0a;border-left:3px solid var(--gold);padding:10px 14px;border-radius:6px;margin-top:10px;font-size:12.5px;}
+  .pill{padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;}
+  .p1{background:rgba(154,154,165,.15);color:#b9b9c4;} .p2{background:rgba(54,211,154,.15);color:var(--green);} .p3{background:linear-gradient(90deg,rgba(255,46,126,.2),rgba(245,197,66,.2));color:var(--gold);}
+  #msg{font-size:12.5px;color:var(--green);min-height:16px;margin-top:6px;}
+  .hidden{display:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Do <span>Inglewood</span> — Admin</h1>
+  <p class="sub">Your private control panel. Approve claims, promote/pause/delete businesses, manage events.</p>
+
+  <div class="card" id="connect-card">
+    <label>Supabase <b>service_role</b> key (Supabase → Project Settings → API Keys → <b>service_role</b> "secret")</label>
+    <input id="key" type="password" placeholder="paste service_role key">
+    <button class="primary" id="connect" style="margin-top:12px">Connect</button>
+    <div class="warn"><b>🔒 Keep this file on your computer only.</b> Never upload it to Netlify or share it — this key has full admin power. It stays in this page and is never saved anywhere.</div>
+  </div>
+
+  <div id="app" class="hidden">
+    <div class="tabs">
+      <div class="tab on" data-tab="claims" onclick="showTab('claims')">Claims <span id="claims-n"></span></div>
+      <div class="tab" data-tab="biz" onclick="showTab('biz')">Businesses</div>
+      <div class="tab" data-tab="events" onclick="showTab('events')">Events</div>
+    </div>
+    <div id="msg"></div>
+
+    <div class="card tabpane" id="pane-claims">
+      <div class="mut" style="margin-bottom:8px">Businesses that requested to claim/upgrade. Approving sets their tier.</div>
+      <div id="claims-list"><div class="mut">Loading…</div></div>
+    </div>
+
+    <div class="card tabpane hidden" id="pane-biz">
+      <input type="text" id="bizsearch" placeholder="Search a business by name…" oninput="searchBiz()">
+      <div id="biz-list" style="margin-top:10px"><div class="mut">Type a name to find a business.</div></div>
+    </div>
+
+    <div class="card tabpane hidden" id="pane-events">
+      <div class="mut" style="margin-bottom:8px">Upcoming events. Delete removes them from the calendar. (Add events with the events spreadsheet/tools.)</div>
+      <div id="events-list"><div class="mut">Loading…</div></div>
+    </div>
+  </div>
+</div>
+<script>
+const SUPABASE_URL="https://eojlkqxnwzoelwvrxgzc.supabase.co";
+let KEY="";
+const $=id=>document.getElementById(id);
+function H(){ return {apikey:KEY,Authorization:'Bearer '+KEY}; }
+function HJ(){ return {apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json',Prefer:'return=minimal'}; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+function msg(t){ $('msg').textContent=t; if(t) setTimeout(function(){ if($('msg').textContent===t)$('msg').textContent=''; },3500); }
+let BIZNAMES={};
+
+async function api(path,opts){ const r=await fetch(SUPABASE_URL+'/rest/v1/'+path,opts||{headers:H()}); if(!r.ok){ throw new Error('HTTP '+r.status+' '+(await r.text()).slice(0,120)); } const t=await r.text(); return t?JSON.parse(t):null; }
+
+async function loadBizNames(){
+  let off=0; BIZNAMES={};
+  while(true){
+    const rows=await api('di_businesses?select=id,name&limit=1000&offset='+off,{headers:H()});
+    rows.forEach(function(b){BIZNAMES[b.id]=b.name;});
+    if(rows.length<1000) break; off+=1000;
+  }
+}
+const TIER={1:'<span class="pill p1">Free</span>',2:'<span class="pill p2">Verified</span>',3:'<span class="pill p3">⭐ Premium</span>'};
+
+async function loadClaims(){
+  try{
+    const rows=await api('di_claims?status=eq.pending&order=created_at.desc',{headers:H()});
+    $('claims-n').textContent=rows.length?('('+rows.length+')'):'';
+    if(!rows.length){ $('claims-list').innerHTML='<div class="mut">No pending claims. 🎉</div>'; return; }
+    $('claims-list').innerHTML=rows.map(function(c){
+      var nm=BIZNAMES[c.business_id]||c.business_id||'(unknown)';
+      var contact=[c.contact_first_name,c.contact_last_name].filter(Boolean).join(' ');
+      return '<div class="row"><div class="grow"><div class="nm">'+esc(nm)+' '+(TIER[c.requested_tier]||'')+'</div>'+
+        '<div class="mut">'+esc(contact)+(c.contact_email?' · '+esc(c.contact_email):'')+(c.contact_phone?' · '+esc(c.contact_phone):'')+'</div></div>'+
+        '<button class="g" onclick="approve(\''+c.id+'\',\''+c.business_id+'\','+(c.requested_tier||2)+')">Approve → set '+((c.requested_tier===3)?'Premium':'Verified')+'</button>'+
+        '<button class="r" onclick="rejectClaim(\''+c.id+'\')">Reject</button></div>';
+    }).join('');
+  }catch(e){ $('claims-list').innerHTML='<div class="mut">Could not load claims: '+esc(e.message)+'</div>'; }
+}
+async function approve(claimId,bizId,tier){
+  try{
+    await fetch(SUPABASE_URL+'/rest/v1/di_businesses?id=eq.'+encodeURIComponent(bizId),{method:'PATCH',headers:HJ(),body:JSON.stringify({tier:tier})});
+    await fetch(SUPABASE_URL+'/rest/v1/di_claims?id=eq.'+encodeURIComponent(claimId),{method:'PATCH',headers:HJ(),body:JSON.stringify({status:'approved'})});
+    msg('Approved ✓ business set to tier '+tier); loadClaims();
+  }catch(e){ msg('Error: '+e.message); }
+}
+async function rejectClaim(claimId){
+  try{ await fetch(SUPABASE_URL+'/rest/v1/di_claims?id=eq.'+encodeURIComponent(claimId),{method:'PATCH',headers:HJ(),body:JSON.stringify({status:'rejected'})}); msg('Rejected'); loadClaims(); }catch(e){ msg('Error: '+e.message); }
+}
+
+let searchTimer=null;
+function searchBiz(){ clearTimeout(searchTimer); searchTimer=setTimeout(doSearchBiz,300); }
+async function doSearchBiz(){
+  var q=$('bizsearch').value.trim();
+  if(q.length<2){ $('biz-list').innerHTML='<div class="mut">Type a name to find a business.</div>'; return; }
+  try{
+    const rows=await api('di_businesses?select=id,name,category,tier,address&name=ilike.*'+encodeURIComponent(q)+'*&limit=40',{headers:H()});
+    if(!rows.length){ $('biz-list').innerHTML='<div class="mut">No matches.</div>'; return; }
+    $('biz-list').innerHTML=rows.map(function(b){
+      return '<div class="row" id="brow-'+b.id+'"><div class="grow"><div class="nm">'+esc(b.name)+'</div><div class="mut">'+esc(b.category||'')+(b.address?' · '+esc(b.address):'')+'</div></div>'+
+        '<select id="tier-'+b.id+'"><option value="1"'+(b.tier==1?' selected':'')+'>Free</option><option value="2"'+(b.tier==2?' selected':'')+'>Verified</option><option value="3"'+(b.tier==3?' selected':'')+'>Premium ⭐</option></select>'+
+        '<button class="primary" onclick="saveTier(\''+b.id+'\')">Save</button>'+
+        '<button class="r" onclick="delBiz(\''+b.id+'\',\''+esc(b.name).replace(/\'/g,"")+'\')">Delete</button></div>';
+    }).join('');
+  }catch(e){ $('biz-list').innerHTML='<div class="mut">Search error: '+esc(e.message)+'</div>'; }
+}
+async function saveTier(id){
+  var t=+$('tier-'+id).value;
+  try{ await fetch(SUPABASE_URL+'/rest/v1/di_businesses?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:HJ(),body:JSON.stringify({tier:t})}); msg('Saved ✓ tier '+t); }catch(e){ msg('Error: '+e.message); }
+}
+async function delBiz(id,name){
+  if(!confirm('Delete "'+name+'"? This removes it from the app.')) return;
+  try{ await fetch(SUPABASE_URL+'/rest/v1/di_businesses?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:HJ()}); var r=$('brow-'+id); if(r)r.remove(); msg('Deleted'); }catch(e){ msg('Error: '+e.message); }
+}
+
+async function loadEvents(){
+  try{
+    const rows=await api('di_events?order=event_date.asc&limit=300',{headers:H()});
+    if(!rows.length){ $('events-list').innerHTML='<div class="mut">No events.</div>'; return; }
+    $('events-list').innerHTML=rows.map(function(e){
+      return '<div class="row" id="erow-'+e.id+'"><div class="grow"><div class="nm">'+esc(e.title)+'</div><div class="mut">'+esc(e.event_date||'')+(e.start_time?' · '+esc(e.start_time):'')+' · 📍 '+esc(e.venue||'')+'</div></div>'+
+        '<button class="r" onclick="delEvent(\''+e.id+'\')">Delete</button></div>';
+    }).join('');
+  }catch(e){ $('events-list').innerHTML='<div class="mut">Could not load events: '+esc(e.message)+'</div>'; }
+}
+async function delEvent(id){
+  if(!confirm('Delete this event?')) return;
+  try{ await fetch(SUPABASE_URL+'/rest/v1/di_events?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:HJ()}); var r=$('erow-'+id); if(r)r.remove(); msg('Deleted'); }catch(e){ msg('Error: '+e.message); }
+}
+
+function showTab(t){
+  document.querySelectorAll('.tab').forEach(function(el){el.classList.toggle('on',el.dataset.tab===t);});
+  document.querySelectorAll('.tabpane').forEach(function(el){el.classList.add('hidden');});
+  $('pane-'+t).classList.remove('hidden');
+  if(t==='events') loadEvents();
+}
+$('connect').onclick=async function(){
+  KEY=$('key').value.trim();
+  if(!KEY){ alert('Paste your service_role key.'); return; }
+  $('connect').disabled=true; $('connect').textContent='Connecting…';
+  try{
+    await loadBizNames();
+    $('connect-card').classList.add('hidden'); $('app').classList.remove('hidden');
+    loadClaims();
+  }catch(e){ alert('Could not connect: '+e.message+'\\nMake sure you pasted the service_role key.'); $('connect').disabled=false; $('connect').textContent='Connect'; }
+};
+</script>
+</body>
+</html>
