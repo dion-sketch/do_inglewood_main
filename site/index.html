@@ -903,6 +903,8 @@ function tierBadge(p){
 }
 
 /* HOME cards */
+// A business "has a photo" only if its image is a real URL (not a generated letter-tile)
+function hasPhoto(p){ return !!(p&&p.img&&p.img.indexOf('http')===0); }
 function cardHTML(p){
   return `<div class="card" onclick="openListing('${p.k}','home')">
     <div class="img" style="background-image:url('${p.img}')">${tierBadge(p)}</div>
@@ -910,14 +912,17 @@ function cardHTML(p){
   </div>`;
 }
 function buildHome(){
-  const pop=['twohommes','sixseven','dulans','nile','meeting','conis'];
-  const spec=P.filter(p=>p.special);
-  const near=['sofi','forum','intuit','anthem','casino','crestridge'];
-  document.getElementById('popping-cards').innerHTML=pop.filter(k=>PB[k]).map(k=>cardHTML(PB[k])).join('');
+  const popIds=['twohommes','sixseven','dulans','nile','meeting','conis'];
+  const nearIds=['sofi','forum','intuit','anthem','casino','crestridge'];
+  // Popping: curated favourites that have photos, topped up with other high-rated photo'd spots
+  var pop=popIds.filter(k=>PB[k]&&hasPhoto(PB[k])).map(k=>PB[k]);
+  if(pop.length<6){ for(var k in PB){ if(pop.length>=10)break; var b=PB[k]; if(hasPhoto(b)&&pop.indexOf(b)<0&&(b.tier>=2||(b.r||0)>=4.4)) pop.push(b); } }
+  document.getElementById('popping-cards').innerHTML=pop.map(cardHTML).join('');
+  document.getElementById('near-cards').innerHTML=nearIds.filter(k=>PB[k]&&hasPhoto(PB[k])).map(k=>cardHTML(PB[k])).join('');
+  const spec=P.filter(p=>p.special&&hasPhoto(p));
   var sc=document.getElementById('special-cards'); var offersSect=sc.closest('.sect');
   if(spec.length){ sc.innerHTML=spec.map(p=>cardHTML(p)).join(''); if(offersSect)offersSect.style.display=''; }
   else if(offersSect){ offersSect.style.display='none'; }   // hide "Offers Tonight" until a paid business posts a real special
-  document.getElementById('near-cards').innerHTML=near.filter(k=>PB[k]).map(k=>cardHTML(PB[k])).join('');
 }
 
 /* EXPLORE */
@@ -948,6 +953,7 @@ function exploreMatches(){
   var q=(box&&box.value||'').trim().toLowerCase();
   var list=P.filter(p=>matchFilter(p,curFilter));
   if(q){ list=list.filter(function(p){ return (p.n+' '+p.cat+' '+((p.tags||[]).join(' '))+' '+(p.addr||'')).toLowerCase().indexOf(q)>=0; }); }
+  else { list=list.filter(hasPhoto); }   // browsing shows only spots WITH a real photo; a search still finds every spot
   return list;
 }
 function paintExplore(list){
