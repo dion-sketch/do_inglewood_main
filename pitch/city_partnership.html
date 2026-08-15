@@ -126,6 +126,24 @@
   footer{border-top:1px solid var(--line);padding:26px 0 44px;text-align:center;font-size:12.5px;color:var(--muted);}
   footer b{color:var(--ink-soft);}
 
+  /* kpi + timeline */
+  .kpi{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+  @media (min-width:560px){.kpi{grid-template-columns:repeat(4,1fr);}}
+  .kpi .k{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px 16px;}
+  .kpi .k .n{font-size:clamp(26px,5.5vw,34px);font-weight:900;letter-spacing:-.02em;line-height:1;}
+  .kpi .k .l{font-size:12.5px;color:var(--ink-soft);margin-top:8px;font-weight:750;}
+  .kpi .k .s{font-size:11.5px;color:var(--muted);margin-top:3px;}
+  .timeline{display:flex;gap:10px;margin-top:16px;}
+  @media (max-width:560px){.timeline{flex-direction:column;}}
+  .mile{flex:1;background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:15px 16px;}
+  .mile .yr{font-size:21px;font-weight:900;letter-spacing:-.02em;}
+  .mile .ev{font-size:12.5px;color:var(--ink-soft);margin-top:3px;font-weight:600;}
+  .mile.on{background:color-mix(in srgb,var(--gold) 13%,var(--surface));border-color:color-mix(in srgb,var(--gold) 34%,var(--line));}
+  .proof{margin-top:16px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--pink);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow);}
+  .proof .k{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--pink);}
+  .proof .v{font-size:15px;color:var(--ink-soft);margin-top:8px;}
+  .proof .v b{color:var(--ink);}
+
   .rise{opacity:0;transform:translateY(14px);animation:rise .7s cubic-bezier(.2,.7,.2,1) forwards;}
   @keyframes rise{to{opacity:1;transform:none;}}
   @media (prefers-reduced-motion:reduce){.rise{animation:none;opacity:1;transform:none;}}
@@ -154,6 +172,23 @@
   </section>
 
   <section class="rise" style="animation-delay:.05s">
+    <p class="eyebrow">The opportunity</p>
+    <h2>Look what flows through Inglewood — every year.</h2>
+    <p>Five world-class venues in one small city, drawing millions of visitors — and that's <em>before</em> the World Cup and Olympics arrive.</p>
+    <div class="kpi num" style="margin-top:20px">
+      <div class="k"><div class="n grad">300+</div><div class="l">Ticketed events / yr</div><div class="s">Across its venues</div></div>
+      <div class="k"><div class="n grad">Millions</div><div class="l">Visitors / year</div><div class="s">And climbing</div></div>
+      <div class="k"><div class="n grad">70,240</div><div class="l">Seats at SoFi</div><div class="s">Up to 100,240</div></div>
+      <div class="k"><div class="n grad">150+</div><div class="l">Kia Forum events</div><div class="s">Concerts a year</div></div>
+    </div>
+    <div class="timeline num">
+      <div class="mile"><div class="yr">2022</div><div class="ev">✓ Super Bowl LVI — hosted</div></div>
+      <div class="mile on"><div class="yr">2026</div><div class="ev">World Cup — 8 matches at SoFi</div></div>
+      <div class="mile on"><div class="yr">2028</div><div class="ev">Olympics — Opening Ceremony + basketball</div></div>
+    </div>
+  </section>
+
+  <section class="rise" style="animation-delay:.05s">
     <p class="eyebrow">Why it matters</p>
     <div class="thesis">
       <div class="big">This isn't a marketing cost. It's <span class="grad">economic development.</span></div>
@@ -163,6 +198,10 @@
       <div class="ret"><div class="ic">🧾</div><div class="t">Taxes stay local</div><div class="d">Every discovered sale rings up local and county tax the city collects.</div></div>
       <div class="ret"><div class="ic">👷🏽</div><div class="t">Jobs stay local</div><div class="d">Busier businesses hire more Inglewood residents.</div></div>
       <div class="ret"><div class="ic">🔁</div><div class="t">Dollars stay local</div><div class="d">Visitor spend recirculates through local suppliers instead of leaving.</div></div>
+    </div>
+    <div class="proof">
+      <div class="k">One event, for scale</div>
+      <div class="v"><b>Super Bowl LVI</b> alone drove up to <b>$52M</b> in local economic activity, kept roughly <b>$2M in tax revenue inside Inglewood</b>, and supported up to <b>800 jobs</b>. The only question left is how much of that visitor spending local businesses actually capture — and that comes down to whether they're <b>visible</b>.</div>
     </div>
   </section>
 
@@ -197,7 +236,7 @@
   <section class="rise" style="animation-delay:.05s">
     <p class="eyebrow">Bundled with certification</p>
     <h2>Get certified. Get on the map. Same day.</h2>
-    <p>Fold Do Inglewood into the City's business certification and licensing path. The moment a business becomes official with Inglewood, it's <strong>automatically placed on the map</strong>, into the visitor app, and onto the list to be seen. The City's program gains a modern storefront; the business gets premium visibility it could never afford alone.</p>
+    <p>Every Inglewood business already pays a city business tax — a minimum of about <strong>$93.50 a year</strong> — just to be registered. That's required either way, and today it's a line item that does nothing for them. Fold Do Inglewood into that same certification path: the moment a business becomes official with the City, it's <strong>automatically placed on the map</strong>, into the visitor app, and onto the list to be seen. The City's program gains a modern storefront; the business gets premium visibility it could never afford alone.</p>
     <div class="grid" style="margin-top:20px">
       <div class="cell"><div class="t">For the business</div><div class="d">City-backed visibility, a verified badge, and real customers — the day they're licensed. Far more reach than $60 buys on the open market.</div></div>
       <div class="cell"><div class="t">For the City</div><div class="d">More businesses registering, paying taxes, and hiring locally — plus a live directory that keeps visitor spend inside Inglewood.</div></div>
