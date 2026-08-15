@@ -1,0 +1,113 @@
+<title>Owner Dashboard Preview</title>
+<style>
+  :root{--bg:#0d0d12;--panel:#16161d;--panel2:#1e1e27;--line:#2a2a34;--pink:#ff2e7e;--gold:#f5c542;--green:#36d39a;--muted:#9a9aa6;--txt:#f2f2f5;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:#08080c;color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;line-height:1.5;padding:22px 14px 40px;}
+  .top{max-width:420px;margin:0 auto 16px;text-align:center;}
+  .prevtag{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);background:rgba(245,197,66,.12);border:1px solid rgba(245,197,66,.3);border-radius:999px;padding:5px 11px;}
+  .seg{display:inline-flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px;margin-top:12px;}
+  .seg button{border:0;background:transparent;color:var(--muted);font-weight:700;font-size:13px;padding:8px 15px;border-radius:999px;cursor:pointer;}
+  .seg button.on{background:linear-gradient(90deg,var(--pink),var(--gold));color:#111;}
+  .hint{font-size:12px;color:var(--muted);margin-top:10px;}
+
+  /* phone frame */
+  .phone{max-width:390px;margin:0 auto;background:var(--bg);border:1px solid #2c2c38;border-radius:30px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.55);}
+  .bar{display:flex;align-items:center;gap:10px;padding:16px 16px 12px;border-bottom:1px solid var(--line);background:var(--bg);position:sticky;top:0;}
+  .bar .back{font-size:22px;color:var(--muted);}
+  .bar .ttl{font-weight:800;font-size:16px;}
+  .bar .mn{margin-left:auto;font-size:20px;color:var(--muted);}
+  .screen{padding:18px 16px 26px;max-height:640px;overflow:auto;}
+
+  .bizname{font-weight:800;font-size:21px;font-family:Arial;letter-spacing:-.01em;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .chip{padding:3px 10px;border-radius:999px;font-size:11px;font-weight:800;}
+  .c-free{background:rgba(154,154,165,.16);color:#c2c2cc;}
+  .c-ver{background:rgba(54,211,154,.16);color:var(--green);}
+  .c-prem{background:linear-gradient(90deg,rgba(255,46,126,.22),rgba(245,197,66,.22));color:var(--gold);}
+  .subtle{font-size:12px;color:var(--muted);margin:5px 0 15px;}
+
+  .photo{height:150px;border-radius:14px;border:1px solid var(--line);margin-bottom:9px;display:flex;align-items:flex-end;padding:12px;
+    background:linear-gradient(135deg,#7A1FA2,#FF2E7E);}
+  .photo .pn{font-weight:800;font-size:17px;text-shadow:0 1px 6px rgba(0,0,0,.5);}
+  .upload{display:inline-block;font-size:13px;font-weight:700;color:var(--txt);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:14px;cursor:pointer;}
+
+  .flbl{display:block;font-size:12px;color:var(--muted);margin:12px 0 6px;font-weight:600;}
+  .finput{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:#0f0f15;color:var(--txt);font-size:14px;font-family:inherit;}
+  textarea.finput{resize:vertical;}
+  .save{width:100%;margin-top:18px;padding:14px;border:0;border-radius:12px;font-weight:800;font-size:15px;cursor:pointer;background:linear-gradient(90deg,var(--pink),var(--gold));color:#111;}
+
+  .upsell{margin-top:20px;padding-top:16px;border-top:1px solid var(--line);}
+  .upsell .h{font-weight:800;font-size:16px;font-family:Arial;}
+  .upsell .d{font-size:12px;color:var(--muted);margin:4px 0 12px;}
+  .ghost{width:100%;padding:12px;border-radius:11px;border:1px solid var(--line);background:var(--panel2);color:var(--txt);font-weight:800;font-size:14px;cursor:pointer;margin-bottom:8px;}
+  .fine{font-size:11px;color:var(--muted);margin-top:6px;}
+  .hide{display:none;}
+</style>
+
+<div class="top">
+  <span class="prevtag">Preview · sample business</span>
+  <div class="seg">
+    <button onclick="setTier('free',this)">Free</button>
+    <button class="on" onclick="setTier('ver',this)">Verified</button>
+    <button onclick="setTier('prem',this)">Premium</button>
+  </div>
+  <div class="hint">Tap a plan to see what the owner sees at each level.</div>
+</div>
+
+<div class="phone">
+  <div class="bar"><span class="back">‹</span><span class="ttl">My Business</span><span class="mn">☰</span></div>
+  <div class="screen">
+    <div class="bizname">The Nile Restaurant &amp; Bar <span id="badge" class="chip c-ver">Verified</span></div>
+    <div class="subtle">Edit your listing — changes go live instantly.</div>
+
+    <div class="photo"><span class="pn">📷 Your main photo</span></div>
+    <span class="upload">📷 Upload main photo</span>
+
+    <label class="flbl">Business name</label><input class="finput" value="The Nile Restaurant &amp; Bar">
+    <label class="flbl">Category</label><input class="finput" value="Lounge">
+    <label class="flbl">Hours</label><input class="finput" value="Daily til 1–2 AM">
+    <label class="flbl">Phone</label><input class="finput" value="(424) 331-9313">
+    <label class="flbl">Website</label><input class="finput" value="thenile.la">
+    <label class="flbl">Price ($, $$, $$$)</label><input class="finput" value="$$">
+    <label class="flbl">Avg per person ($)</label><input class="finput" value="30">
+    <label class="flbl">Description</label>
+    <textarea class="finput" rows="3">A whole vibe — the spot before and after a game. Live DJ, great atmosphere, open late.</textarea>
+
+    <div id="specialWrap" class="hide">
+      <label class="flbl">Special / offer (Premium)</label>
+      <input class="finput" value="Show your game ticket — half-off wings till close">
+    </div>
+
+    <button class="save">Save changes</button>
+
+    <div id="upsell" class="upsell">
+      <div class="h">Upgrade your listing</div>
+      <div class="d">More reach, more bookings — cancel anytime.</div>
+      <button id="btnVer" class="ghost hide">Go Verified · $69/mo</button>
+      <button id="btnPrem" class="ghost">Go Premium · $169/mo</button>
+      <div class="fine">Secure checkout by Stripe. Your new badge activates once payment clears.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function setTier(t,el){
+    document.querySelectorAll('.seg button').forEach(function(b){b.classList.remove('on');});
+    el.classList.add('on');
+    var badge=document.getElementById('badge');
+    var special=document.getElementById('specialWrap');
+    var upsell=document.getElementById('upsell');
+    var bVer=document.getElementById('btnVer'), bPrem=document.getElementById('btnPrem');
+    special.classList.add('hide'); bVer.classList.add('hide'); bPrem.classList.remove('hide'); upsell.classList.remove('hide');
+    if(t==='free'){
+      badge.className='chip c-free'; badge.textContent='Free';
+      bVer.classList.remove('hide');            // free sees BOTH upgrade buttons
+    } else if(t==='ver'){
+      badge.className='chip c-ver'; badge.textContent='Verified';
+      // only Go Premium shows
+    } else {
+      badge.className='chip c-prem'; badge.textContent='⭐ Premium';
+      special.classList.remove('hide');         // premium unlocks the Special field
+      upsell.classList.add('hide');             // nothing left to upsell
+    }
+  }
+</script>
