@@ -620,7 +620,7 @@
 
       <div class="tier feat">
         <div class="tname">Verified <span class="chip chip-verified" style="vertical-align:middle">Most Popular</span></div>
-        <div class="tprice">$89<span>/mo</span></div>
+        <div class="tprice">$69<span>/mo</span></div>
         <ul>
           <li>Everything in Free</li>
           <li>Verified badge on your page</li>
@@ -629,12 +629,12 @@
           <li>Show up first in your category</li>
           <li class="off">Push specials to the top</li>
         </ul>
-        <button class="tb-paid" onclick="openClaimForm(null,2)">Claim &amp; Verify</button>
+        <button class="tb-paid" onclick="openClaimForm(null,2)">Claim to Upgrade</button>
       </div>
 
       <div class="tier">
         <div class="tname">Premium</div>
-        <div class="tprice">$220<span>/mo</span></div>
+        <div class="tprice">$169<span>/mo</span></div>
         <ul>
           <li>Everything in Verified</li>
           <li>Push live specials to the top of Do Plans</li>
@@ -642,9 +642,9 @@
           <li>Event-weekend promotion</li>
           <li>Full analytics — views, plan adds, clicks</li>
         </ul>
-        <button class="tb-paid" onclick="openClaimForm(null,3)">Go Premium</button>
+        <button class="tb-paid" onclick="openClaimForm(null,3)">Claim to Upgrade</button>
       </div>
-      <div class="disclaimer" style="margin:0 20px 16px;">Claim your listing free for 60 days. Then choose a plan to keep your business visible, verified, and built into Do Plans.</div>
+      <div class="disclaimer" style="margin:0 20px 16px;">Your listing is free — always. Claim it to take control, then upgrade to Verified or Premium anytime for more reach. Cancel whenever you like.</div>
     </div>
 
     <!-- CLAIM FORM -->
@@ -773,7 +773,15 @@ function renderOwner(){
     fld('Avg per person ($)','ob_cpp',b.avg_per_person)+
     '<label class="flbl">Description</label><textarea id="ob_desc" class="finput" rows="3">'+String(b.review_quote||'').replace(/</g,'&lt;')+'</textarea>'+
     (b.tier>=3?'<label class="flbl">Special / offer (Premium)</label><input id="ob_special" class="finput" value="'+String(b.special||'').replace(/"/g,'&quot;')+'">':'<input id="ob_special" type="hidden" value="'+String(b.special||'').replace(/"/g,'&quot;')+'">')+
-    '<button class="btn btn-primary" style="width:100%;margin-top:16px;padding:14px" onclick="saveMyBiz()">Save changes</button>';
+    '<button class="btn btn-primary" style="width:100%;margin-top:16px;padding:14px" onclick="saveMyBiz()">Save changes</button>'+
+    (b.tier>=3?''
+      :'<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--line)">'+
+        '<div style="font-weight:800;font-size:15px;font-family:\'Barlow Condensed\';margin-bottom:4px">Upgrade your listing</div>'+
+        '<div style="font-size:12px;color:var(--muted);margin-bottom:10px">More reach, more bookings — cancel anytime.</div>'+
+        (b.tier<2?'<button class="btn btn-ghost" style="width:100%;margin-bottom:8px" onclick="startUpgrade(2)">Go Verified &#183; $69/mo</button>':'')+
+        '<button class="btn btn-ghost" style="width:100%" onclick="startUpgrade(3)">Go Premium &#183; $169/mo</button>'+
+        '<div style="font-size:11px;color:var(--muted);margin-top:8px">Secure checkout by Stripe. Your new badge activates once payment clears.</div>'+
+      '</div>');
 }
 async function saveMyBiz(){
   if(!MY_BIZ)return;
@@ -1345,20 +1353,35 @@ function swapStop(key){
 const views=['home','explore','events','build','loading','results','detail','listing','claim','claimform','saved','owner'];
 
 /* ============ BUSINESS CLAIM FLOW ============ */
-// Stripe checkout links (test). Each carries the business id via client_reference_id,
-// so in Stripe you see exactly which business paid for which tier.
+// Stripe checkout links (TEST placeholders — replace with your real $69/$169
+// links before going live). Used only by the UPGRADE buttons in the owner
+// dashboard — claiming a business is always FREE. Each link carries the
+// business id via client_reference_id so you see who paid for what in Stripe.
 const STRIPE_LINKS = {
-  2: 'https://buy.stripe.com/test_aFacN6bgU4mb4lxbKIa3u01', // Verified — $89/mo
-  3: 'https://buy.stripe.com/test_aFa3cw1Gk5qfdW76qoa3u00'  // Premium  — $220/mo
+  2: 'https://buy.stripe.com/test_aFacN6bgU4mb4lxbKIa3u01', // Verified — $69/mo  (TEST link, swap before live)
+  3: 'https://buy.stripe.com/test_aFa3cw1Gk5qfdW76qoa3u00'  // Premium  — $169/mo (TEST link, swap before live)
 };
 function openClaimForm(bizKey, tier){
   var dl=document.getElementById('cf_bizlist');
   dl.innerHTML=P.map(function(p){return '<option value="'+String(p.n).replace(/"/g,'&quot;')+'"></option>';}).join('');
   document.getElementById('cf_biz').value=(bizKey && PB[bizKey])?PB[bizKey].n:'';
-  window._claimTier=tier||2;
-  var notes={1:'Free claim — take control of your contact info & hours.',2:'Verified ($89/mo) — add photos, menu, set prices, show first in your category. Secure checkout follows.',3:'Premium ($220/mo) — everything in Verified plus featured placement, specials & full analytics. Secure checkout follows.'};
-  document.getElementById('claimTierNote').textContent=notes[window._claimTier]||'';
+  window._claimTier=tier||1;
+  var notes={
+    1:'Claim your listing — it’s free. Once we confirm it’s yours (within 72 hours) you can manage your info, hours & photos.',
+    2:'Claiming is free. After we confirm you own it, you can upgrade to Verified ($69/mo) anytime from your dashboard.',
+    3:'Claiming is free. After we confirm you own it, you can upgrade to Premium ($169/mo) anytime from your dashboard.'
+  };
+  document.getElementById('claimTierNote').textContent=notes[window._claimTier]||notes[1];
   go('claimform');
+}
+// Owner starts a paid upgrade from their dashboard (Verified=2 / Premium=3).
+function startUpgrade(tier){
+  if(!MY_BIZ){ toast('Claim your business first'); return; }
+  var link=STRIPE_LINKS[tier]; if(!link){ toast('Upgrade unavailable'); return; }
+  var email=(CURRENT_USER&&CURRENT_USER.email)||'';
+  var url=link+'?client_reference_id='+encodeURIComponent(MY_BIZ.id)+'&prefilled_email='+encodeURIComponent(email);
+  toast('Opening secure checkout…');
+  setTimeout(function(){ window.location.href=url; }, 500);
 }
 function bizKeyFromName(name){
   var t=(name||'').trim().toLowerCase();
@@ -1379,25 +1402,18 @@ async function submitClaim(){
   if(!email){ toast('Enter your email'); return; }
   if(!attest){ toast('Please check the certification box'); return; }
   if(!CURRENT_USER){ toast('Sign in first to claim your business'); acctPrompt('claim'); return; }
-  var tier=window._claimTier||2;
-  // Save the claim (best-effort — never block checkout if the record fails)
-  try{
-    await SB.from('di_claims').insert({
-      business_id:bizKey, requested_tier:tier, status:'pending', user_id:CURRENT_USER.id,
-      contact_first_name:first, contact_last_name:last, role:role,
-      contact_email:email, contact_phone:phone, attested:true
-    });
-  }catch(e){ console.warn('claim insert failed (continuing to checkout)', e); }
+  var tier=window._claimTier||1;   // what they're interested in — recorded so you know, but claiming is FREE
+  // Save the ownership claim as 'pending' for you to approve. No payment here.
+  var r=await SB.from('di_claims').insert({
+    business_id:bizKey, requested_tier:tier, status:'pending', user_id:CURRENT_USER.id,
+    contact_first_name:first, contact_last_name:last, role:role,
+    contact_email:email, contact_phone:phone, attested:true
+  });
+  if(r && r.error){ toast('Could not submit: '+r.error.message); return; }
   ['cf_biz','cf_first','cf_last','cf_phone','cf_email'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('cf_attest').checked=false;
-  if(tier>=2 && STRIPE_LINKS[tier]){
-    var url=STRIPE_LINKS[tier]+'?client_reference_id='+encodeURIComponent(bizKey)+'&prefilled_email='+encodeURIComponent(email);
-    toast('Opening secure checkout…');
-    setTimeout(function(){ window.location.href=url; }, 700);
-  }else{
-    toast('Claim submitted ✓ We’ll review within 72 hours');
-    setTimeout(function(){ go('home'); }, 1300);
-  }
+  toast('Claim submitted ✓ We’ll review within 72 hours');
+  setTimeout(function(){ go('home'); }, 1500);
 }
 /* ============ EVENTS / CALENDAR ============ */
 function evEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
