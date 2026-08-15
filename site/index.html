@@ -680,6 +680,12 @@
         <div style="font-size:12px;color:var(--muted);margin-top:12px;text-align:center;line-height:1.5;">We review every claim within 72 hours. You'll get an email at the address above once you're approved.</div>
       </div>
     </div>
+
+    <!-- OWNER DASHBOARD -->
+    <div class="view" id="view-owner">
+      <div class="head-bar"><div class="back" onclick="go('home')">&#8249;</div><div class="logo-mini" role="img" aria-label="Do Inglewood" title="Home" onclick="go('home')"></div><span class="htitle">My Business</span></div>
+      <div id="owner-body" style="padding:16px 20px 60px;"></div>
+    </div>
   </div>
 
   <div class="tabbar">
@@ -695,17 +701,17 @@
       <h3>Do Inglewood</h3>
       <p>California's Entertainment City</p>
       <button class="ab" style="margin-bottom:10px" onclick="closeMenu();go('claim')">&#127970; For Business &mdash; List or Claim</button>
-      <button class="ab" style="background:var(--panel-2);color:var(--txt);border:1px solid var(--line);margin-bottom:10px" onclick="closeMenu();acctPrompt('save')">&#128100; Sign In / Create Account</button>
+      <div id="menu-auth" style="margin-bottom:10px"></div>
       <button class="ab" style="background:var(--panel-2);color:var(--txt);border:1px solid var(--line)" onclick="closeMenu();toast('Advertise with Do Inglewood')">&#128226; Advertise With Us</button>
       <div class="skip" onclick="closeMenu()">Close</div>
     </div>
   </div>
   <div class="acct-overlay" id="acctOverlay">
     <div class="acct-sheet">
-      <h3 id="acctTitle">Save your night</h3>
-      <p id="acctMsg">Create a free account to save this plan, star your favorite spots, and get back to them anytime.</p>
-      <input placeholder="Email or phone">
-      <button class="ab" onclick="acctDone()">Create Free Account</button>
+      <h3 id="acctTitle">Sign in</h3>
+      <p id="acctMsg">Enter your email — we'll send you a one-tap sign-in link. No password needed.</p>
+      <input id="authEmail" type="email" placeholder="you@email.com">
+      <button class="ab" onclick="sendMagicLink()">Send sign-in link</button>
       <div class="skip" onclick="closeAcct()">Maybe later</div>
     </div>
   </div>
@@ -718,6 +724,78 @@
 const SUPABASE_URL = "https://eojlkqxnwzoelwvrxgzc.supabase.co";
 const SUPABASE_KEY = "sb_publishable_WeSqJHxHWza5rgyq8XcF0g_bYF7VE7R"; // publishable (safe) key
 const SB = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* ============ AUTH + OWNER DASHBOARD ============ */
+var CURRENT_USER=null, MY_BIZ=null;
+function gv(id){var e=document.getElementById(id);return e?(e.value||'').trim():'';}
+SB.auth.getSession().then(function(r){ CURRENT_USER=(r.data&&r.data.session&&r.data.session.user)||null; onAuthChange(); });
+SB.auth.onAuthStateChange(function(_e,session){ CURRENT_USER=(session&&session.user)||null; onAuthChange(); });
+async function onAuthChange(){
+  if(CURRENT_USER){
+    try{ var ex=await SB.from('di_users').select('id').eq('auth_id',CURRENT_USER.id).limit(1); if(!ex.data||!ex.data.length){ await SB.from('di_users').insert({auth_id:CURRENT_USER.id,email:CURRENT_USER.email}); } }catch(e){}
+    await loadMyBusiness();
+  } else { MY_BIZ=null; }
+  updateAccountUI();
+}
+async function loadMyBusiness(){
+  if(!CURRENT_USER){ MY_BIZ=null; return; }
+  try{ var r=await SB.from('di_businesses').select('*').eq('claimed_by',CURRENT_USER.id); MY_BIZ=(r.data&&r.data[0])||null; }catch(e){ MY_BIZ=null; }
+}
+async function sendMagicLink(){
+  var email=gv('authEmail'); if(!email){ toast('Enter your email'); return; }
+  var r=await SB.auth.signInWithOtp({email:email,options:{emailRedirectTo:location.href.split('#')[0]}});
+  if(r.error) toast('Error: '+r.error.message); else { toast('✓ Check your email for a sign-in link'); closeAcct(); }
+}
+async function doSignOut(){ try{ await SB.auth.signOut(); }catch(e){} CURRENT_USER=null; MY_BIZ=null; updateAccountUI(); toast('Signed out'); go('home'); }
+function updateAccountUI(){
+  var box=document.getElementById('menu-auth'); if(!box)return;
+  if(CURRENT_USER){
+    var mine = MY_BIZ ? '<button class="ab" style="margin-bottom:10px" onclick="closeMenu();renderOwner();go(\'owner\')">&#127978; My Business</button>' : '';
+    box.innerHTML = mine + '<button class="ab" style="background:var(--panel-2);color:var(--txt);border:1px solid var(--line)" onclick="closeMenu();doSignOut()">Sign Out</button>';
+  } else {
+    box.innerHTML = '<button class="ab" style="background:var(--panel-2);color:var(--txt);border:1px solid var(--line)" onclick="closeMenu();acctPrompt(\'signin\')">&#128100; Sign In</button>';
+  }
+}
+function renderOwner(){
+  var host=document.getElementById('owner-body'); if(!host)return;
+  if(!CURRENT_USER){ host.innerHTML='<div class="ev-empty"><div class="big">&#128100;</div>Sign in to manage your business.<br><button class="btn btn-primary" style="margin-top:14px" onclick="acctPrompt(\'signin\')">Sign In</button></div>'; return; }
+  if(!MY_BIZ){ host.innerHTML='<div class="ev-empty"><div class="big">&#127978;</div>No business linked to your account yet.<br>Claim your business — once we approve it (within 72 hours) it shows here to manage.<br><button class="btn btn-primary" style="margin-top:14px" onclick="go(\'claim\')">Claim a Business</button></div>'; return; }
+  var b=MY_BIZ;
+  function fld(lbl,id,v){ return '<label class="flbl">'+lbl+'</label><input id="'+id+'" class="finput" value="'+String(v==null?'':v).replace(/"/g,'&quot;')+'">'; }
+  var badge=b.tier>=3?'<span class="chip chip-sponsored">&#11088; Premium</span>':(b.tier>=2?'<span class="chip chip-verified">Verified</span>':'<span class="chip chip-import">Free</span>');
+  host.innerHTML =
+    '<div style="font-weight:800;font-size:20px;font-family:\'Barlow Condensed\'">'+(b.name||'')+' '+badge+'</div>'+
+    '<div style="font-size:12px;color:var(--muted);margin:4px 0 14px">Edit your listing — changes go live instantly.</div>'+
+    '<div style="height:150px;border-radius:12px;background:#0f0f15 center/cover no-repeat;background-image:url(\''+(b.photo_url||'')+'\');border:1px solid var(--line);margin-bottom:8px"></div>'+
+    '<label class="btn btn-ghost" style="display:inline-block;cursor:pointer;margin-bottom:6px">&#128247; Upload main photo<input type="file" accept="image/*" style="display:none" onchange="uploadMainPhoto(this.files[0])"></label>'+
+    fld('Business name','ob_name',b.name)+fld('Category','ob_cat',b.category)+fld('Hours','ob_hours',b.hours)+
+    fld('Phone','ob_phone',b.phone)+fld('Website','ob_web',b.website)+fld('Price ($, $$, $$$)','ob_price',b.price_level)+
+    fld('Avg per person ($)','ob_cpp',b.avg_per_person)+
+    '<label class="flbl">Description</label><textarea id="ob_desc" class="finput" rows="3">'+String(b.review_quote||'').replace(/</g,'&lt;')+'</textarea>'+
+    (b.tier>=3?'<label class="flbl">Special / offer (Premium)</label><input id="ob_special" class="finput" value="'+String(b.special||'').replace(/"/g,'&quot;')+'">':'<input id="ob_special" type="hidden" value="'+String(b.special||'').replace(/"/g,'&quot;')+'">')+
+    '<button class="btn btn-primary" style="width:100%;margin-top:16px;padding:14px" onclick="saveMyBiz()">Save changes</button>';
+}
+async function saveMyBiz(){
+  if(!MY_BIZ)return;
+  var upd={ name:gv('ob_name'), category:gv('ob_cat'), hours:gv('ob_hours'), phone:gv('ob_phone'), website:gv('ob_web'), price_level:gv('ob_price'), avg_per_person:(+gv('ob_cpp')||null), review_quote:gv('ob_desc') };
+  var sp=document.getElementById('ob_special'); if(sp) upd.special=(sp.value||'').trim()||null;
+  var r=await SB.from('di_businesses').update(upd).eq('id',MY_BIZ.id);
+  if(r.error){ toast('Save failed: '+r.error.message); return; }
+  toast('Saved &#10003;'); await loadMyBusiness(); renderOwner();
+  try{ await loadBusinesses(); buildHome(); }catch(e){}
+}
+async function uploadMainPhoto(file){
+  if(!MY_BIZ||!file)return;
+  toast('Uploading…');
+  var ext=(file.name.split('.').pop()||'jpg').toLowerCase();
+  var path=MY_BIZ.id+'/'+Date.now()+'.'+ext;
+  var up=await SB.storage.from('business-photos').upload(path,file,{upsert:true,contentType:file.type});
+  if(up.error){ toast('Upload failed: '+up.error.message); return; }
+  var url=SB.storage.from('business-photos').getPublicUrl(path).data.publicUrl;
+  var r=await SB.from('di_businesses').update({photo_url:url}).eq('id',MY_BIZ.id);
+  if(r.error){ toast('Update failed: '+r.error.message); return; }
+  toast('Photo updated &#10003;'); await loadMyBusiness(); renderOwner();
+}
 
 /* ============ GOOGLE PLACES PHOTO INTEGRATION ============
    To pull REAL business photos automatically, set your key below.
@@ -1300,11 +1378,12 @@ async function submitClaim(){
   if(!first||!last){ toast('Enter your first and last name'); return; }
   if(!email){ toast('Enter your email'); return; }
   if(!attest){ toast('Please check the certification box'); return; }
+  if(!CURRENT_USER){ toast('Sign in first to claim your business'); acctPrompt('claim'); return; }
   var tier=window._claimTier||2;
   // Save the claim (best-effort — never block checkout if the record fails)
   try{
     await SB.from('di_claims').insert({
-      business_id:bizKey, requested_tier:tier, status:'pending',
+      business_id:bizKey, requested_tier:tier, status:'pending', user_id:CURRENT_USER.id,
       contact_first_name:first, contact_last_name:last, role:role,
       contact_email:email, contact_phone:phone, attested:true
     });
@@ -1537,9 +1616,11 @@ function openMenu(){document.getElementById('menuOverlay').classList.add('on');}
 function closeMenu(){document.getElementById('menuOverlay').classList.remove('on');}
 function acctPrompt(kind){
   var t=document.getElementById('acctTitle'),m=document.getElementById('acctMsg');
-  if(kind==='save'){t.textContent='Save your night';m.textContent='Create a free account to save this plan and get back to it anytime.';}
-  if(kind==='send'){t.textContent='Send to your crew';m.textContent='Create a free account to send this plan and let your group vote on it.';}
-  if(kind==='star'){t.textContent='Star this spot';m.textContent='Create a free account to save your favorite Inglewood spots.';}
+  t.textContent='Sign in';
+  m.textContent="Enter your email — we'll send a one-tap sign-in link. No password needed.";
+  if(kind==='save'){m.textContent="Sign in to save this plan and get back to it anytime — we'll email you a one-tap link.";}
+  if(kind==='star'){m.textContent="Sign in to save your favorite Inglewood spots — we'll email you a one-tap link.";}
+  if(kind==='claim'){m.textContent="Sign in to claim your business — we'll email you a one-tap link, then finish your claim.";}
   document.getElementById('acctOverlay').classList.add('on');
 }
 function closeAcct(){document.getElementById('acctOverlay').classList.remove('on');}

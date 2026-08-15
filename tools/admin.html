@@ -103,16 +103,17 @@ async function loadClaims(){
       var contact=[c.contact_first_name,c.contact_last_name].filter(Boolean).join(' ');
       return '<div class="row"><div class="grow"><div class="nm">'+esc(nm)+' '+(TIER[c.requested_tier]||'')+'</div>'+
         '<div class="mut">'+esc(contact)+(c.contact_email?' · '+esc(c.contact_email):'')+(c.contact_phone?' · '+esc(c.contact_phone):'')+'</div></div>'+
-        '<button class="g" onclick="approve(\''+c.id+'\',\''+c.business_id+'\','+(c.requested_tier||2)+')">Approve → set '+((c.requested_tier===3)?'Premium':'Verified')+'</button>'+
+        '<button class="g" onclick="approve(\''+c.id+'\',\''+c.business_id+'\','+(c.requested_tier||2)+',\''+(c.user_id||'')+'\')">Approve → set '+((c.requested_tier===3)?'Premium':'Verified')+'</button>'+
         '<button class="r" onclick="rejectClaim(\''+c.id+'\')">Reject</button></div>';
     }).join('');
   }catch(e){ $('claims-list').innerHTML='<div class="mut">Could not load claims: '+esc(e.message)+'</div>'; }
 }
-async function approve(claimId,bizId,tier){
+async function approve(claimId,bizId,tier,userId){
   try{
-    await fetch(SUPABASE_URL+'/rest/v1/di_businesses?id=eq.'+encodeURIComponent(bizId),{method:'PATCH',headers:HJ(),body:JSON.stringify({tier:tier})});
+    var body={tier:tier}; if(userId) body.claimed_by=userId;
+    await fetch(SUPABASE_URL+'/rest/v1/di_businesses?id=eq.'+encodeURIComponent(bizId),{method:'PATCH',headers:HJ(),body:JSON.stringify(body)});
     await fetch(SUPABASE_URL+'/rest/v1/di_claims?id=eq.'+encodeURIComponent(claimId),{method:'PATCH',headers:HJ(),body:JSON.stringify({status:'approved'})});
-    msg('Approved ✓ business set to tier '+tier); loadClaims();
+    msg('Approved ✓ tier '+tier+(userId?' + owner linked':'')); loadClaims();
   }catch(e){ msg('Error: '+e.message); }
 }
 async function rejectClaim(claimId){
