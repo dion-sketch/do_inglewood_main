@@ -1,0 +1,246 @@
+<title>Inglewood City Partnership</title>
+<style>
+  /* ---------- THEME TOKENS ---------- */
+  :root{
+    --paper:#faf7f4; --surface:#ffffff; --surface-2:#f4efe9;
+    --ink:#17141c; --ink-soft:#4c4653; --muted:#8b8490; --line:#e8e0d8;
+    --pink:#d81b64; --gold:#b7830f; --green:#128a5b;
+    --grad:linear-gradient(95deg,#e11d6b,#ff6a2c,#c8941a);
+    --shadow:0 1px 2px rgba(20,15,25,.04),0 10px 30px rgba(20,15,25,.06);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0c0a11; --surface:#161320; --surface-2:#1f1a2c;
+      --ink:#f5f1f8; --ink-soft:#cbc4d6; --muted:#948ba6; --line:#2a2438;
+      --pink:#ff3d86; --gold:#f5c542; --green:#37d59c;
+      --grad:linear-gradient(95deg,#ff2e7e,#ff8a3d,#f5c542);
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 14px 40px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0c0a11; --surface:#161320; --surface-2:#1f1a2c;
+    --ink:#f5f1f8; --ink-soft:#cbc4d6; --muted:#948ba6; --line:#2a2438;
+    --pink:#ff3d86; --gold:#f5c542; --green:#37d59c;
+    --grad:linear-gradient(95deg,#ff2e7e,#ff8a3d,#f5c542);
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 14px 40px rgba(0,0,0,.5);
+  }
+
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.6; -webkit-font-smoothing:antialiased; font-feature-settings:"kern" 1;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:0 22px;}
+  .num{font-variant-numeric:tabular-nums;}
+
+  section{padding:44px 0;border-top:1px solid var(--line);}
+  section:first-of-type{border-top:0;}
+  .eyebrow{font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--pink);margin:0 0 14px;}
+  h1,h2,h3{margin:0;text-wrap:balance;letter-spacing:-.02em;font-weight:850;}
+  h1{font-size:clamp(34px,7.4vw,54px);line-height:1.03;}
+  h2{font-size:clamp(25px,4.6vw,34px);line-height:1.08;margin-bottom:14px;}
+  h3{font-size:18px;letter-spacing:-.01em;}
+  p{margin:0 0 14px;color:var(--ink-soft);}
+  p.lead{font-size:clamp(16px,2.4vw,19px);color:var(--ink-soft);max-width:60ch;}
+  .grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  strong{color:var(--ink);font-weight:750;}
+
+  header{padding:26px 0 6px;}
+  .brandrow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .wordmark{font-size:20px;font-weight:900;letter-spacing:-.02em;}
+  .wordmark span{font-weight:400;color:var(--muted);}
+  .prepared{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+    border:1px solid var(--line);border-radius:999px;padding:6px 12px;}
+
+  .hero{padding-top:30px;}
+  .hero .kicker{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:16px;}
+  .venues{display:flex;flex-wrap:wrap;gap:8px;margin-top:26px;}
+  .venue{font-size:12.5px;font-weight:700;color:var(--ink-soft);background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:7px 13px;}
+
+  /* thesis strip */
+  .thesis{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:28px 26px;box-shadow:var(--shadow);}
+  .thesis .big{font-size:clamp(22px,4.4vw,30px);font-weight:850;letter-spacing:-.02em;line-height:1.15;}
+  .thesis p{margin-top:12px;margin-bottom:0;}
+
+  /* three returns */
+  .returns{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  @media (max-width:560px){.returns{grid-template-columns:1fr;}}
+  .ret{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px 18px;}
+  .ret .ic{font-size:22px;line-height:1;margin-bottom:10px;}
+  .ret .t{font-weight:850;font-size:16px;margin-bottom:5px;}
+  .ret .d{font-size:13.5px;color:var(--muted);line-height:1.5;}
+
+  /* offer */
+  .offer{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:34px 28px;box-shadow:var(--shadow);position:relative;overflow:hidden;}
+  .offer::before{content:"";position:absolute;inset:0 0 auto 0;height:5px;background:var(--grad);}
+  .offer .unit{font-size:clamp(30px,6vw,44px);font-weight:900;letter-spacing:-.03em;line-height:1;}
+  .offer .unit small{font-size:.42em;font-weight:750;color:var(--muted);letter-spacing:0;}
+  .offer .min{font-size:14px;color:var(--muted);margin-top:8px;font-weight:600;}
+  .bigfig{margin-top:26px;padding-top:24px;border-top:1px dashed var(--line);}
+  .bigfig .n{font-size:clamp(48px,12vw,80px);font-weight:900;line-height:.92;letter-spacing:-.04em;}
+  .bigfig .cap{font-size:14.5px;color:var(--ink-soft);margin-top:10px;max-width:46ch;}
+  .perday{display:inline-block;margin-top:16px;font-size:13px;font-weight:800;color:var(--green);background:color-mix(in srgb,var(--green) 12%,transparent);border-radius:999px;padding:7px 14px;}
+
+  /* payback flow */
+  .flow{display:grid;grid-template-columns:1fr;gap:12px;counter-reset:s;}
+  .stepc{display:flex;gap:15px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:17px 18px;}
+  .stepc .no{flex:none;width:30px;height:30px;border-radius:999px;background:var(--grad);color:#fff;font-weight:900;font-size:14px;display:flex;align-items:center;justify-content:center;}
+  .stepc .tx{font-size:14.5px;color:var(--ink-soft);}
+  .stepc .tx b{color:var(--ink);}
+  .payback{margin-top:16px;background:color-mix(in srgb,var(--green) 10%,var(--surface));border:1px solid color-mix(in srgb,var(--green) 32%,var(--line));border-radius:16px;padding:20px 20px;}
+  .payback .k{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--green);}
+  .payback .v{font-size:clamp(19px,3.6vw,23px);font-weight:850;letter-spacing:-.01em;margin-top:6px;line-height:1.25;}
+
+  /* scale table */
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:16px;background:var(--surface);}
+  table{width:100%;border-collapse:collapse;min-width:420px;}
+  th,td{text-align:right;padding:15px 18px;font-size:15px;}
+  th:first-child,td:first-child{text-align:left;}
+  thead th{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:800;border-bottom:1px solid var(--line);}
+  tbody td{border-top:1px solid var(--line);color:var(--ink-soft);}
+  tbody td:first-child{color:var(--ink);font-weight:700;}
+  tbody tr.hi td{background:color-mix(in srgb,var(--gold) 9%,transparent);}
+  .money{font-weight:800;color:var(--ink);}
+
+  /* feature grid */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  @media (max-width:520px){.grid{grid-template-columns:1fr;}}
+  .cell{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:17px 18px;}
+  .cell .t{font-weight:800;font-size:15px;margin-bottom:5px;}
+  .cell .d{font-size:13.5px;color:var(--muted);line-height:1.5;}
+
+  /* traction */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+  @media (max-width:560px){.stats{grid-template-columns:1fr 1fr;}}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:18px 14px;text-align:center;}
+  .stat .n{font-size:clamp(24px,5vw,30px);font-weight:900;letter-spacing:-.02em;line-height:1;}
+  .stat .l{font-size:11.5px;color:var(--muted);margin-top:7px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;}
+
+  .footnote{font-size:12px;color:var(--muted);margin-top:14px;line-height:1.5;}
+
+  .close{text-align:center;padding:56px 0 30px;}
+  .close h2{margin-bottom:10px;}
+  .cta{display:inline-block;margin-top:20px;font-weight:850;font-size:16px;color:#fff;background:var(--grad);border-radius:999px;padding:15px 30px;text-decoration:none;box-shadow:0 10px 26px color-mix(in srgb,var(--pink) 34%,transparent);}
+  footer{border-top:1px solid var(--line);padding:26px 0 44px;text-align:center;font-size:12.5px;color:var(--muted);}
+  footer b{color:var(--ink-soft);}
+
+  .rise{opacity:0;transform:translateY(14px);animation:rise .7s cubic-bezier(.2,.7,.2,1) forwards;}
+  @keyframes rise{to{opacity:1;transform:none;}}
+  @media (prefers-reduced-motion:reduce){.rise{animation:none;opacity:1;transform:none;}}
+</style>
+
+<div class="wrap">
+
+  <header class="rise">
+    <div class="brandrow">
+      <div class="wordmark">Do <span>Inglewood</span></div>
+      <div class="prepared">Proposal · City of Inglewood</div>
+    </div>
+  </header>
+
+  <section class="hero rise" style="animation-delay:.05s">
+    <span class="kicker">California's Entertainment City</span>
+    <h1>A city sponsorship that <span class="grad">pays itself back.</span></h1>
+    <p class="lead" style="margin-top:18px">The world is heading to Inglewood — the <strong>2026 World Cup</strong>, the <strong>2028 Olympics</strong>, and a sold-out calendar at SoFi, the Intuit Dome, and the Kia Forum in between. Do Inglewood puts every local business in front of those visitors — and turns their spending into local taxes, local jobs, and dollars that stay in the city.</p>
+    <div class="venues" aria-label="Nearby venues">
+      <span class="venue">🏟️ SoFi Stadium</span>
+      <span class="venue">🏀 Intuit Dome</span>
+      <span class="venue">🎶 Kia Forum</span>
+      <span class="venue">🎭 YouTube Theater</span>
+      <span class="venue">🎰 Hollywood Park</span>
+    </div>
+  </section>
+
+  <section class="rise" style="animation-delay:.05s">
+    <p class="eyebrow">Why it matters</p>
+    <div class="thesis">
+      <div class="big">This isn't a marketing cost. It's <span class="grad">economic development.</span></div>
+      <p>Every business the City sponsors onto Do Inglewood becomes a visible, verified, revenue-generating storefront — a business that registers with the city, pays local taxes, hires local residents, and buys from local suppliers. The sponsorship doesn't spend money. It <strong>circulates it — inside Inglewood.</strong></p>
+    </div>
+    <div class="returns" style="margin-top:16px">
+      <div class="ret"><div class="ic">🧾</div><div class="t">Taxes stay local</div><div class="d">Every discovered sale rings up local and county tax the city collects.</div></div>
+      <div class="ret"><div class="ic">👷🏽</div><div class="t">Jobs stay local</div><div class="d">Busier businesses hire more Inglewood residents.</div></div>
+      <div class="ret"><div class="ic">🔁</div><div class="t">Dollars stay local</div><div class="d">Visitor spend recirculates through local suppliers instead of leaving.</div></div>
+    </div>
+  </section>
+
+  <section class="rise" style="animation-delay:.05s">
+    <p class="eyebrow">The bundle</p>
+    <div class="offer">
+      <div class="unit num">$60 <small>/ business / month</small></div>
+      <div class="min num">City-sponsored · minimum 500 businesses</div>
+      <div class="bigfig">
+        <div class="n grad num">$30,000<span style="font-size:.34em;color:var(--muted);font-weight:800">/mo</span></div>
+        <div class="cap">500 local businesses — online, verified, certified, and built into every visitor's night out. About <strong>$2 a day</strong> to put a business on the map.</div>
+        <span class="perday num">≈ $2 a day per business</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="rise" style="animation-delay:.05s">
+    <h2>How the $60 flips.</h2>
+    <p>The city's investment doesn't sit still — it turns into local economic activity within days.</p>
+    <div class="flow" style="margin-top:20px">
+      <div class="stepc"><div class="no">1</div><div class="tx">The City sponsors a business onto Do Inglewood for <b>$60/mo</b> — bundled with its city certification.</div></div>
+      <div class="stepc"><div class="no">2</div><div class="tx">A group heading to a <b>SoFi concert</b> finds it in the app and books a table — say <b>$180</b> for dinner and drinks.</div></div>
+      <div class="stepc"><div class="no">3</div><div class="tx">That spend rings up <b>local tax</b>, the business <b>restocks from local suppliers</b>, and <b>keeps its staff on the clock</b>.</div></div>
+    </div>
+    <div class="payback">
+      <div class="k">The flip</div>
+      <div class="v">It takes <span class="grad">one discovered table a month</span> to return the sponsorship. Everything after is upside for the city's economy.</div>
+    </div>
+    <p class="footnote">Illustrative example. The point holds at any scale: the local economic activity a visible business generates far exceeds the $60 that made it visible.</p>
+  </section>
+
+  <section class="rise" style="animation-delay:.05s">
+    <p class="eyebrow">Bundled with certification</p>
+    <h2>Get certified. Get on the map. Same day.</h2>
+    <p>Fold Do Inglewood into the City's business certification and licensing path. The moment a business becomes official with Inglewood, it's <strong>automatically placed on the map</strong>, into the visitor app, and onto the list to be seen. The City's program gains a modern storefront; the business gets premium visibility it could never afford alone.</p>
+    <div class="grid" style="margin-top:20px">
+      <div class="cell"><div class="t">For the business</div><div class="d">City-backed visibility, a verified badge, and real customers — the day they're licensed. Far more reach than $60 buys on the open market.</div></div>
+      <div class="cell"><div class="t">For the City</div><div class="d">More businesses registering, paying taxes, and hiring locally — plus a live directory that keeps visitor spend inside Inglewood.</div></div>
+    </div>
+  </section>
+
+  <section class="rise" style="animation-delay:.05s">
+    <h2>Simple math, and it scales.</h2>
+    <p>Start at the 500-business minimum, or bring the whole city online. Every business is already mapped and ready.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Businesses</th><th>City / month</th><th>City / year</th></tr></thead>
+        <tbody class="num">
+          <tr><td>500 <span style="color:var(--muted);font-weight:600">· minimum</span></td><td class="money">$30,000</td><td>$360,000</td></tr>
+          <tr><td>1,000</td><td class="money">$60,000</td><td>$720,000</td></tr>
+          <tr class="hi"><td><strong>1,383 · all of Inglewood</strong></td><td class="money">$82,980</td><td>$995,760</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="footnote">1,383 = every Inglewood business already loaded into the app today. For scale: a custom civic or tourism app of this scope typically runs <strong>$75,000–300,000</strong> just to build — Do Inglewood is already built and live.</p>
+  </section>
+
+  <section class="rise" style="animation-delay:.05s">
+    <h2>This isn't a concept. It's live.</h2>
+    <p>The platform is built, loaded, and running today — turnkey economic development the City can switch on before the Olympics.</p>
+    <div class="stats num" style="margin-top:20px">
+      <div class="stat"><div class="n grad">1,383</div><div class="l">Businesses mapped</div></div>
+      <div class="stat"><div class="n grad">1,100+</div><div class="l">Real photos</div></div>
+      <div class="stat"><div class="n grad">2027</div><div class="l">Events loaded to</div></div>
+      <div class="stat"><div class="n grad">Live</div><div class="l">App running now</div></div>
+    </div>
+  </section>
+
+  <section class="close rise" style="animation-delay:.05s;border-top:0">
+    <p class="eyebrow" style="color:var(--gold)">The window is now</p>
+    <h2>Keep the world's spending inside Inglewood.</h2>
+    <p style="max-width:52ch;margin-left:auto;margin-right:auto">Before the World Cup and the Olympics bring millions to town, give Inglewood one front door for its entire business economy — and turn every visitor into local revenue.</p>
+    <a class="cta" href="mailto:dionrambo@gmail.com?subject=Do%20Inglewood%20—%20City%20Partnership">Start the conversation →</a>
+  </section>
+
+  <footer>
+    <b>Do Inglewood</b> — California's Entertainment City · Eat. Play. Stay.<br>
+    Prepared for the City of Inglewood · Contact: dionrambo@gmail.com
+  </footer>
+
+</div>
