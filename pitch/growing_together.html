@@ -94,23 +94,48 @@
 
   /* ---------- PRINT: fit one Letter page, keep colors ---------- */
   @media print{
-    @page{ size:letter portrait; margin:0.45in; }
+    @page{ size:letter portrait; margin:0; }
     html,body{background:#fff !important;}
     body{-webkit-print-color-adjust:exact;print-color-adjust:exact;color:#17141c;}
-    .sheet{max-width:100%;padding:0;}
-    .hero{padding:20px 22px 22px;border-radius:16px;background:#f6f1ec;}
-    .hero h1{font-size:58px;}
-    .hero .slogan{font-size:26px;margin-top:12px;}
-    .sec{padding:18px 0 0;}
-    .steps{gap:10px;margin-top:14px;}
-    .step{padding:14px 12px;box-shadow:none;}
-    .step .badge{width:52px;height:52px;font-size:25px;margin-bottom:8px;}
+    .sheet{max-width:100%;padding:0.28in 0.42in;}
+    .hero{padding:11px 20px 12px;border-radius:13px;background:#f6f1ec;}
+    .movement{font-size:9.5px;letter-spacing:.2em;}
+    .hero h1{font-size:37px;margin-top:4px;}
+    .hero .cec{font-size:10px;margin-top:6px;}
+    .hero .slogan{font-size:17px;margin-top:7px;}
+    .hero .oneliner{display:none;}
+    .sec{padding:9px 0 0;}
+    .kick{font-size:9.5px;}
+    .sec h2{font-size:18px;}
+    .steps{gap:7px;margin-top:8px;}
+    .step{padding:9px 9px;box-shadow:none;border-radius:13px;}
+    .step .badge{width:40px;height:40px;font-size:19px;margin-bottom:5px;border-radius:12px;}
+    .step .no{font-size:9.5px;}
+    .step .t{font-size:15px;margin:2px 0;}
+    .step .d{font-size:11px;line-height:1.35;}
     .arrow{display:none !important;}
-    .result{margin-top:14px;}
-    .phonewrap{margin-top:14px;}
-    .phone{max-width:196px;}
-    .together{margin-top:16px;padding:20px 22px;background:#faf3e4;}
-    footer{margin-top:14px;}
+    .result{margin-top:8px;font-size:13.5px;}
+    .phonewrap{margin-top:9px;}
+    .phone{max-width:150px;border-width:6px;}
+    .pstatus{padding:6px 11px 2px;font-size:8px;}
+    .ph-top{padding:7px 10px;}
+    .ph-top .n{font-size:13px;} .ph-top .c{font-size:9px;}
+    .ph-body{padding:8px;}
+    .ph-lab{font-size:9px;}
+    .ph-tot{font-size:10px;margin-bottom:7px;}
+    .stop{margin-bottom:6px;}
+    .stop .dot{width:22px;height:22px;font-size:11px;}
+    .stop .sn{font-size:11px;} .stop .sm{font-size:9px;}
+    .pnav{padding:6px 6px 8px;}
+    .pnav .it{font-size:7px;} .pnav .it .i{font-size:13px;}
+    .together{margin-top:9px;padding:12px 18px;background:#faf3e4;border-radius:13px;}
+    .together .k{font-size:9.5px;}
+    .together h2{font-size:19px;}
+    .together p{font-size:11px;margin-top:7px;}
+    .together .pills{margin-top:9px;}
+    .together .pill{font-size:10px;padding:5px 10px;}
+    footer{margin-top:8px;}
+    footer .by{font-size:13px;} footer .meta{font-size:11px;margin-top:5px;}
     .hero,.steps,.step,.phonewrap,.together,footer{break-inside:avoid;}
   }
 </style>
