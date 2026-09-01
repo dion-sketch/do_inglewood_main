@@ -118,6 +118,7 @@ async function approve(claimId){
     if(c.user_id) body.claimed_by=c.user_id;
     if(c.booking_url) body.booking_url=c.booking_url;
     if(c.reservation_provider) body.reservation_provider=c.reservation_provider;
+    if(c.contact_email) body.notify_email=c.contact_email;
     await fetch(SUPABASE_URL+'/rest/v1/di_businesses?id=eq.'+encodeURIComponent(c.business_id),{method:'PATCH',headers:HJ(),body:JSON.stringify(body)});
     await fetch(SUPABASE_URL+'/rest/v1/di_claims?id=eq.'+encodeURIComponent(claimId),{method:'PATCH',headers:HJ(),body:JSON.stringify({status:'approved'})});
     msg('Approved ✓ tier '+tier+(c.user_id?' + owner linked':'')); loadClaims();

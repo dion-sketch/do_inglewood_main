@@ -795,6 +795,7 @@ function renderOwner(){
     fld('Avg per person ($)','ob_cpp',b.avg_per_person)+
     '<label class="flbl">Reservation / booking link</label><input id="ob_book" class="finput" placeholder="OpenTable / Resy / Booksy / your website" value="'+String(b.booking_url||'').replace(/"/g,'&quot;')+'">'+
     '<label class="flbl">Reservation provider</label><select id="ob_prov" class="finput">'+['','OpenTable','Resy','Booksy','Yelp Reservations','My own website','Phone only'].map(function(o){return '<option value="'+o+'"'+(((b.reservation_provider||'')===o)?' selected':'')+'>'+(o||'None yet — use Do Inglewood')+'</option>';}).join('')+'</select>'+
+    '<label class="flbl">Reservation alerts to (email)</label><input id="ob_notify" class="finput" type="email" placeholder="where new-request emails go" value="'+String(b.notify_email||(CURRENT_USER&&CURRENT_USER.email)||'').replace(/"/g,'&quot;')+'">'+
     '<label class="flbl">Description</label><textarea id="ob_desc" class="finput" rows="3">'+String(b.review_quote||'').replace(/</g,'&lt;')+'</textarea>'+
     (b.tier>=3?'<label class="flbl">Special / offer (Premium)</label><input id="ob_special" class="finput" value="'+String(b.special||'').replace(/"/g,'&quot;')+'">':'<input id="ob_special" type="hidden" value="'+String(b.special||'').replace(/"/g,'&quot;')+'">')+
     '<button class="btn btn-primary" style="width:100%;margin-top:16px;padding:14px" onclick="saveMyBiz()">Save changes</button>'+
@@ -811,7 +812,7 @@ function renderOwner(){
 async function saveMyBiz(){
   if(!MY_BIZ)return;
   var provEl=document.getElementById('ob_prov');
-  var upd={ name:gv('ob_name'), category:gv('ob_cat'), hours:gv('ob_hours'), phone:gv('ob_phone'), website:gv('ob_web'), price_level:gv('ob_price'), avg_per_person:(+gv('ob_cpp')||null), review_quote:gv('ob_desc'), booking_url:gv('ob_book')||null, reservation_provider:(provEl&&provEl.value)||null };
+  var upd={ name:gv('ob_name'), category:gv('ob_cat'), hours:gv('ob_hours'), phone:gv('ob_phone'), website:gv('ob_web'), price_level:gv('ob_price'), avg_per_person:(+gv('ob_cpp')||null), review_quote:gv('ob_desc'), booking_url:gv('ob_book')||null, reservation_provider:(provEl&&provEl.value)||null, notify_email:gv('ob_notify')||null };
   var sp=document.getElementById('ob_special'); if(sp) upd.special=(sp.value||'').trim()||null;
   var r=await SB.from('di_businesses').update(upd).eq('id',MY_BIZ.id);
   if(r.error){ toast('Save failed: '+r.error.message); return; }
