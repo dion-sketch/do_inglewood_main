@@ -719,6 +719,23 @@
       <div class="skip" onclick="closeAcct()">Maybe later</div>
     </div>
   </div>
+  <div class="acct-overlay" id="resvOverlay">
+    <div class="acct-sheet">
+      <h3 id="resvTitle">Request a table</h3>
+      <p id="resvSub">Pick a time — the business will confirm.</p>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input id="rv_date" type="date" style="flex:1;margin:0">
+        <select id="rv_time" style="flex:1;padding:12px;border-radius:11px;border:1px solid var(--line);background:var(--panel);color:var(--txt);font-size:14px">
+          <option>10:00 AM</option><option>11:00 AM</option><option>12:00 PM</option><option>1:00 PM</option><option>2:00 PM</option><option>3:00 PM</option><option>4:00 PM</option><option>5:00 PM</option><option selected>6:00 PM</option><option>7:00 PM</option><option>8:00 PM</option><option>9:00 PM</option>
+        </select>
+      </div>
+      <input id="rv_party" type="number" min="1" placeholder="Party size (e.g. 2)">
+      <input id="rv_name" placeholder="Your name">
+      <input id="rv_phone" type="tel" placeholder="Phone (so they can confirm)">
+      <button class="ab" onclick="submitResv()">Send request</button>
+      <div class="skip" onclick="closeResv()">Cancel</div>
+    </div>
+  </div>
   <div class="toast" id="toast"></div>
 </div>
 
@@ -730,7 +747,7 @@ const SUPABASE_KEY = "sb_publishable_WeSqJHxHWza5rgyq8XcF0g_bYF7VE7R"; // publis
 const SB = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 /* ============ AUTH + OWNER DASHBOARD ============ */
-var CURRENT_USER=null, MY_BIZ=null;
+var CURRENT_USER=null, MY_BIZ=null, MY_RESV={};
 function gv(id){var e=document.getElementById(id);return e?(e.value||'').trim():'';}
 SB.auth.getSession().then(function(r){ CURRENT_USER=(r.data&&r.data.session&&r.data.session.user)||null; onAuthChange(); });
 SB.auth.onAuthStateChange(function(_e,session){ CURRENT_USER=(session&&session.user)||null; onAuthChange(); });
@@ -738,7 +755,8 @@ async function onAuthChange(){
   if(CURRENT_USER){
     try{ var ex=await SB.from('di_users').select('id').eq('auth_id',CURRENT_USER.id).limit(1); if(!ex.data||!ex.data.length){ await SB.from('di_users').insert({auth_id:CURRENT_USER.id,email:CURRENT_USER.email}); } }catch(e){}
     await loadMyBusiness();
-  } else { MY_BIZ=null; }
+    await loadMyReservations();
+  } else { MY_BIZ=null; MY_RESV={}; }
   updateAccountUI();
 }
 async function loadMyBusiness(){
@@ -787,7 +805,8 @@ function renderOwner(){
         (b.tier<2?'<button class="btn btn-ghost" style="width:100%;margin-bottom:8px" onclick="startUpgrade(2)">Go Verified &#183; $69/mo</button>':'')+
         '<button class="btn btn-ghost" style="width:100%" onclick="startUpgrade(3)">Go Premium &#183; $169/mo</button>'+
         '<div style="font-size:11px;color:var(--muted);margin-top:8px">Secure checkout by Stripe. Your new badge activates once payment clears.</div>'+
-      '</div>');
+      '</div>')+'<div id="owner-resv"></div>';
+  renderOwnerResv();
 }
 async function saveMyBiz(){
   if(!MY_BIZ)return;
@@ -966,7 +985,73 @@ function bookingLink(p){
   if(p.web)  return webUrl(p.web);
   return 'https://www.google.com/search?q='+encodeURIComponent(p.n+' Inglewood reservation');
 }
-function reserveStop(key){ var p=PB[key]; if(!p)return; var u=bookingLink(p); if(u) window.open(u,'_blank'); }
+function reserveStop(key){
+  var p=PB[key]; if(!p)return;
+  if(p.book){ window.open(webUrl(p.book),'_blank'); return; }  // they use OpenTable/Resy/etc.
+  openResv(key);                                              // else: native Do Inglewood request
+}
+
+/* ---- Native reservations (for businesses NOT on a booking provider) ---- */
+async function loadMyReservations(){
+  MY_RESV={};
+  if(!CURRENT_USER) return;
+  try{
+    var r=await SB.from('di_reservations').select('*').eq('user_id',CURRENT_USER.id).order('created_at',{ascending:false});
+    (r.data||[]).forEach(function(x){ if(!MY_RESV[x.business_id]) MY_RESV[x.business_id]=x; });
+  }catch(e){}
+}
+function openResv(bizKey){
+  var p=PB[bizKey]; if(!p) return;
+  window._resvBiz=bizKey;
+  document.getElementById('resvTitle').textContent='Request a table · '+p.n;
+  var d=document.getElementById('rv_date'); if(d) d.value=(typeof sel!=='undefined'&&sel.date)||isoOf(new Date());
+  var t=document.getElementById('rv_time'); if(t&&typeof sel!=='undefined'&&sel.startTime){ for(var i=0;i<t.options.length;i++){ if(t.options[i].value===sel.startTime){ t.selectedIndex=i; break; } } }
+  var party=document.getElementById('rv_party'); if(party&&!party.value){ party.value=(typeof sel!=='undefined'&&sel.people==='1')?1:2; }
+  document.getElementById('resvOverlay').classList.add('on');
+}
+function closeResv(){ document.getElementById('resvOverlay').classList.remove('on'); }
+async function submitResv(){
+  var biz=window._resvBiz; if(!biz){ closeResv(); return; }
+  var name=gv('rv_name'), phone=gv('rv_phone'), date=gv('rv_date'), time=gv('rv_time'), party=+gv('rv_party')||2;
+  if(!name){ toast('Enter your name'); return; }
+  if(!phone){ toast('Enter a phone so they can confirm'); return; }
+  var rec={ business_id:biz, customer_name:name, customer_phone:phone, party_size:party, resv_date:date||null, resv_time:time||null, status:'requested' };
+  if(CURRENT_USER) rec.user_id=CURRENT_USER.id;
+  var r=await SB.from('di_reservations').insert(rec);
+  if(r&&r.error){ toast('Could not send: '+r.error.message); return; }
+  closeResv();
+  toast('Request sent ✓ '+(PB[biz]?PB[biz].n:'The business')+' will confirm');
+  await loadMyReservations();
+  if(document.getElementById('view-detail').classList.contains('active') && window._lastPlanIdx!=null){ openDetail(window._lastPlanIdx); }
+}
+/* Owner side — see & accept/decline requests in "My Business" */
+async function renderOwnerResv(){
+  var host=document.getElementById('owner-resv'); if(!host||!MY_BIZ) return;
+  try{
+    var r=await SB.from('di_reservations').select('*').eq('business_id',MY_BIZ.id).order('created_at',{ascending:false});
+    var rows=r.data||[];
+    if(!rows.length){ host.innerHTML=''; return; }
+    host.innerHTML='<div style="font-weight:800;font-size:16px;font-family:\'Barlow Condensed\';margin:22px 0 8px;padding-top:16px;border-top:1px solid var(--line)">Reservation requests</div>'+rows.map(resvRowHTML).join('');
+  }catch(e){ host.innerHTML=''; }
+}
+function resvRowHTML(x){
+  var badge = x.status==='confirmed' ? '<span class="chip chip-verified">Confirmed &#10003;</span>'
+            : x.status==='declined'  ? '<span class="chip chip-import" style="color:#ff7a7a">Declined</span>'
+            : '<span class="chip chip-special">&#9203; Requested</span>';
+  var actions = x.status==='requested'
+    ? '<button class="btn btn-primary" style="padding:8px 14px;font-size:13px" onclick="setResv(\''+x.id+'\',\'confirmed\')">Accept</button>'
+      +'<button class="btn btn-ghost" style="padding:8px 14px;font-size:13px" onclick="setResv(\''+x.id+'\',\'declined\')">Decline</button>'
+    : '';
+  return '<div style="border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px">'+
+    '<div style="font-weight:700">'+xmlEsc(x.customer_name||'Guest')+' &#183; '+(x.party_size||'?')+' ppl</div>'+
+    '<div style="font-size:12px;color:var(--muted);margin:2px 0 8px">'+xmlEsc(String(x.resv_date||''))+(x.resv_time?' &#183; '+xmlEsc(x.resv_time):'')+' &#183; '+xmlEsc(x.customer_phone||'')+'</div>'+
+    '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+badge+actions+'</div></div>';
+}
+async function setResv(id,status){
+  var r=await SB.from('di_reservations').update({status:status}).eq('id',id);
+  if(r&&r.error){ toast('Failed: '+r.error.message); return; }
+  toast(status==='confirmed'?'Confirmed ✓':'Declined'); renderOwnerResv();
+}
 async function loadBusinesses(){
   try{
     // Page through in blocks of 1000 so ALL businesses load (Supabase caps each request at 1000)
@@ -1342,7 +1427,12 @@ function openDetail(i){
 }
 function stopHTML(icon,num,name,sub,connector,key,swappable){
   var badge=key&&PB[key]?(PB[key].tier>=2?'<span class="chip chip-verified" style="vertical-align:middle">Verified</span>':'<span class="chip chip-import" style="vertical-align:middle">Imported</span>'):'';
-  var resv = (key&&PB[key]&&isReservable(PB[key])) ? '<span class="tbtn pink" onclick="event.stopPropagation();reserveStop(\''+key+'\')">Reserve</span>' : '';
+  var rstat = (key&&MY_RESV[key])?MY_RESV[key].status:null;
+  var resv;
+  if(rstat==='confirmed') resv='<span class="tbtn" style="color:var(--green);border-color:var(--green)">Confirmed &#10003;</span>';
+  else if(rstat==='requested') resv='<span class="tbtn" style="color:var(--gold)">Requested&#8230;</span>';
+  else if(rstat==='declined') resv='<span class="tbtn pink" onclick="event.stopPropagation();reserveStop(\''+key+'\')">Try another time</span>';
+  else resv = (key&&PB[key]&&isReservable(PB[key])) ? '<span class="tbtn pink" onclick="event.stopPropagation();reserveStop(\''+key+'\')">Reserve</span>' : '';
   var swap = swappable&&key ? '<span class="tbtn" onclick="event.stopPropagation();swapStop(\''+key+'\')">Replace</span>' : '';
   var dirbtn=key?'<span class="tbtn" onclick="event.stopPropagation();openDirections(\''+key+'\')">Directions</span>':'';
   var click=key?'onclick="openListing(\''+key+'\',\'detail\')" style="cursor:pointer"':'';
@@ -1590,7 +1680,7 @@ function toast(m){const t=document.getElementById('toast');t.textContent=m;t.cla
 function diSaved(){ try{return JSON.parse(localStorage.getItem('di_saved_plans')||'[]');}catch(e){return [];} }
 function diSavePlans(a){ try{localStorage.setItem('di_saved_plans',JSON.stringify(a));}catch(e){} }
 function planTextSummary(pl){
-  var stops=pl.stops.map(function(st){return PB[st.k]?PB[st.k].n:'';}).filter(Boolean);
+  var stops=pl.stops.map(function(st){var p=PB[st.k]; if(!p)return ''; var c=(MY_RESV[st.k]&&MY_RESV[st.k].status==='confirmed')?' ✓':''; return p.n+c;}).filter(Boolean);
   var when=(sel.date?fmtDate(sel.date):'')+(sel.startTime?' at '+sel.startTime:'');
   return (when?when+' — ':'')+stops.join(' → ')+' · Est. '+money(pl.total)+' for '+pl.ppl+(pl.ppl>1?' people':' person');
 }
