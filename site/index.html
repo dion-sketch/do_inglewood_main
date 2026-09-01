@@ -444,7 +444,7 @@
       <div class="builder-banner"><b>Activity Builder</b><span>A few quick questions &mdash; we build the day for you</span></div>
 
       <div class="build-step" data-step="1">
-        <div class="build-q"><div class="eyebrow">A few quick questions &mdash; we build the rest</div><h2>What are you planning?</h2></div>
+        <div class="build-q"><div class="eyebrow">Step 1 of 4</div><h2>What's the plan &mdash; and when?</h2></div>
         <div class="opts">
           <div class="opt" onclick="pick(this,'plan','Date Night')"><div class="ic">&#128150;</div><div class="lb">Date Night</div></div>
           <div class="opt" onclick="pick(this,'plan','Friends Night')"><div class="ic">&#128101;</div><div class="lb">Friends Night</div></div>
@@ -455,10 +455,19 @@
           <div class="opt" onclick="pick(this,'plan','After-Concert')"><div class="ic">&#127908;</div><div class="lb">After-Concert</div></div>
           <div class="opt" onclick="pick(this,'plan','Surprise Me')"><div class="ic">&#10024;</div><div class="lb">Surprise Me</div></div>
         </div>
+        <div style="display:flex;gap:10px;padding:16px 20px 0">
+          <div style="flex:1"><label class="flbl">Date</label><input id="bDate" type="date" class="finput" onchange="sel.date=this.value"></div>
+          <div style="flex:1"><label class="flbl">Start time</label>
+            <select id="bTime" class="finput" onchange="sel.startTime=this.value">
+              <option>10:00 AM</option><option>11:00 AM</option><option>12:00 PM</option><option>1:00 PM</option><option>2:00 PM</option><option>3:00 PM</option><option>4:00 PM</option><option>5:00 PM</option><option selected>6:00 PM</option><option>7:00 PM</option><option>8:00 PM</option><option>9:00 PM</option>
+            </select></div>
+        </div>
+        <div class="hint">Date &amp; time so we can line up reservations.</div>
       </div>
 
       <div class="build-step" data-step="2" style="display:none">
-        <div class="build-q"><div class="eyebrow">Question 2 · Budget</div><h2>What's your budget?</h2></div>
+        <div class="build-q"><div class="eyebrow">Step 2 of 4</div><h2>Budget &amp; group size</h2></div>
+        <div style="padding:2px 20px 6px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">Your budget</div>
         <div class="opts-row">
           <div class="pill" onclick="pick(this,'budget','$50')">$50</div>
           <div class="pill" onclick="pick(this,'budget','$100')">$100</div>
@@ -466,10 +475,7 @@
           <div class="pill" onclick="pick(this,'budget','$250')">$250</div>
         </div>
         <div class="hint">Total for everything, all people included</div>
-      </div>
-
-      <div class="build-step" data-step="3" style="display:none">
-        <div class="build-q"><div class="eyebrow">Question 3 · People</div><h2>How many people?</h2></div>
+        <div style="padding:16px 20px 6px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">How many people</div>
         <div class="opts-row">
           <div class="pill" onclick="pick(this,'people','1')">1</div>
           <div class="pill" onclick="pick(this,'people','2')">2</div>
@@ -478,8 +484,9 @@
         </div>
       </div>
 
-      <div class="build-step" data-step="4" style="display:none">
-        <div class="build-q"><div class="eyebrow">Question 4 · Food</div><h2>What do you feel like?</h2></div>
+      <div class="build-step" data-step="3" style="display:none">
+        <div class="build-q"><div class="eyebrow">Step 3 of 4</div><h2>Food &amp; extras</h2></div>
+        <div style="padding:2px 20px 6px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">What do you feel like?</div>
         <div class="opts3">
           <div class="opt" onclick="pick(this,'food','Mexican')"><div class="ic">&#127790;</div><div class="lb">Mexican</div></div>
           <div class="opt" onclick="pick(this,'food','Soul Food')"><div class="ic">&#127831;</div><div class="lb">Soul Food</div></div>
@@ -490,10 +497,7 @@
           <div class="opt" onclick="pick(this,'food','Vegan')"><div class="ic">&#129382;</div><div class="lb">Vegan</div></div>
           <div class="opt" onclick="pick(this,'food','Surprise')"><div class="ic">&#10024;</div><div class="lb">Anything</div></div>
         </div>
-      </div>
-
-      <div class="build-step" data-step="5" style="display:none">
-        <div class="build-q"><div class="eyebrow">Optional · Add to your night</div><h2>Add to your night?</h2></div>
+        <div style="padding:16px 20px 6px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">Add to your day (optional)</div>
         <div class="opts3">
           <div class="opt" onclick="multi(this,'Movie')"><div class="ic">&#127902;</div><div class="lb">Movie</div></div>
           <div class="opt" onclick="multi(this,'Lounge')"><div class="ic">&#127864;</div><div class="lb">Lounge</div></div>
@@ -501,22 +505,16 @@
           <div class="opt" onclick="multi(this,'Dessert')"><div class="ic">&#9749;</div><div class="lb">Coffee &amp; Dessert</div></div>
           <div class="opt" onclick="multi(this,'Event')"><div class="ic">&#127908;</div><div class="lb">Event</div></div>
           <div class="opt" onclick="multi(this,'Club')"><div class="ic">&#127881;</div><div class="lb">Club</div></div>
-        </div>
-        <div class="hint">Tap any you want — or skip</div>
-      </div>
-
-      <div class="build-step" data-step="6" style="display:none">
-        <div class="build-q"><div class="eyebrow">Optional · Inglewood experience</div><h2>Want the Inglewood experience?</h2></div>
-        <div class="opts3">
           <div class="opt" onclick="multi(this,'Landmark')"><div class="ic">&#127914;</div><div class="lb">Landmarks</div></div>
           <div class="opt" onclick="multi(this,'Stadium')"><div class="ic">&#127967;</div><div class="lb">Stadium Stop</div></div>
           <div class="opt" onclick="multi(this,'Park')"><div class="ic">&#127795;</div><div class="lb">Park / Walk</div></div>
         </div>
-        <div class="hint">Make it more than a meal — experience the city. Or skip.</div>
+        <div class="hint">Tap any you want — or skip</div>
       </div>
 
-      <div class="build-step" data-step="7" style="display:none">
-        <div class="build-q"><div class="eyebrow">Question 5 · Starting point</div><h2>Where are you starting?</h2></div>
+      <div class="build-step" data-step="4" style="display:none">
+        <div class="build-q"><div class="eyebrow">Step 4 of 4</div><h2>Getting around</h2></div>
+        <div style="padding:2px 20px 6px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">Where are you starting?</div>
         <div class="opts">
           <div class="opt" onclick="pick(this,'start','Use my location')"><div class="ic">&#128205;</div><div class="lb">Use my location (GPS)</div></div>
           <div class="opt" onclick="pick(this,'start','Enter address')"><div class="ic">&#9999;</div><div class="lb">Enter an address</div></div>
@@ -526,10 +524,7 @@
           <div class="opt" onclick="pick(this,'start','Already in Inglewood')"><div class="ic">&#127968;</div><div class="lb">I'm already here</div></div>
         </div>
         <div id="addrField" style="display:none;padding:4px 20px 0"><input id="addrInput" placeholder="Type your starting address..." style="width:100%;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:13px;color:var(--txt);font-size:14px"></div>
-      </div>
-
-      <div class="build-step" data-step="8" style="display:none">
-        <div class="build-q"><div class="eyebrow">Last · How you move</div><h2>How do you want to move?</h2></div>
+        <div style="padding:16px 20px 6px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">How do you want to move?</div>
         <div class="opts">
           <div class="opt" onclick="pick(this,'move','Drive + Parking')"><div class="ic">&#128663;</div><div class="lb">Drive + Parking</div></div>
           <div class="opt" onclick="pick(this,'move','Metro / Bus')"><div class="ic">&#128649;</div><div class="lb">Metro / Bus</div></div>
@@ -1136,17 +1131,18 @@ function openListing(k,from){
 }
 
 /* BUILD FLOW */
-let step=1;const sel={plan:null,budget:null,people:null,food:null,extras:[],exp:[],start:null,move:null,parking:false};
-function resetBuild(){step=1;sel.plan=sel.budget=sel.people=sel.food=sel.move=sel.start=null;sel.extras=[];sel.exp=[];sel.parking=false;window.__anchorEvent=null;
+let step=1;const sel={plan:null,budget:null,people:null,food:null,extras:[],exp:[],start:null,move:null,parking:false,date:null,startTime:null};
+function resetBuild(){step=1;sel.plan=sel.budget=sel.people=sel.food=sel.move=sel.start=null;sel.extras=[];sel.exp=[];sel.parking=false;sel.date=null;sel.startTime=null;window.__anchorEvent=null;
   document.querySelectorAll('.opt,.pill,.toggle').forEach(e=>e.classList.remove('sel'));
-  var af=document.getElementById('addrField');if(af)af.style.display='none';showStep();}
+  var af=document.getElementById('addrField');if(af)af.style.display='none';
+  var d=document.getElementById('bDate'); if(d){ if(!d.value) d.value=isoOf(new Date()); sel.date=d.value; }
+  var t=document.getElementById('bTime'); if(t){ sel.startTime=t.value; }
+  showStep();}
 function showStep(){
   document.querySelectorAll('.build-step').forEach(s=>s.style.display=(+s.dataset.step===step)?'block':'none');
-  document.getElementById('pfill').style.width=(step/8*100)+'%';
+  document.getElementById('pfill').style.width=(step/4*100)+'%';
   var nb=document.getElementById('buildNext');
-  if(step===8)nb.textContent='Build My Plans →';
-  else if(step===5||step===6)nb.textContent='Next (or Skip)';
-  else nb.textContent='Next';
+  nb.textContent = step===4 ? 'Build My Plans →' : 'Next';
 }
 function pick(el,key,val){el.parentElement.querySelectorAll('.opt,.pill').forEach(e=>e.classList.remove('sel'));el.classList.add('sel');sel[key]=val;
   if(key==='start'){var af=document.getElementById('addrField');if(af)af.style.display=(val==='Enter address')?'block':'none';}}
@@ -1155,10 +1151,13 @@ function multi(el,val){el.classList.toggle('sel');
   var arr = EXPSET.indexOf(val)>=0 ? sel.exp : sel.extras;
   var i=arr.indexOf(val); if(i>=0)arr.splice(i,1); else arr.push(val);}
 function buildNext(){
-  const req=['plan','budget','people','food',null,null,'start','move'];
-  const k=req[step-1];
-  if(k&&!sel[k]){toast('Pick an option to continue');return;}
-  if(step<8){step++;showStep();document.getElementById('screen').scrollTop=0;}
+  if(step===1){ if(!sel.plan){toast('Pick what you are planning');return;}
+    var d=document.getElementById('bDate'); if(d&&d.value)sel.date=d.value; if(!sel.date)sel.date=isoOf(new Date());
+    var t=document.getElementById('bTime'); if(t&&t.value)sel.startTime=t.value; if(!sel.startTime)sel.startTime='6:00 PM'; }
+  else if(step===2){ if(!sel.budget){toast('Pick a budget');return;} if(!sel.people){toast('How many people?');return;} }
+  else if(step===3){ if(!sel.food){toast('Pick what you feel like');return;} }
+  else if(step===4){ if(!sel.start){toast('Where are you starting?');return;} if(!sel.move){toast('How do you want to move?');return;} }
+  if(step<4){step++;showStep();document.getElementById('screen').scrollTop=0;}
   else{runLoader();}
 }
 function buildBack(){if(step>1){step--;showStep();}else go('home');}
@@ -1177,6 +1176,8 @@ function runLoader(){
 /* RESULTS */
 let currentPlans=[],curSort='best';
 function money(n){return '$'+Math.round(n);}
+function fmtDate(iso){ if(!iso)return 'Today'; try{ return parseD(iso).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'}); }catch(e){ return iso; } }
+function fmtMins(m){ m=((m%1440)+1440)%1440; var h=Math.floor(m/60),mm=m%60,ap=h<12?'AM':'PM',h12=h%12||12; return h12+':'+String(mm).padStart(2,'0')+' '+ap; }
 function pickFood(){
   const map={Mexican:['lafonda','fiesta','frijoles','barbarita'],'Soul Food':['dulans','servingspoon','southernsoul','rustypot'],
     Seafood:['conis','chente','bigfish','lalos'],American:['meeting','mrfries','threeout'],Caribbean:['twohommes'],
@@ -1199,7 +1200,7 @@ function buildResults(){
   const moveCost=sel.move==='Rideshare'?18:sel.move==='Drive + Parking'?25:sel.move==='Metro / Bus'?7:15;
   const moveLabel=sel.move==='Mix It For Me'?'Rideshare + Walking':sel.move;
   const startLabel=sel.start==='Enter address'?(document.getElementById('addrInput')&&document.getElementById('addrInput').value||'your address'):sel.start;
-  document.getElementById('planSummary').textContent=`${sel.plan} · ${sel.people} ${ppl>1?'people':'person'} · ${sel.budget} · ${sel.food} · from ${startLabel} · ${sel.move}`;
+  document.getElementById('planSummary').textContent=`${fmtDate(sel.date)}${sel.startTime?' · '+sel.startTime:''} · ${sel.plan} · ${sel.people} ${ppl>1?'people':'person'} · ${sel.budget} · ${sel.food} · from ${startLabel} · ${sel.move}`;
   const foods=pickFood();
 
   // Build a shared stop list each plan varies slightly
@@ -1262,7 +1263,7 @@ function openDetail(i){
   var hasAnchor=!!(ev||anchor);
   var anchorTime=ev?(ev.time||null):(anchor?(PB[anchor.k].showtimes[2]||PB[anchor.k].showtimes[0]):null);
   var anchorLabel=ev?((String(ev.title).split('\u2014')[0].trim())+(anchorTime?(' at '+anchorTime):'')):(anchorTime?('Show at '+anchorTime):'');
-  document.getElementById('detailMeta').innerHTML=`${sel.plan} \u00b7 ${pl.ppl} ${pl.ppl>1?'people':'person'} \u00b7 Est. ${money(pl.total)}`+(anchorLabel?` \u00b7 <span style="color:var(--gold)">${anchorLabel}</span>`:'');
+  document.getElementById('detailMeta').innerHTML=`${fmtDate(sel.date)}${sel.startTime?' \u00b7 '+sel.startTime:''} \u00b7 ${sel.plan} \u00b7 ${pl.ppl} ${pl.ppl>1?'people':'person'} \u00b7 Est. ${money(pl.total)}`+(anchorLabel?` \u00b7 <span style="color:var(--gold)">${anchorLabel}</span>`:'');
 
   // classify each stop into BEFORE / SHOW / AFTER
   function phaseOf(st){
@@ -1324,11 +1325,12 @@ function openDetail(i){
     }
     html+=section(ev?'After the show':'After',groups.after);
   } else {
-    // no clock: single clean flow
-    html+='<div class="phasehdr">Your Plan</div>';
+    // no event anchor: schedule from the chosen start time
+    var base=timeVal(sel.startTime||'6:00 PM');
+    html+='<div class="phasehdr">Your Plan \u00b7 starts '+(sel.startTime||'6:00 PM')+'</div>';
     pl.stops.forEach(function(st,idx){
       var p=PB[st.k]; if(!p)return; num++;
-      var sub=p.cat+' \u00b7 '+p.price+(p.cpp?' \u00b7 '+money(p.cpp*pl.ppl)+' est.':'')+' \u00b7 '+dur(p);
+      var sub='&#9201; '+fmtMins(base+idx*105)+' \u00b7 '+p.cat+' \u00b7 '+p.price+(p.cpp?' \u00b7 '+money(p.cpp*pl.ppl)+' est.':'')+' \u00b7 '+dur(p);
       if(p.special)sub+=' \u00b7 \u2728 '+p.special;
       html+=stopHTML(iconFor(p),num,p.n,sub,idx<pl.stops.length-1,st.k,true);
     });
@@ -1545,6 +1547,8 @@ function planAround(id){
   var e=EV.find(x=>x.id===id);if(!e)return;
   go('build');resetBuild();
   window.__anchorEvent=e;                       // set AFTER reset so it persists through the build
+  if(e.date){ sel.date=e.date; var _d=document.getElementById('bDate'); if(_d)_d.value=e.date; }
+  if(e.time){ sel.startTime=e.time; }
   toast('Building your day around '+(e.title||'the show')+' 🎟️');
   setTimeout(function(){
     document.querySelectorAll('#view-build .opt').forEach(function(o){ if(/After-Concert/i.test(o.textContent)) o.click(); });
@@ -1587,12 +1591,13 @@ function diSaved(){ try{return JSON.parse(localStorage.getItem('di_saved_plans')
 function diSavePlans(a){ try{localStorage.setItem('di_saved_plans',JSON.stringify(a));}catch(e){} }
 function planTextSummary(pl){
   var stops=pl.stops.map(function(st){return PB[st.k]?PB[st.k].n:'';}).filter(Boolean);
-  return stops.join(' → ')+' · Est. '+money(pl.total)+' for '+pl.ppl+(pl.ppl>1?' people':' person');
+  var when=(sel.date?fmtDate(sel.date):'')+(sel.startTime?' at '+sel.startTime:'');
+  return (when?when+' — ':'')+stops.join(' → ')+' · Est. '+money(pl.total)+' for '+pl.ppl+(pl.ppl>1?' people':' person');
 }
 function savePlanLocal(){
   var pl=currentPlans[window._lastPlanIdx||0]; if(!pl){toast('Open an itinerary first');return;}
   var arr=diSaved();
-  arr.unshift({plan:pl, sel:{plan:sel.plan,people:sel.people,budget:sel.budget,food:sel.food,start:sel.start,move:sel.move,exp:sel.exp,extras:sel.extras}, title:pl.label, summary:planTextSummary(pl)});
+  arr.unshift({plan:pl, sel:{plan:sel.plan,people:sel.people,budget:sel.budget,food:sel.food,start:sel.start,move:sel.move,exp:sel.exp,extras:sel.extras,date:sel.date,startTime:sel.startTime}, title:pl.label, summary:planTextSummary(pl)});
   diSavePlans(arr);
   toast('Saved to your Plans ⭐');
 }
