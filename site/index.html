@@ -989,7 +989,16 @@ function bookingLink(p){
 function reserveStop(key){
   var p=PB[key]; if(!p)return;
   if(p.book){ window.open(webUrl(p.book),'_blank'); return; }  // they use OpenTable/Resy/etc.
+  if(!CURRENT_USER){ toast('Sign in to reserve — so we can track your status'); acctPrompt('reserve'); return; }
   openResv(key);                                              // else: native Do Inglewood request
+}
+async function cancelResv(id){
+  if(!id) return;
+  var r=await SB.from('di_reservations').update({status:'cancelled'}).eq('id',id);
+  if(r&&r.error){ toast('Could not cancel: '+r.error.message); return; }
+  toast('Reservation cancelled');
+  await loadMyReservations();
+  if(document.getElementById('view-detail').classList.contains('active') && window._lastPlanIdx!=null){ openDetail(window._lastPlanIdx); }
 }
 
 /* ---- Native reservations (for businesses NOT on a booking provider) ---- */
@@ -1428,11 +1437,14 @@ function openDetail(i){
 }
 function stopHTML(icon,num,name,sub,connector,key,swappable){
   var badge=key&&PB[key]?(PB[key].tier>=2?'<span class="chip chip-verified" style="vertical-align:middle">Verified</span>':'<span class="chip chip-import" style="vertical-align:middle">Imported</span>'):'';
-  var rstat = (key&&MY_RESV[key])?MY_RESV[key].status:null;
+  var rObj = (key&&MY_RESV[key])?MY_RESV[key]:null;
+  var rstat = rObj?rObj.status:null;
+  var cancelBtn = rObj ? '<span class="tbtn" onclick="event.stopPropagation();cancelResv(\''+rObj.id+'\')">Cancel</span>' : '';
   var resv;
-  if(rstat==='confirmed') resv='<span class="tbtn" style="color:var(--green);border-color:var(--green)">Confirmed &#10003;</span>';
-  else if(rstat==='requested') resv='<span class="tbtn" style="color:var(--gold)">Requested&#8230;</span>';
+  if(rstat==='confirmed') resv='<span class="tbtn" style="color:var(--green);border-color:var(--green)">Confirmed &#10003;</span>'+cancelBtn;
+  else if(rstat==='requested') resv='<span class="tbtn" style="color:var(--gold)">Requested&#8230;</span>'+cancelBtn;
   else if(rstat==='declined') resv='<span class="tbtn pink" onclick="event.stopPropagation();reserveStop(\''+key+'\')">Try another time</span>';
+  else if(rstat==='cancelled') resv='<span class="tbtn pink" onclick="event.stopPropagation();reserveStop(\''+key+'\')">Reserve again</span>';
   else resv = (key&&PB[key]&&isReservable(PB[key])) ? '<span class="tbtn pink" onclick="event.stopPropagation();reserveStop(\''+key+'\')">Reserve</span>' : '';
   var swap = swappable&&key ? '<span class="tbtn" onclick="event.stopPropagation();swapStop(\''+key+'\')">Replace</span>' : '';
   var dirbtn=key?'<span class="tbtn" onclick="event.stopPropagation();openDirections(\''+key+'\')">Directions</span>':'';
@@ -1761,6 +1773,7 @@ function acctPrompt(kind){
   if(kind==='save'){m.textContent="Sign in to save this plan and get back to it anytime — we'll email you a one-tap link.";}
   if(kind==='star'){m.textContent="Sign in to save your favorite Inglewood spots — we'll email you a one-tap link.";}
   if(kind==='claim'){m.textContent="Sign in to claim your business — we'll email you a one-tap link, then finish your claim.";}
+  if(kind==='reserve'){m.textContent="Sign in to reserve — we'll email you a one-tap link, then keep your reservation status updated here.";}
   document.getElementById('acctOverlay').classList.add('on');
 }
 function closeAcct(){document.getElementById('acctOverlay').classList.remove('on');}
