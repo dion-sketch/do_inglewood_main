@@ -105,7 +105,7 @@ async function loadClaims(){
       var resv=c.reservation_provider?(' · 📅 '+esc(c.reservation_provider)):(c.booking_url?' · 📅 booking link':'');
       return '<div class="row"><div class="grow"><div class="nm">'+esc(nm)+' '+(TIER[c.requested_tier]||'')+'</div>'+
         '<div class="mut">'+esc(contact)+(c.contact_email?' · '+esc(c.contact_email):'')+(c.contact_phone?' · '+esc(c.contact_phone):'')+resv+'</div></div>'+
-        '<button class="g" onclick="approve(\''+c.id+'\')">Approve → set '+((c.requested_tier===3)?'Premium':'Verified')+'</button>'+
+        '<button class="g" onclick="approve(\''+c.id+'\')">Approve → set '+((c.requested_tier===3)?'Premium':(c.requested_tier===2)?'Verified':'Free')+'</button>'+
         '<button class="r" onclick="rejectClaim(\''+c.id+'\')">Reject</button></div>';
     }).join('');
   }catch(e){ $('claims-list').innerHTML='<div class="mut">Could not load claims: '+esc(e.message)+'</div>'; }
@@ -134,19 +134,28 @@ async function doSearchBiz(){
   var q=$('bizsearch').value.trim();
   if(q.length<2){ $('biz-list').innerHTML='<div class="mut">Type a name to find a business.</div>'; return; }
   try{
-    const rows=await api('di_businesses?select=id,name,category,tier,address&name=ilike.*'+encodeURIComponent(q)+'*&limit=40',{headers:H()});
+    const rows=await api('di_businesses?select=id,name,category,tier,address,is_active&name=ilike.*'+encodeURIComponent(q)+'*&limit=40',{headers:H()});
     if(!rows.length){ $('biz-list').innerHTML='<div class="mut">No matches.</div>'; return; }
     $('biz-list').innerHTML=rows.map(function(b){
-      return '<div class="row" id="brow-'+b.id+'"><div class="grow"><div class="nm">'+esc(b.name)+'</div><div class="mut">'+esc(b.category||'')+(b.address?' · '+esc(b.address):'')+'</div></div>'+
+      var paused=(b.is_active===false);
+      return '<div class="row" id="brow-'+b.id+'"><div class="grow"><div class="nm">'+esc(b.name)+(paused?' <span class="pill p1">Paused</span>':'')+'</div>'+
+        '<div class="mut">'+esc(b.category||'')+'</div>'+
+        '<input id="addr-'+b.id+'" type="text" value="'+esc(b.address||'')+'" placeholder="address" style="margin-top:6px"></div>'+
         '<select id="tier-'+b.id+'"><option value="1"'+(b.tier==1?' selected':'')+'>Free</option><option value="2"'+(b.tier==2?' selected':'')+'>Verified</option><option value="3"'+(b.tier==3?' selected':'')+'>Premium ⭐</option></select>'+
-        '<button class="primary" onclick="saveTier(\''+b.id+'\')">Save</button>'+
+        '<button class="primary" onclick="saveBiz(\''+b.id+'\')">Save</button>'+
+        '<button onclick="pauseBiz(\''+b.id+'\','+paused+')">'+(paused?'Unpause':'Pause')+'</button>'+
         '<button class="r" onclick="delBiz(\''+b.id+'\',\''+esc(b.name).replace(/\'/g,"")+'\')">Delete</button></div>';
     }).join('');
   }catch(e){ $('biz-list').innerHTML='<div class="mut">Search error: '+esc(e.message)+'</div>'; }
 }
-async function saveTier(id){
+async function saveBiz(id){
   var t=+$('tier-'+id).value;
-  try{ await fetch(SUPABASE_URL+'/rest/v1/di_businesses?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:HJ(),body:JSON.stringify({tier:t})}); msg('Saved ✓ tier '+t); }catch(e){ msg('Error: '+e.message); }
+  var addrEl=$('addr-'+id);
+  var body={tier:t}; if(addrEl) body.address=addrEl.value;
+  try{ await fetch(SUPABASE_URL+'/rest/v1/di_businesses?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:HJ(),body:JSON.stringify(body)}); msg('Saved ✓ tier '+t); }catch(e){ msg('Error: '+e.message); }
+}
+async function pauseBiz(id, activate){
+  try{ await fetch(SUPABASE_URL+'/rest/v1/di_businesses?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:HJ(),body:JSON.stringify({is_active:activate})}); msg(activate?'Unpaused ✓':'Paused (hidden from app)'); doSearchBiz(); }catch(e){ msg('Error: '+e.message); }
 }
 async function delBiz(id,name){
   if(!confirm('Delete "'+name+'"? This removes it from the app.')) return;

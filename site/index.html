@@ -790,7 +790,10 @@ function renderOwner(){
     '<div style="font-size:12px;color:var(--muted);margin:4px 0 14px">Edit your listing — changes go live instantly.</div>'+
     '<div style="height:150px;border-radius:12px;background:#0f0f15 center/cover no-repeat;background-image:url(\''+(b.photo_url||'')+'\');border:1px solid var(--line);margin-bottom:8px"></div>'+
     '<label class="btn btn-ghost" style="display:inline-block;cursor:pointer;margin-bottom:6px">&#128247; Upload main photo<input type="file" accept="image/*" style="display:none" onchange="uploadMainPhoto(this.files[0])"></label>'+
-    fld('Business name','ob_name',b.name)+fld('Category','ob_cat',b.category)+fld('Hours','ob_hours',b.hours)+
+    '<div style="font-size:12px;color:var(--muted);margin:10px 0 4px">More photos</div>'+
+    '<div id="ob_gallery" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">'+galleryThumbs(b.photos||[])+'</div>'+
+    '<label class="btn btn-ghost" style="display:inline-block;cursor:pointer;margin-bottom:6px">&#10133; Add more photos<input type="file" accept="image/*" multiple style="display:none" onchange="uploadExtraPhotos(this.files)"></label>'+
+    fld('Business name','ob_name',b.name)+fld('Category','ob_cat',b.category)+fld('Address','ob_addr',b.address)+fld('Hours','ob_hours',b.hours)+
     fld('Phone','ob_phone',b.phone)+fld('Website','ob_web',b.website)+fld('Price ($, $$, $$$)','ob_price',b.price_level)+
     fld('Avg per person ($)','ob_cpp',b.avg_per_person)+
     '<label class="flbl">Reservation / booking link</label><input id="ob_book" class="finput" placeholder="OpenTable / Resy / Booksy / your website" value="'+String(b.booking_url||'').replace(/"/g,'&quot;')+'">'+
@@ -812,7 +815,7 @@ function renderOwner(){
 async function saveMyBiz(){
   if(!MY_BIZ)return;
   var provEl=document.getElementById('ob_prov');
-  var upd={ name:gv('ob_name'), category:gv('ob_cat'), hours:gv('ob_hours'), phone:gv('ob_phone'), website:gv('ob_web'), price_level:gv('ob_price'), avg_per_person:(+gv('ob_cpp')||null), review_quote:gv('ob_desc'), booking_url:gv('ob_book')||null, reservation_provider:(provEl&&provEl.value)||null, notify_email:gv('ob_notify')||null };
+  var upd={ name:gv('ob_name'), category:gv('ob_cat'), address:gv('ob_addr'), hours:gv('ob_hours'), phone:gv('ob_phone'), website:gv('ob_web'), price_level:gv('ob_price'), avg_per_person:(+gv('ob_cpp')||null), review_quote:gv('ob_desc'), booking_url:gv('ob_book')||null, reservation_provider:(provEl&&provEl.value)||null, notify_email:gv('ob_notify')||null };
   var sp=document.getElementById('ob_special'); if(sp) upd.special=(sp.value||'').trim()||null;
   var r=await SB.from('di_businesses').update(upd).eq('id',MY_BIZ.id);
   if(r.error){ toast('Save failed: '+r.error.message); return; }
@@ -830,6 +833,38 @@ async function uploadMainPhoto(file){
   var r=await SB.from('di_businesses').update({photo_url:url}).eq('id',MY_BIZ.id);
   if(r.error){ toast('Update failed: '+r.error.message); return; }
   toast('Photo updated &#10003;'); await loadMyBusiness(); renderOwner();
+}
+function galleryThumbs(arr){
+  return (arr||[]).map(function(u,i){
+    var s=String(u).replace(/"/g,'&quot;');
+    return '<div style="position:relative;width:66px;height:50px;border-radius:8px;overflow:hidden;border:1px solid var(--line)">'+
+      '<img src="'+s+'" style="width:100%;height:100%;object-fit:cover;display:block">'+
+      '<span onclick="removePhoto('+i+')" title="Remove" style="position:absolute;top:1px;right:2px;background:rgba(0,0,0,.65);color:#fff;border-radius:50%;width:17px;height:17px;line-height:17px;text-align:center;font-size:12px;cursor:pointer">&times;</span></div>';
+  }).join('');
+}
+async function uploadExtraPhotos(files){
+  if(!MY_BIZ||!files||!files.length) return;
+  toast('Uploading…');
+  var arr=(MY_BIZ.photos||[]).slice();
+  for(var i=0;i<files.length;i++){
+    var file=files[i];
+    var ext=((file.name.split('.').pop())||'jpg').toLowerCase();
+    var path=MY_BIZ.id+'/g'+Date.now()+'_'+i+'.'+ext;
+    var up=await SB.storage.from('business-photos').upload(path,file,{upsert:true,contentType:file.type});
+    if(up.error){ toast('Upload failed: '+up.error.message); return; }
+    arr.push(SB.storage.from('business-photos').getPublicUrl(path).data.publicUrl);
+  }
+  var r=await SB.from('di_businesses').update({photos:arr}).eq('id',MY_BIZ.id);
+  if(r.error){ toast('Save failed: '+r.error.message); return; }
+  toast('Photos added ✓'); await loadMyBusiness(); renderOwner();
+}
+async function removePhoto(i){
+  if(!MY_BIZ) return;
+  var arr=(MY_BIZ.photos||[]).slice(); if(i<0||i>=arr.length) return;
+  arr.splice(i,1);
+  var r=await SB.from('di_businesses').update({photos:arr}).eq('id',MY_BIZ.id);
+  if(r.error){ toast('Failed: '+r.error.message); return; }
+  await loadMyBusiness(); renderOwner();
 }
 
 /* ============ GOOGLE PLACES PHOTO INTEGRATION ============
@@ -974,6 +1009,7 @@ function dbToApp(r){
     price:r.price_level, cpp:r.avg_per_person||0, hrs:r.hours,
     q:r.review_quote, tier:r.tier||1, special:r.special||null,
     book:r.booking_url||null, prov:r.reservation_provider||null,
+    photos:r.photos||[],
     img: pickImg(r)
   };
 }
@@ -1076,7 +1112,7 @@ async function loadBusinesses(){
     }
     if(all.length){
       P.length = 0;
-      all.forEach(r=>P.push(dbToApp(r)));
+      all.filter(function(r){return r.is_active!==false;}).forEach(r=>P.push(dbToApp(r)));   // paused businesses are hidden
       for(const k in PB){ delete PB[k]; }
       P.forEach(p=>PB[p.k]=p);
       console.log('✓ Loaded '+P.length+' businesses live from Supabase');
@@ -1202,6 +1238,7 @@ function openListing(k,from){
   document.getElementById('ldbody').innerHTML=`
     <h2>${p.n}</h2>
     <div class="ldmeta"><span style="font-size:13px">${starline(p)}</span><span class="pricelv">${p.price}</span>${badge}</div>
+    ${(p.photos&&p.photos.length)?`<div style="display:flex;gap:8px;overflow-x:auto;margin:12px 0;padding-bottom:4px">${p.photos.map(u=>`<img src="${String(u).replace(/"/g,'&quot;')}" loading="lazy" style="height:120px;border-radius:12px;flex:0 0 auto">`).join('')}</div>`:''}
     ${p.special?`<div class="specialbox"><div class="st">&#127863; Active Special</div><div class="sd">${p.special}</div></div>`:''}
     <div style="margin-top:12px">
       <div class="ldrow"><span class="k">Category</span><span class="v">${p.cat}</span></div>
