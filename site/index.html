@@ -368,7 +368,7 @@
       </div>
 
       <div class="heroimg" id="heroimg">
-        <div class="cap"><b>What's happening in the city</b><span>50+ spots near SoFi, Intuit Dome &amp; the Forum</span></div>
+        <div class="cap"><b>What's happening in the city</b><span>1,100+ Inglewood businesses near SoFi, Intuit Dome &amp; the Forum</span></div>
       </div>
 
       <!-- PLAN YOUR ACTIVITY -->
@@ -441,10 +441,10 @@
     <div class="view" id="view-build">
       <div class="head-bar"><div class="back" onclick="buildBack()">&#8249;</div><div class="logo-mini" role="img" aria-label="Do Inglewood" title="Home" onclick="go('home')"></div><span class="htitle">Activity Builder</span></div>
       <div class="progress"><div class="fill" id="pfill"></div></div>
-      <div class="builder-banner"><b>Activity Builder</b><span>5 quick questions &mdash; we build the night for you</span></div>
+      <div class="builder-banner"><b>Activity Builder</b><span>A few quick questions &mdash; we build the day for you</span></div>
 
       <div class="build-step" data-step="1">
-        <div class="build-q"><div class="eyebrow">5 quick questions &mdash; we build the rest</div><h2>What are you planning?</h2></div>
+        <div class="build-q"><div class="eyebrow">A few quick questions &mdash; we build the rest</div><h2>What are you planning?</h2></div>
         <div class="opts">
           <div class="opt" onclick="pick(this,'plan','Date Night')"><div class="ic">&#128150;</div><div class="lb">Date Night</div></div>
           <div class="opt" onclick="pick(this,'plan','Friends Night')"><div class="ic">&#128101;</div><div class="lb">Friends Night</div></div>
@@ -671,6 +671,15 @@
         <label class="flbl">Your role</label>
         <select id="cf_role" class="finput"><option>Owner</option><option>Manager</option><option>Authorized representative</option></select>
 
+        <label class="flbl">Do you take reservations? Add your booking link (optional)</label>
+        <input id="cf_booking" class="finput" placeholder="OpenTable / Resy / Booksy / your website URL" autocomplete="off">
+        <label class="flbl">Reservation provider</label>
+        <select id="cf_provider" class="finput">
+          <option value="">None yet — I'll use Do Inglewood</option>
+          <option>OpenTable</option><option>Resy</option><option>Booksy</option>
+          <option>Yelp Reservations</option><option>My own website</option><option>Phone only</option>
+        </select>
+
         <label style="display:flex;gap:10px;align-items:flex-start;margin:16px 0;font-size:13px;color:var(--muted);cursor:pointer;line-height:1.45;">
           <input id="cf_attest" type="checkbox" style="margin-top:2px;width:18px;height:18px;flex:none;accent-color:var(--gold)">
           <span>I certify that I am the owner or an authorized representative of this business, and the information above is accurate.</span>
@@ -771,6 +780,8 @@ function renderOwner(){
     fld('Business name','ob_name',b.name)+fld('Category','ob_cat',b.category)+fld('Hours','ob_hours',b.hours)+
     fld('Phone','ob_phone',b.phone)+fld('Website','ob_web',b.website)+fld('Price ($, $$, $$$)','ob_price',b.price_level)+
     fld('Avg per person ($)','ob_cpp',b.avg_per_person)+
+    '<label class="flbl">Reservation / booking link</label><input id="ob_book" class="finput" placeholder="OpenTable / Resy / Booksy / your website" value="'+String(b.booking_url||'').replace(/"/g,'&quot;')+'">'+
+    '<label class="flbl">Reservation provider</label><select id="ob_prov" class="finput">'+['','OpenTable','Resy','Booksy','Yelp Reservations','My own website','Phone only'].map(function(o){return '<option value="'+o+'"'+(((b.reservation_provider||'')===o)?' selected':'')+'>'+(o||'None yet — use Do Inglewood')+'</option>';}).join('')+'</select>'+
     '<label class="flbl">Description</label><textarea id="ob_desc" class="finput" rows="3">'+String(b.review_quote||'').replace(/</g,'&lt;')+'</textarea>'+
     (b.tier>=3?'<label class="flbl">Special / offer (Premium)</label><input id="ob_special" class="finput" value="'+String(b.special||'').replace(/"/g,'&quot;')+'">':'<input id="ob_special" type="hidden" value="'+String(b.special||'').replace(/"/g,'&quot;')+'">')+
     '<button class="btn btn-primary" style="width:100%;margin-top:16px;padding:14px" onclick="saveMyBiz()">Save changes</button>'+
@@ -785,7 +796,8 @@ function renderOwner(){
 }
 async function saveMyBiz(){
   if(!MY_BIZ)return;
-  var upd={ name:gv('ob_name'), category:gv('ob_cat'), hours:gv('ob_hours'), phone:gv('ob_phone'), website:gv('ob_web'), price_level:gv('ob_price'), avg_per_person:(+gv('ob_cpp')||null), review_quote:gv('ob_desc') };
+  var provEl=document.getElementById('ob_prov');
+  var upd={ name:gv('ob_name'), category:gv('ob_cat'), hours:gv('ob_hours'), phone:gv('ob_phone'), website:gv('ob_web'), price_level:gv('ob_price'), avg_per_person:(+gv('ob_cpp')||null), review_quote:gv('ob_desc'), booking_url:gv('ob_book')||null, reservation_provider:(provEl&&provEl.value)||null };
   var sp=document.getElementById('ob_special'); if(sp) upd.special=(sp.value||'').trim()||null;
   var r=await SB.from('di_businesses').update(upd).eq('id',MY_BIZ.id);
   if(r.error){ toast('Save failed: '+r.error.message); return; }
@@ -946,9 +958,20 @@ function dbToApp(r){
     pid:r.google_place_id||"", r:r.rating, rc:r.rating_count,
     price:r.price_level, cpp:r.avg_per_person||0, hrs:r.hours,
     q:r.review_quote, tier:r.tier||1, special:r.special||null,
+    book:r.booking_url||null, prov:r.reservation_provider||null,
     img: pickImg(r)
   };
 }
+/* ---- Reservations: link out to the business's booking provider (OpenTable/Resy/etc.),
+   else their website, else a search. No booking engine — that comes later. ---- */
+function isReservable(p){ return !!(p && ['Stadium','Landmark','Park','Movie'].indexOf(p.cat)<0); }
+function bookingLink(p){
+  if(!p) return null;
+  if(p.book) return webUrl(p.book);
+  if(p.web)  return webUrl(p.web);
+  return 'https://www.google.com/search?q='+encodeURIComponent(p.n+' Inglewood reservation');
+}
+function reserveStop(key){ var p=PB[key]; if(!p)return; var u=bookingLink(p); if(u) window.open(u,'_blank'); }
 async function loadBusinesses(){
   try{
     // Page through in blocks of 1000 so ALL businesses load (Supabase caps each request at 1000)
@@ -1100,8 +1123,9 @@ function openListing(k,from){
       ${p.q?`<div class="quote">&ldquo;${p.q}&rdquo;</div>`:''}
     </div>
     <iframe title="Map of ${xmlEsc(p.n)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" style="width:100%;height:180px;border:0;border-radius:14px;margin-top:14px;display:block" src="https://www.google.com/maps?q=${encodeURIComponent(p.n+', '+(p.addr||'')+', Inglewood CA')}&output=embed"></iframe>
-    <div style="display:flex;gap:9px;margin-top:16px">
-      <button class="btn btn-primary" style="font-size:15px;padding:13px" onclick="go('build');resetBuild();">Build a Plan Around This</button>
+    ${p.tier>=3?`<button class="btn btn-primary" style="width:100%;margin-top:16px;padding:14px;font-size:15px" onclick="reserveStop('${p.k}')">&#128197; Book Now</button>`:''}
+    <div style="display:flex;gap:9px;margin-top:${p.tier>=3?'9':'16'}px">
+      <button class="btn ${p.tier>=3?'btn-ghost':'btn-primary'}" style="font-size:15px;padding:13px" onclick="go('build');resetBuild();">Build a Plan Around This</button>
       <button class="tbtn pink" style="padding:0 16px" onclick="openDirections('${p.k}')">Directions</button>
     </div>
     ${p.tier<2?`<div class="claimbox"><b>Is this your business?</b><span>Claim it to manage your info, hours &amp; photos, and get the Verified badge.</span><button class="claimbtn" onclick="openClaimForm('${p.k}',2)">Claim &amp; Verify &rarr;</button></div>`
@@ -1316,11 +1340,12 @@ function openDetail(i){
 }
 function stopHTML(icon,num,name,sub,connector,key,swappable){
   var badge=key&&PB[key]?(PB[key].tier>=2?'<span class="chip chip-verified" style="vertical-align:middle">Verified</span>':'<span class="chip chip-import" style="vertical-align:middle">Imported</span>'):'';
-  var swap = swappable&&key ? '<span class="tbtn" onclick="event.stopPropagation();swapStop(\''+key+'\')">\u21bb Swap</span>' : '';
+  var resv = (key&&PB[key]&&isReservable(PB[key])) ? '<span class="tbtn pink" onclick="event.stopPropagation();reserveStop(\''+key+'\')">Reserve</span>' : '';
+  var swap = swappable&&key ? '<span class="tbtn" onclick="event.stopPropagation();swapStop(\''+key+'\')">Replace</span>' : '';
   var dirbtn=key?'<span class="tbtn" onclick="event.stopPropagation();openDirections(\''+key+'\')">Directions</span>':'';
   var click=key?'onclick="openListing(\''+key+'\',\'detail\')" style="cursor:pointer"':'';
   return '<div class="tstop"><div class="tline"><div class="tdot tnum">'+num+'</div>'+(connector?'<div class="tconnector"></div>':'')+'</div>'+
-    '<div class="tbody" '+click+'><div class="tname">'+name+' '+badge+'</div><div class="tsub">'+sub+'</div><div class="tactions">'+swap+dirbtn+'</div></div></div>';
+    '<div class="tbody" '+click+'><div class="tname">'+name+' '+badge+'</div><div class="tsub">'+sub+'</div><div class="tactions">'+resv+swap+dirbtn+'</div></div></div>';
 }
 function eventStopHTML(ev,num){
   var venue=ev.venue?(' · 📍 '+evEsc(ev.venue)):'';
@@ -1396,6 +1421,8 @@ async function submitClaim(){
   var phone=document.getElementById('cf_phone').value.trim();
   var email=document.getElementById('cf_email').value.trim();
   var role=document.getElementById('cf_role').value;
+  var booking=document.getElementById('cf_booking').value.trim();
+  var provider=document.getElementById('cf_provider').value;
   var attest=document.getElementById('cf_attest').checked;
   if(!bizKey){ toast('Pick your business from the list'); return; }
   if(!first||!last){ toast('Enter your first and last name'); return; }
@@ -1407,7 +1434,8 @@ async function submitClaim(){
   var r=await SB.from('di_claims').insert({
     business_id:bizKey, requested_tier:tier, status:'pending', user_id:CURRENT_USER.id,
     contact_first_name:first, contact_last_name:last, role:role,
-    contact_email:email, contact_phone:phone, attested:true
+    contact_email:email, contact_phone:phone, attested:true,
+    booking_url:booking||null, reservation_provider:provider||null
   });
   if(r && r.error){ toast('Could not submit: '+r.error.message); return; }
   ['cf_biz','cf_first','cf_last','cf_phone','cf_email'].forEach(function(id){document.getElementById(id).value='';});
