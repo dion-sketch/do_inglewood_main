@@ -104,7 +104,7 @@
   .actrow{display:flex;gap:8px;margin:14px 0 2px;}
   .actpill{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px;border:1px solid var(--line);border-radius:12px;background:var(--panel);font-size:10.5px;color:var(--muted);cursor:pointer;text-decoration:none;font-weight:700;}
   .actpill .ai{font-size:18px;}
-  .actpill:active{transform:scale(.96);}
+  .actpill:active{transform:scale(.96);color:var(--pink);border-color:var(--pink);}
   .head-bar h2{font-family:'Barlow Condensed';font-weight:700;font-size:22px;}
   .search{margin:14px 20px 6px;display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 14px;color:var(--muted);font-size:14px;}
   .finput{width:100%;margin-bottom:2px;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:12px 13px;color:var(--txt);font-size:14px;outline:none;}
@@ -240,6 +240,9 @@
   .tabbar{position:absolute;bottom:0;left:0;right:0;height:74px;background:rgba(16,16,19,.96);backdrop-filter:blur(12px);border-top:1px solid var(--line);display:flex;align-items:flex-start;padding:9px 6px 0;z-index:20;}
   .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:var(--muted);cursor:pointer;font-weight:600;}
   .tab .ic{font-size:19px;}
+  .tab .ic svg{width:23px;height:23px;display:block;}
+  .tab:active{color:var(--pink);}
+  .tab:active .ic{transform:scale(.9);}
   .tab.on{color:var(--pink);}
   .tab.build-tab .ic{width:46px;height:46px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;color:#1a0010;font-size:22px;margin-top:-18px;box-shadow:0 6px 18px rgba(255,46,126,.4);}
   .tab.build-tab.on{color:var(--pink);}
@@ -699,11 +702,11 @@
 
   <div id="reserveBar"></div>
   <div class="tabbar">
-    <div class="tab on" id="tab-home" onclick="go('home')"><div class="ic">&#127968;</div>Home</div>
-    <div class="tab" id="tab-explore" onclick="go('explore')"><div class="ic">&#128269;</div>Explore</div>
+    <div class="tab on" id="tab-home" onclick="go('home')"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5"/><path d="M9.5 21v-6h5v6"/></svg></div>Home</div>
+    <div class="tab" id="tab-explore" onclick="go('explore')"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>Explore</div>
     <div class="tab build-tab" id="tab-build" onclick="go('build');resetBuild();"><div class="ic" style="font-family:'Barlow Condensed';font-weight:800;font-style:italic;font-size:20px">Do</div></div>
-    <div class="tab" id="tab-events" onclick="go('events')"><div class="ic">&#127915;</div>Events</div>
-    <div class="tab" id="tab-plans" onclick="go('saved')"><div class="ic">&#128205;</div>Plans</div>
+    <div class="tab" id="tab-events" onclick="go('events')"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2 2 2 0 0 0 0 4 2 2 0 0 1-2 2H6a2 2 0 0 1-2-2 2 2 0 0 0 0-4z"/><line x1="13" y1="6" x2="13" y2="18" stroke-dasharray="2 2"/></svg></div>Events</div>
+    <div class="tab" id="tab-plans" onclick="go('saved')"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z"/></svg></div>Plans</div>
   </div>
 
   <div class="acct-overlay" id="menuOverlay">
