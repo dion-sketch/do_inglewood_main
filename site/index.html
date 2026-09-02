@@ -101,6 +101,10 @@
   /* EXPLORE */
   .head-bar{padding:14px 20px 10px;display:flex;align-items:center;gap:12px;position:sticky;top:0;background:var(--bg);z-index:5;border-bottom:1px solid var(--line);}
   .back{width:34px;height:34px;border-radius:50%;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;flex:0 0 auto;position:relative;z-index:30;}
+  .actrow{display:flex;gap:8px;margin:14px 0 2px;}
+  .actpill{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px;border:1px solid var(--line);border-radius:12px;background:var(--panel);font-size:10.5px;color:var(--muted);cursor:pointer;text-decoration:none;font-weight:700;}
+  .actpill .ai{font-size:18px;}
+  .actpill:active{transform:scale(.96);}
   .head-bar h2{font-family:'Barlow Condensed';font-weight:700;font-size:22px;}
   .search{margin:14px 20px 6px;display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 14px;color:var(--muted);font-size:14px;}
   .finput{width:100%;margin-bottom:2px;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:12px 13px;color:var(--txt);font-size:14px;outline:none;}
@@ -1246,6 +1250,7 @@ function webUrl(w){ return !w?'#':(/^https?:\/\//i.test(w)?w:'https://'+w); }
 function prettyWeb(w){ return String(w).replace(/^https?:\/\//i,'').replace(/\/+$/,''); }
 function telHref(ph){ return 'tel:'+String(ph).replace(/[^+0-9]/g,''); }
 function openDirections(k){ var p=PB[k]; if(!p)return; var u='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(p.n+', '+(p.addr||'')+' Inglewood CA'); if(p.pid)u+='&destination_place_id='+encodeURIComponent(p.pid); window.open(u,'_blank'); }
+function shareBiz(k){ var p=PB[k]; if(!p)return; var text=p.n+' · '+(p.cat||'')+' in Inglewood\n'+(p.addr||'')+'\nFound on Do Inglewood 🎟️'; if(navigator.share){ navigator.share({title:p.n,text:text}).catch(function(){}); } else if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(function(){toast('Copied — paste it anywhere');}); } else { toast('Sharing not supported'); } }
 function menuHTML(p){
   var m=p.menu||[]; if(!m.length) return '';
   return '<div style="margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:6px 16px 12px">'+
@@ -1275,6 +1280,12 @@ function openListing(k,from){
   document.getElementById('ldbody').innerHTML=`
     <h2>${p.n}</h2>
     <div class="ldmeta"><span style="font-size:13px">${starline(p)}</span><span class="pricelv">${p.price}</span>${badge}</div>
+    <div class="actrow">
+      <div class="actpill" onclick="openDirections('${p.k}')"><span class="ai">&#129517;</span>Directions</div>
+      ${p.ph?`<a class="actpill" href="${telHref(p.ph)}"><span class="ai">&#128222;</span>Call</a>`:''}
+      ${p.web?`<a class="actpill" href="${webUrl(p.web)}" target="_blank" rel="noopener"><span class="ai">&#127760;</span>Website</a>`:''}
+      <div class="actpill" onclick="shareBiz('${p.k}')"><span class="ai">&#8599;</span>Share</div>
+    </div>
     ${(p.photos&&p.photos.length)?`<div style="display:flex;gap:8px;overflow-x:auto;margin:12px 0;padding-bottom:4px">${p.photos.map(u=>`<img src="${String(u).replace(/"/g,'&quot;')}" loading="lazy" style="height:120px;border-radius:12px;flex:0 0 auto">`).join('')}</div>`:''}
     ${p.special?`<div class="specialbox"><div class="st">&#127863; Active Special</div><div class="sd">${p.special}</div></div>`:''}
     <div style="margin-top:12px">
