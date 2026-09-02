@@ -1262,10 +1262,13 @@ function openListing(k,from){
       ${p.cpp?`<div class="ldrow"><span class="k">Avg / person</span><span class="v">~$${p.cpp}${p.tier<2?' <span style="color:var(--muted);font-size:11px">· estimated</span>':''}</span></div>`:''}
       ${p.q?`<div class="quote">&ldquo;${p.q}&rdquo;</div>`:''}
     </div>
-    <iframe title="Map of ${xmlEsc(p.n)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" style="width:100%;height:180px;border:0;border-radius:14px;margin-top:14px;display:block" src="https://www.google.com/maps?q=${encodeURIComponent(p.n+', '+(p.addr||'')+', Inglewood CA')}&output=embed"></iframe>
-    ${p.tier>=3?`<button class="btn btn-primary" style="width:100%;margin-top:16px;padding:14px;font-size:15px" onclick="reserveStop('${p.k}')">&#128197; Book Now</button>`:''}
-    <div style="display:flex;gap:9px;margin-top:${p.tier>=3?'9':'16'}px">
-      <button class="btn ${p.tier>=3?'btn-ghost':'btn-primary'}" style="font-size:15px;padding:13px" onclick="go('build');resetBuild();">Build a Plan Around This</button>
+    <iframe title="Map of ${xmlEsc(p.n)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" style="width:100%;height:120px;border:0;border-radius:14px;margin-top:14px;display:block" src="https://www.google.com/maps?q=${encodeURIComponent(p.n+', '+(p.addr||'')+', Inglewood CA')}&output=embed"></iframe>
+    ${isReservable(p)?((p.book||p.tier>=3)
+      ?`<button class="btn btn-primary" style="width:100%;margin-top:16px;padding:14px;font-size:15px" onclick="reserveStop('${p.k}')">&#128197; Reserve a Table</button>`
+      :`<button class="btn" style="width:100%;margin-top:16px;padding:14px;font-size:14px;opacity:.5;background:var(--panel-2);color:var(--muted);border:1px solid var(--line);cursor:not-allowed" onclick="toast('Reservations are not on for this spot yet')">&#128197; Reservations — coming soon</button>`
+    ):''}
+    <div style="display:flex;gap:9px;margin-top:${isReservable(p)?'9':'16'}px">
+      <button class="btn ${isReservable(p)?'btn-ghost':'btn-primary'}" style="font-size:15px;padding:13px" onclick="go('build');resetBuild();">Build a Plan Around This</button>
       <button class="tbtn pink" style="padding:0 16px" onclick="openDirections('${p.k}')">Directions</button>
     </div>
     ${similarSpots(p)}
