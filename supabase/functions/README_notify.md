@@ -25,7 +25,7 @@ Supabase → **Edge Functions** → **Manage secrets** (or Project Settings → 
 ## 4) Fire it on every new reservation (Database Webhook)
 Supabase → **Database** → **Webhooks** → **Create a new hook**:
 - Table: **di_reservations**
-- Events: **Insert**
+- Events: **Insert** AND **Update**  (Insert = alert the owner; Update = email the customer when confirmed/declined)
 - Type: **Supabase Edge Function** → choose **notify-reservation**
 - Save.
 

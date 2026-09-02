@@ -732,6 +732,7 @@
       <input id="rv_party" type="number" min="1" placeholder="Party size (e.g. 2)">
       <input id="rv_name" placeholder="Your name">
       <input id="rv_phone" type="tel" placeholder="Phone (so they can confirm)">
+      <input id="rv_email" type="email" placeholder="Email (we'll send your confirmation)">
       <button class="ab" onclick="submitResv()">Send request</button>
       <div class="skip" onclick="closeResv()">Cancel</div>
     </div>
@@ -1072,10 +1073,10 @@ function openResv(bizKey){
 function closeResv(){ document.getElementById('resvOverlay').classList.remove('on'); }
 async function submitResv(){
   var biz=window._resvBiz; if(!biz){ closeResv(); return; }
-  var name=gv('rv_name'), phone=gv('rv_phone'), date=gv('rv_date'), time=gv('rv_time'), party=+gv('rv_party')||2;
+  var name=gv('rv_name'), phone=gv('rv_phone'), email=gv('rv_email'), date=gv('rv_date'), time=gv('rv_time'), party=+gv('rv_party')||2;
   if(!name){ toast('Enter your name'); return; }
   if(!phone){ toast('Enter a phone so they can confirm'); return; }
-  var rec={ business_id:biz, customer_name:name, customer_phone:phone, party_size:party, resv_date:date||null, resv_time:time||null, status:'requested' };
+  var rec={ business_id:biz, customer_name:name, customer_phone:phone, customer_email:email||(CURRENT_USER&&CURRENT_USER.email)||null, party_size:party, resv_date:date||null, resv_time:time||null, status:'requested' };
   if(CURRENT_USER) rec.user_id=CURRENT_USER.id;
   var r=await SB.from('di_reservations').insert(rec);
   if(r&&r.error){ toast('Could not send: '+r.error.message); return; }
