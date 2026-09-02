@@ -100,7 +100,7 @@
 
   /* EXPLORE */
   .head-bar{padding:14px 20px 10px;display:flex;align-items:center;gap:12px;position:sticky;top:0;background:var(--bg);z-index:5;border-bottom:1px solid var(--line);}
-  .back{width:34px;height:34px;border-radius:50%;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;flex:0 0 auto;}
+  .back{width:34px;height:34px;border-radius:50%;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;flex:0 0 auto;position:relative;z-index:30;}
   .head-bar h2{font-family:'Barlow Condensed';font-weight:700;font-size:22px;}
   .search{margin:14px 20px 6px;display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 14px;color:var(--muted);font-size:14px;}
   .finput{width:100%;margin-bottom:2px;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:12px 13px;color:var(--txt);font-size:14px;outline:none;}
@@ -237,7 +237,7 @@
   .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:var(--muted);cursor:pointer;font-weight:600;}
   .tab .ic{font-size:19px;}
   .tab.on{color:var(--pink);}
-  .tab.build-tab .ic{width:46px;height:46px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;color:#1a0010;font-size:22px;margin-top:-18px;box-shadow:0 6px 18px rgba(255,46,126,.4);}
+  .tab.build-tab .ic{width:38px;height:38px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;color:#1a0010;font-size:16px;margin-top:-8px;box-shadow:0 4px 12px rgba(255,46,126,.32);}
   .tab.build-tab.on{color:var(--pink);}
 
 
@@ -497,7 +497,7 @@
           <div class="opt" onclick="pick(this,'food','Vegan')"><div class="ic">&#129382;</div><div class="lb">Vegan</div></div>
           <div class="opt" onclick="pick(this,'food','Surprise')"><div class="ic">&#10024;</div><div class="lb">Anything</div></div>
         </div>
-        <div style="padding:16px 20px 6px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">Add to your day (optional)</div>
+        <div style="padding:16px 20px 6px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">Add to your day — pick as many as you like</div>
         <div class="opts3">
           <div class="opt" onclick="multi(this,'Movie')"><div class="ic">&#127902;</div><div class="lb">Movie</div></div>
           <div class="opt" onclick="multi(this,'Lounge')"><div class="ic">&#127864;</div><div class="lb">Lounge</div></div>
@@ -695,7 +695,7 @@
   <div class="tabbar">
     <div class="tab on" id="tab-home" onclick="go('home')"><div class="ic">&#127968;</div>Home</div>
     <div class="tab" id="tab-explore" onclick="go('explore')"><div class="ic">&#128269;</div>Explore</div>
-    <div class="tab build-tab" id="tab-build" onclick="go('build');resetBuild();"><div class="ic" style="font-family:'Barlow Condensed';font-weight:800;font-style:italic;font-size:20px">Do</div></div>
+    <div class="tab build-tab" id="tab-build" onclick="go('build');resetBuild();"><div class="ic" style="font-family:'Barlow Condensed';font-weight:800;font-style:italic;font-size:15px">Do</div>Plan</div>
     <div class="tab" id="tab-events" onclick="go('events')"><div class="ic">&#127915;</div>Events</div>
     <div class="tab" id="tab-plans" onclick="go('saved')"><div class="ic">&#128205;</div>Plans</div>
   </div>
@@ -1231,6 +1231,19 @@ function webUrl(w){ return !w?'#':(/^https?:\/\//i.test(w)?w:'https://'+w); }
 function prettyWeb(w){ return String(w).replace(/^https?:\/\//i,'').replace(/\/+$/,''); }
 function telHref(ph){ return 'tel:'+String(ph).replace(/[^+0-9]/g,''); }
 function openDirections(k){ var p=PB[k]; if(!p)return; var u='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(p.n+', '+(p.addr||'')+' Inglewood CA'); if(p.pid)u+='&destination_place_id='+encodeURIComponent(p.pid); window.open(u,'_blank'); }
+function similarSpots(p){
+  var alts=P.filter(function(x){return x.k!==p.k && x.cat===p.cat && hasPhoto(x);});
+  if(alts.length<2){ alts=P.filter(function(x){return x.k!==p.k && (x.tags||[]).some(function(t){return (p.tags||[]).indexOf(t)>=0;}) && hasPhoto(x);}); }
+  alts=alts.slice(0,8);
+  if(!alts.length) return '';
+  return '<div style="margin-top:22px"><div style="font-weight:800;font-size:15px;margin-bottom:10px">More '+(p.cat||'spots')+' like this</div>'+
+    '<div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px">'+
+    alts.map(function(x){return '<div onclick="openListing(\''+x.k+'\',lastList)" style="flex:0 0 auto;width:132px;cursor:pointer">'+
+      '<div style="height:86px;border-radius:10px;border:1px solid var(--line);background:#0f0f15 center/cover no-repeat;background-image:url(\''+String(x.img).replace(/\'/g,"%27")+'\')"></div>'+
+      '<div style="font-size:12.5px;font-weight:700;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x.n+'</div>'+
+      '<div style="font-size:11px;color:var(--muted)">'+starline(x)+' · '+(x.price||'')+'</div></div>';}).join('')+
+    '</div></div>';
+}
 function openListing(k,from){
   lastList=from||'home';const p=PB[k];
   document.getElementById('ldhero').style.backgroundImage=`url('${p.img}')`;
@@ -1255,6 +1268,7 @@ function openListing(k,from){
       <button class="btn ${p.tier>=3?'btn-ghost':'btn-primary'}" style="font-size:15px;padding:13px" onclick="go('build');resetBuild();">Build a Plan Around This</button>
       <button class="tbtn pink" style="padding:0 16px" onclick="openDirections('${p.k}')">Directions</button>
     </div>
+    ${similarSpots(p)}
     ${p.tier<2?`<div class="claimbox"><b>Is this your business?</b><span>Claim it to manage your info, hours &amp; photos, and get the Verified badge.</span><button class="claimbtn" onclick="openClaimForm('${p.k}',2)">Claim &amp; Verify &rarr;</button></div>`
     :`<div class="disclaimer"><b style="color:var(--green)">&#10003; Verified business.</b> This page is managed by the owner.</div>`}
     ${p.tier<2?'<div class="disclaimer">Imported from public information. Prices, hours, and offers may change — confirm before you go.</div>':''}
@@ -1344,7 +1358,7 @@ function buildResults(){
     stops.push({k:primaryFood,phase:'food'}); used.push(primaryFood);
     // night extras (movie/lounge/casino/dessert/event/hotel) in sensible order
     var order=['Movie','Event','Lounge','Club','Casino','Dessert'];
-    order.forEach(function(tag){ if(sel.extras.indexOf(tag)>=0){var k=extraKeyFor(tag,used);if(k){stops.push({k:k,phase:tag.toLowerCase()});used.push(k);}}});
+    order.forEach(function(tag){ if(sel.extras.indexOf(tag)>=0){var k=extraKeyFor(tag,used);if(k&&used.indexOf(k)<0){stops.push({k:k,phase:tag.toLowerCase()});used.push(k);}}});
     // PLANNING RULE: cap at 5 stops so a plan stays realistic
     if(stops.length>5){ stops=stops.slice(0,5); }
     return stops;
