@@ -243,6 +243,7 @@
   .tab.on{color:var(--pink);}
   .tab.build-tab .ic{width:46px;height:46px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;color:#1a0010;font-size:22px;margin-top:-18px;box-shadow:0 6px 18px rgba(255,46,126,.4);}
   .tab.build-tab.on{color:var(--pink);}
+  #reserveBar{position:absolute;left:0;right:0;bottom:74px;padding:9px 14px 10px;background:rgba(13,13,18,.94);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-top:1px solid var(--line);z-index:15;display:none;}
 
 
 
@@ -696,6 +697,7 @@
     </div>
   </div>
 
+  <div id="reserveBar"></div>
   <div class="tabbar">
     <div class="tab on" id="tab-home" onclick="go('home')"><div class="ic">&#127968;</div>Home</div>
     <div class="tab" id="tab-explore" onclick="go('explore')"><div class="ic">&#128269;</div>Explore</div>
@@ -1311,8 +1313,16 @@ function openListing(k,from){
     ${p.tier<2?`<div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line);text-align:center;font-size:12px;color:var(--muted)">Own this business? <span onclick="openClaimForm('${p.k}',1)" style="color:var(--pink);cursor:pointer;font-weight:700">Claim it &rarr;</span></div>`
     :`<div class="disclaimer"><b style="color:var(--green)">&#10003; Verified business.</b> This page is managed by the owner.</div>`}
     ${p.tier<2?'<div class="disclaimer">Imported from public information. Prices, hours, and offers may change — confirm before you go.</div>':''}
+    <div style="height:78px"></div>
   `;
   go('listing');
+  var rb=document.getElementById('reserveBar');
+  if(rb){
+    if(isReservable(p)&&(p.book||p.tier>=3)){
+      rb.innerHTML='<button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px" onclick="reserveStop(\''+p.k+'\')">&#128197; Reserve a Table</button>';
+      rb.style.display='block';
+    } else { rb.style.display='none'; }
+  }
 }
 
 /* BUILD FLOW */
@@ -1763,6 +1773,7 @@ function renderHomeEvents(){
 }
 
 function go(v){
+  var _rb=document.getElementById('reserveBar'); if(_rb)_rb.style.display='none';   // sticky Reserve shows only on a business page (set by openListing)
   views.forEach(x=>document.getElementById('view-'+x).classList.remove('active'));
   document.getElementById('view-'+v).classList.add('active');
   document.getElementById('screen').scrollTop=0;
