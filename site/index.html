@@ -1253,6 +1253,26 @@ function prettyWeb(w){ return String(w).replace(/^https?:\/\//i,'').replace(/\/+
 function telHref(ph){ return 'tel:'+String(ph).replace(/[^+0-9]/g,''); }
 function openDirections(k){ var p=PB[k]; if(!p)return; var u='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(p.n+', '+(p.addr||'')+' Inglewood CA'); if(p.pid)u+='&destination_place_id='+encodeURIComponent(p.pid); window.open(u,'_blank'); }
 function shareBiz(k){ var p=PB[k]; if(!p)return; var text=p.n+' · '+(p.cat||'')+' in Inglewood\n'+(p.addr||'')+'\nFound on Do Inglewood 🎟️'; if(navigator.share){ navigator.share({title:p.n,text:text}).catch(function(){}); } else if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(function(){toast('Copied — paste it anywhere');}); } else { toast('Sharing not supported'); } }
+/* Best-effort "Open now" from free-text hours. Returns null when unsure (never guesses wrong). */
+function openNow(hrs){
+  var s=String(hrs||''); if(!s) return null;
+  if(/24\s*hour|24h/i.test(s)) return {open:true,label:'Open 24 hours'};
+  if(/\btil\b|\buntil\b|appointment|showtime|event day|front desk/i.test(s)) return null; // ambiguous → don't guess
+  var m=s.match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?\s*[–-]\s*(\d{1,2})(?::(\d{2}))?\s*(AM|PM)/i);
+  if(!m) return null;
+  var days={Sun:0,Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6}, today=new Date().getDay(), openDay=true;
+  if(!/daily/i.test(s)){
+    var dm=s.match(/(Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s*[–-]\s*(Sun|Mon|Tue|Wed|Thu|Fri|Sat)/);
+    if(dm){ var a=days[dm[1]], b=days[dm[2]]; openDay=(a<=b)?(today>=a&&today<=b):(today>=a||today<=b); }
+  }
+  if(!openDay) return {open:false,label:'Closed today'};
+  function to24(h,mm,ap){ h=+h; mm=+mm||0; ap=(ap||'').toUpperCase(); if(ap==='PM'&&h<12)h+=12; if(ap==='AM'&&h===12)h=0; return h*60+mm; }
+  var endAp=m[6], startAp=m[3]||endAp;
+  var start=to24(m[1],m[2],startAp), end=to24(m[4],m[5],endAp);
+  var cur=(function(){var n=new Date();return n.getHours()*60+n.getMinutes();})();
+  var isOpen=(end>start)?(cur>=start&&cur<end):(cur>=start||cur<end);
+  return isOpen?{open:true,label:'Open now'}:{open:false,label:'Closed now'};
+}
 function menuHTML(p){
   var m=p.menu||[]; if(!m.length) return '';
   return '<div style="margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:6px 16px 12px">'+
@@ -1279,9 +1299,17 @@ function openListing(k,from){
   lastList=from||'home';const p=PB[k];
   document.getElementById('ldhero').style.backgroundImage=`url('${p.img}')`;
   const badge=p.tier>=2?'<span class="chip chip-verified">Verified</span>':'<span class="chip chip-import">Imported</span>';
+  var _o=openNow(p.hrs);
+  var _statusParts=[];
+  if(_o) _statusParts.push('<span style="color:'+(_o.open?'var(--green)':'#ff7a7a')+';font-weight:700">&#9679; '+_o.label+'</span>');
+  if(isReservable(p)&&(p.book||p.tier>=3)) _statusParts.push('<span style="color:var(--gold);font-weight:700">&#128197; Takes reservations</span>');
+  var statusLine=_statusParts.length?'<div style="font-size:12.5px;margin-top:8px;display:flex;gap:14px;flex-wrap:wrap">'+_statusParts.join('')+'</div>':'';
+  var tagsRow=(p.tags&&p.tags.length)?'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">'+p.tags.slice(0,4).map(function(t){return '<span style="font-size:11px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:3px 9px">'+xmlEsc(t)+'</span>';}).join('')+'</div>':'';
   document.getElementById('ldbody').innerHTML=`
     <h2>${p.n}</h2>
-    <div class="ldmeta"><span style="font-size:13px">${starline(p)}</span><span class="pricelv">${p.price}</span>${badge}</div>
+    <div class="ldmeta"><span style="font-size:13px">${starline(p)}</span><span class="pricelv">${p.price}</span>${p.cat?`<span style="font-size:12px;color:var(--muted)">${xmlEsc(p.cat)}</span>`:''}${badge}</div>
+    ${tagsRow}
+    ${statusLine}
     <div class="actrow">
       <div class="actpill" onclick="openDirections('${p.k}')"><span class="ai">&#129517;</span>Directions</div>
       ${p.ph?`<a class="actpill" href="${telHref(p.ph)}"><span class="ai">&#128222;</span>Call</a>`:''}
