@@ -801,6 +801,9 @@ function renderOwner(){
     '<label class="flbl">Reservation alerts to (email)</label><input id="ob_notify" class="finput" type="email" placeholder="where new-request emails go" value="'+String(b.notify_email||(CURRENT_USER&&CURRENT_USER.email)||'').replace(/"/g,'&quot;')+'">'+
     '<label class="flbl">Description</label><textarea id="ob_desc" class="finput" rows="3">'+String(b.review_quote||'').replace(/</g,'&lt;')+'</textarea>'+
     (b.tier>=3?'<label class="flbl">Special / offer (Premium)</label><input id="ob_special" class="finput" value="'+String(b.special||'').replace(/"/g,'&quot;')+'">':'<input id="ob_special" type="hidden" value="'+String(b.special||'').replace(/"/g,'&quot;')+'">')+
+    '<div style="font-size:12px;color:var(--muted);margin:16px 0 6px">&#127860; Menu — show your best dishes</div>'+
+    '<div id="ob_menu">'+menuRowsHTML(b.menu||[])+'</div>'+
+    '<button type="button" class="btn btn-ghost" style="margin-bottom:2px" onclick="addMenuRow()">+ Add dish</button>'+
     '<button class="btn btn-primary" style="width:100%;margin-top:16px;padding:14px" onclick="saveMyBiz()">Save changes</button>'+
     (b.tier>=3?''
       :'<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--line)">'+
@@ -817,6 +820,8 @@ async function saveMyBiz(){
   var provEl=document.getElementById('ob_prov');
   var upd={ name:gv('ob_name'), category:gv('ob_cat'), address:gv('ob_addr'), hours:gv('ob_hours'), phone:gv('ob_phone'), website:gv('ob_web'), price_level:gv('ob_price'), avg_per_person:(+gv('ob_cpp')||null), review_quote:gv('ob_desc'), booking_url:gv('ob_book')||null, reservation_provider:(provEl&&provEl.value)||null, notify_email:gv('ob_notify')||null };
   var sp=document.getElementById('ob_special'); if(sp) upd.special=(sp.value||'').trim()||null;
+  var menu=[]; document.querySelectorAll('#ob_menu .menu-item').forEach(function(row){ var ne=row.querySelector('.menu-name'), pe=row.querySelector('.menu-price'); var n=(ne&&ne.value||'').trim(); if(n) menu.push({name:n, price:(pe&&pe.value||'').trim()}); });
+  upd.menu = menu.length?menu:null;
   var r=await SB.from('di_businesses').update(upd).eq('id',MY_BIZ.id);
   if(r.error){ toast('Save failed: '+r.error.message); return; }
   toast('Saved &#10003;'); await loadMyBusiness(); renderOwner();
@@ -866,6 +871,15 @@ async function removePhoto(i){
   if(r.error){ toast('Failed: '+r.error.message); return; }
   await loadMyBusiness(); renderOwner();
 }
+function menuRow(name,price){
+  return '<div class="menu-item" style="display:flex;gap:8px;margin-bottom:6px">'+
+    '<input class="finput menu-name" placeholder="Dish name" value="'+String(name||'').replace(/"/g,'&quot;')+'" style="flex:2">'+
+    '<input class="finput menu-price" placeholder="$" value="'+String(price||'').replace(/"/g,'&quot;')+'" style="flex:0 0 78px">'+
+    '<span onclick="this.parentNode.remove()" style="cursor:pointer;color:#ff7a7a;font-size:22px;line-height:1;align-self:center;padding:0 4px">&times;</span>'+
+  '</div>';
+}
+function menuRowsHTML(items){ return (items||[]).map(function(it){return menuRow(it.name||it.n||'', it.price||it.p||'');}).join(''); }
+function addMenuRow(){ var h=document.getElementById('ob_menu'); if(h) h.insertAdjacentHTML('beforeend', menuRow('','')); }
 
 /* ============ GOOGLE PLACES PHOTO INTEGRATION ============
    To pull REAL business photos automatically, set your key below.
@@ -1009,7 +1023,7 @@ function dbToApp(r){
     price:r.price_level, cpp:r.avg_per_person||0, hrs:r.hours,
     q:r.review_quote, tier:r.tier||1, special:r.special||null,
     book:r.booking_url||null, prov:r.reservation_provider||null,
-    photos:r.photos||[],
+    photos:r.photos||[], menu:r.menu||[],
     img: pickImg(r)
   };
 }
@@ -1231,6 +1245,15 @@ function webUrl(w){ return !w?'#':(/^https?:\/\//i.test(w)?w:'https://'+w); }
 function prettyWeb(w){ return String(w).replace(/^https?:\/\//i,'').replace(/\/+$/,''); }
 function telHref(ph){ return 'tel:'+String(ph).replace(/[^+0-9]/g,''); }
 function openDirections(k){ var p=PB[k]; if(!p)return; var u='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(p.n+', '+(p.addr||'')+' Inglewood CA'); if(p.pid)u+='&destination_place_id='+encodeURIComponent(p.pid); window.open(u,'_blank'); }
+function menuHTML(p){
+  var m=p.menu||[]; if(!m.length) return '';
+  return '<div style="margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:6px 16px 12px">'+
+    '<div style="font-weight:800;font-size:15px;margin:10px 0 4px">&#127860; Menu</div>'+
+    m.map(function(it){return '<div style="display:flex;justify-content:space-between;gap:14px;padding:8px 0;border-top:1px solid var(--line)">'+
+      '<span style="font-size:13.5px">'+xmlEsc(it.name||it.n||'')+(it.desc||it.d?'<span style="display:block;font-size:11.5px;color:var(--muted)">'+xmlEsc(it.desc||it.d)+'</span>':'')+'</span>'+
+      '<span style="font-size:13.5px;font-weight:800;color:var(--gold);white-space:nowrap">'+xmlEsc(it.price||it.p||'')+'</span></div>';}).join('')+
+    '</div>';
+}
 function similarSpots(p){
   var alts=P.filter(function(x){return x.k!==p.k && x.cat===p.cat && hasPhoto(x);});
   if(alts.length<2){ alts=P.filter(function(x){return x.k!==p.k && (x.tags||[]).some(function(t){return (p.tags||[]).indexOf(t)>=0;}) && hasPhoto(x);}); }
@@ -1263,6 +1286,7 @@ function openListing(k,from){
       ${p.q?`<div class="quote">&ldquo;${p.q}&rdquo;</div>`:''}
     </div>
     <iframe title="Map of ${xmlEsc(p.n)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" style="width:100%;height:120px;border:0;border-radius:14px;margin-top:14px;display:block" src="https://www.google.com/maps?q=${encodeURIComponent(p.n+', '+(p.addr||'')+', Inglewood CA')}&output=embed"></iframe>
+    ${menuHTML(p)}
     ${isReservable(p)?((p.book||p.tier>=3)
       ?`<button class="btn btn-primary" style="width:100%;margin-top:16px;padding:14px;font-size:15px" onclick="reserveStop('${p.k}')">&#128197; Reserve a Table</button>`
       :`<button class="btn" style="width:100%;margin-top:16px;padding:14px;font-size:14px;opacity:.5;background:var(--panel-2);color:var(--muted);border:1px solid var(--line);cursor:not-allowed" onclick="toast('Reservations are not on for this spot yet')">&#128197; Reservations — coming soon</button>`
