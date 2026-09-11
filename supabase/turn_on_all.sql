@@ -176,3 +176,7 @@ create policy di_businesses_self_add on di_businesses for insert to authenticate
     and coalesce(is_large,false) = false
     and coalesce(tier,1) = 1
   );
+
+-- ===== 16_member_deals.sql =====
+-- Members-only deals (the customer download magnet).
+alter table di_businesses add column if not exists member_deal text;

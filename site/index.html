@@ -224,6 +224,10 @@
   .specialbox{background:linear-gradient(95deg,rgba(255,46,126,.14),rgba(245,197,66,.1));border:1px solid var(--pink);border-radius:12px;padding:13px 15px;margin:14px 0;}
   .specialbox .st{font-family:'Barlow Condensed';font-weight:700;font-size:15px;color:var(--gold);}
   .specialbox .sd{font-size:12.5px;color:#e4e4ea;margin-top:3px;}
+  .mdealbox{background:linear-gradient(95deg,rgba(0,194,168,.16),rgba(245,197,66,.10));border:1px solid var(--gold);border-radius:12px;padding:13px 15px;margin:14px 0;}
+  .mdealbox .st{font-family:'Barlow Condensed';font-weight:700;font-size:15px;color:var(--gold);}
+  .mdealbox .sd{font-size:12.5px;color:#e4e4ea;margin-top:3px;}
+  .mdealbox.locked{cursor:pointer;border-style:dashed;}
   .disclaimer{font-size:11px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin:16px 0;line-height:1.5;}
   .claimbox{background:var(--panel);border:1px dashed var(--gold);border-radius:12px;padding:14px;margin:14px 0;text-align:center;}
   .claimbox b{font-family:'Barlow Condensed';font-weight:700;font-size:16px;display:block;}
@@ -436,6 +440,11 @@
       <div class="sect">
         <div class="sect-head"><h3>Offers Tonight</h3><a onclick="filterTo('Specials')">See all</a></div>
         <div class="hscroll" id="special-cards"></div>
+      </div>
+
+      <div class="sect" id="member-sect" style="display:none">
+        <div class="sect-head"><h3>&#11088; Member Deals</h3><a onclick="memberJoinOrExplore()">Join free</a></div>
+        <div class="hscroll" id="member-cards"></div>
       </div>
 
       <div class="sect">
@@ -926,8 +935,9 @@ function renderOwner(){
       '<label class="flbl">Reservation alerts to (email)</label><input id="ob_notify" class="finput" type="email" placeholder="where new-request emails go" value="'+String(b.notify_email||(CURRENT_USER&&CURRENT_USER.email)||'').replace(/"/g,'&quot;')+'">'
     : '';
   var specialBlock = paid
-    ? '<label class="flbl">Special / offer</label><input id="ob_special" class="finput" value="'+String(b.special||'').replace(/"/g,'&quot;')+'">'
-    : '<input id="ob_special" type="hidden" value="'+String(b.special||'').replace(/"/g,'&quot;')+'">';
+    ? '<label class="flbl">Special / offer</label><input id="ob_special" class="finput" value="'+String(b.special||'').replace(/"/g,'&quot;')+'">'+
+      '<label class="flbl">&#11088; Do Member deal <span style="color:var(--muted);font-weight:500">(discount for app members — draws customers in)</span></label><input id="ob_mdeal" class="finput" placeholder="e.g. 10% off for Do Members" value="'+String(b.mdeal||b.member_deal||'').replace(/"/g,'&quot;')+'">'
+    : '<input id="ob_special" type="hidden" value="'+String(b.special||'').replace(/"/g,'&quot;')+'"><input id="ob_mdeal" type="hidden" value="'+String(b.mdeal||b.member_deal||'').replace(/"/g,'&quot;')+'">';
   var menuBlock = paid
     ? '<div style="font-size:12px;color:var(--muted);margin:16px 0 6px">&#127860; Menu — show your best dishes</div>'+
       '<div id="ob_menu">'+menuRowsHTML(b.menu||[])+'</div>'+
@@ -976,6 +986,7 @@ async function saveMyBiz(){
     upd.reservation_provider=(provEl&&provEl.value)||null;
     upd.notify_email=gv('ob_notify')||null;
     var sp=document.getElementById('ob_special'); if(sp) upd.special=(sp.value||'').trim()||null;
+    var md=document.getElementById('ob_mdeal'); if(md) upd.member_deal=(md.value||'').trim()||null;
     var menu=[]; document.querySelectorAll('#ob_menu .menu-item').forEach(function(row){ var ne=row.querySelector('.menu-name'), pe=row.querySelector('.menu-price'); var n=(ne&&ne.value||'').trim(); if(n) menu.push({name:n, price:(pe&&pe.value||'').trim()}); });
     upd.menu = menu.length?menu:null;
   }
@@ -1079,10 +1090,10 @@ const FB = {
 
 /* ============ 50 REAL INGLEWOOD BUSINESSES ============ */
 const P = [
-  {k:"twohommes",n:"Two Hommés",cat:"Caribbean",tags:["Caribbean","Food","Black-Owned"],pid:"ChIJE2iu8PyxwoAR0xugqezXqWQ",img:FB.caribbean,r:4.7,rc:261,price:"$$",cpp:45,hrs:"Thu–Mon · 5–10 PM",ph:"+1 424-577-5242",addr:"902 N La Brea Ave",tier:3,special:"Sunday brunch: bottomless mimosa with any entrée",web:"https://twohommes.com",menu:[{name:"Jerk Chicken",price:"$28"},{name:"Oxtail & Butter Beans",price:"$34"},{name:"Curry Goat",price:"$30"},{name:"Braised Short Rib",price:"$38"},{name:"Coconut Shrimp",price:"$26"},{name:"Rum Bread Pudding",price:"$12"}],q:"One of the best meals I've had all year. The atmosphere, service, food, and music transport you somewhere else."},
+  {k:"twohommes",mdeal:"15% off your table for Do Members (Thu–Fri)",n:"Two Hommés",cat:"Caribbean",tags:["Caribbean","Food","Black-Owned"],pid:"ChIJE2iu8PyxwoAR0xugqezXqWQ",img:FB.caribbean,r:4.7,rc:261,price:"$$",cpp:45,hrs:"Thu–Mon · 5–10 PM",ph:"+1 424-577-5242",addr:"902 N La Brea Ave",tier:3,special:"Sunday brunch: bottomless mimosa with any entrée",web:"https://twohommes.com",menu:[{name:"Jerk Chicken",price:"$28"},{name:"Oxtail & Butter Beans",price:"$34"},{name:"Curry Goat",price:"$30"},{name:"Braised Short Rib",price:"$38"},{name:"Coconut Shrimp",price:"$26"},{name:"Rum Bread Pudding",price:"$12"}],q:"One of the best meals I've had all year. The atmosphere, service, food, and music transport you somewhere else."},
   {k:"meeting",n:"The MEETING SPOT",cat:"American",tags:["American","Food","Lounge"],pid:"ChIJXwhVbgC3woARkXQPlQYCoPI",img:FB.american,r:4.2,rc:121,price:"$$",cpp:35,hrs:"Tue–Sun · 12–9 PM",ph:"+1 855-684-7768",addr:"1231 District Dr",tier:2,special:null,q:"Awesome spot to gather pre show time or game time. The community table connects you with fellow fans."},
-  {k:"sixseven",n:"Six Seven Five Lounge",cat:"Lounge",tags:["Lounge","Food","Live Music"],pid:"ChIJjwjQJPy2woARBl1ONbP9W28",img:FB.lounge,r:4.1,rc:102,price:"$$$",cpp:55,hrs:"Thu–Sun · 4 PM–12 AM",ph:"+1 310-431-4844",addr:"675 S La Brea Ave",tier:3,special:"Live jazz Fri & Sat — complimentary valet",menu:[{name:"Truffle Wagyu Sliders",price:"$24"},{name:"Lobster Mac & Cheese",price:"$28"},{name:"Jerk Wings",price:"$18"},{name:"Garlic Butter Shrimp",price:"$22"},{name:"Signature Old Fashioned",price:"$16"},{name:"Passionfruit Martini",price:"$15"}],q:"Incredible ambiance. The live jazz band is the highlight. Get reservations — on Friday it was popping!"},
-  {k:"lafonda",n:"La Fonda Of Inglewood",cat:"Mexican",tags:["Mexican","Food","Brunch"],pid:"ChIJg-Ztw--2woARsCw4U8__KdA",img:FB.mexican,r:4.6,rc:1447,price:"$",cpp:20,hrs:"Daily · 8 AM–10 PM",ph:"+1 310-419-7596",addr:"4649 W Century Blvd",tier:2,special:null,q:"Clean, modern, and the food was flavourful, perfectly spiced, served in hearty portions."},
+  {k:"sixseven",mdeal:"Members: free welcome cocktail Fri & Sat",n:"Six Seven Five Lounge",cat:"Lounge",tags:["Lounge","Food","Live Music"],pid:"ChIJjwjQJPy2woARBl1ONbP9W28",img:FB.lounge,r:4.1,rc:102,price:"$$$",cpp:55,hrs:"Thu–Sun · 4 PM–12 AM",ph:"+1 310-431-4844",addr:"675 S La Brea Ave",tier:3,special:"Live jazz Fri & Sat — complimentary valet",menu:[{name:"Truffle Wagyu Sliders",price:"$24"},{name:"Lobster Mac & Cheese",price:"$28"},{name:"Jerk Wings",price:"$18"},{name:"Garlic Butter Shrimp",price:"$22"},{name:"Signature Old Fashioned",price:"$16"},{name:"Passionfruit Martini",price:"$15"}],q:"Incredible ambiance. The live jazz band is the highlight. Get reservations — on Friday it was popping!"},
+  {k:"lafonda",mdeal:"$5 off orders over $30 for Do Members",n:"La Fonda Of Inglewood",cat:"Mexican",tags:["Mexican","Food","Brunch"],pid:"ChIJg-Ztw--2woARsCw4U8__KdA",img:FB.mexican,r:4.6,rc:1447,price:"$",cpp:20,hrs:"Daily · 8 AM–10 PM",ph:"+1 310-419-7596",addr:"4649 W Century Blvd",tier:2,special:null,q:"Clean, modern, and the food was flavourful, perfectly spiced, served in hearty portions."},
   {k:"fiesta",n:"Fiesta Martin Mexican Grill",cat:"Mexican",tags:["Mexican","Food","Brunch"],pid:"ChIJE35UfG23woARs6SDJKmlirw",img:FB.mexican,r:4.4,rc:2448,price:"$",cpp:22,hrs:"Daily · 8 AM–11 PM",ph:"+1 310-672-1330",addr:"1330 N La Brea Ave",tier:3,special:"Quesabirria tacos — buy 3 get 1 before 5 PM",q:"By far one of the best Mexican spots I have ever had, hands down. Phenomenal."},
   {k:"martins",n:"Martin's Cocina y Cantina",cat:"Mexican",tags:["Mexican","Food","Lounge"],pid:"ChIJaQnhncW3woAR4c4EmypXazQ",img:FB.mexican,r:4.3,rc:663,price:"$$",cpp:30,hrs:"Daily · 11 AM–11 PM",ph:"+1 310-774-4053",addr:"162 N La Brea Ave",tier:2,special:null,q:"Great entertainment while we waited. Hospitality was awesome and the food was out of this world."},
   {k:"frijoles",n:"Frijoles Mexican Restaurant",cat:"Mexican",tags:["Mexican","Food"],pid:"ChIJ_6-WVLq2woARu4uRONj3Dtw",img:FB.mexican,r:4.5,rc:1403,price:"$$",cpp:25,hrs:"Daily · 9 AM–9 PM",ph:"+1 310-643-8541",addr:"11942 Aviation Blvd",tier:1,special:null,q:"Everything I wanted in California Mexican food. Margaritas on point, birria tacos spot on."},
@@ -1090,12 +1101,12 @@ const P = [
   {k:"casagamino",n:"Casa Gamiño Restaurant",cat:"Mexican",tags:["Mexican","Food"],pid:"ChIJD-LtH-a2woARN8I_wszXiQk",img:FB.mexican,r:4.3,rc:1517,price:"$",cpp:22,hrs:"Daily · 11 AM–10 PM",ph:"+1 310-671-7661",addr:"4937 W Century Blvd",tier:1,special:null,q:"A really great Mexican restaurant for many years and rightfully so. Everything was excellent!"},
   {k:"eltarasco",n:"El Tarasco",cat:"Mexican",tags:["Mexican","Food","Late Night"],pid:"ChIJma7J85G2woARS6ThZMkBkG4",img:FB.mexican,r:4.2,rc:1009,price:"$",cpp:15,hrs:"Daily · 9 AM–2 AM",ph:"+1 310-330-0435",addr:"4675 Imperial Hwy",tier:1,special:null,q:"Came here before a concert and food was good. Carne asada torta was excellent."},
   {k:"monarcas",n:"El Rinconcito Monarcas",cat:"Mexican",tags:["Mexican","Food"],pid:"ChIJGfug7KC3woARhEnhfm5zrWg",img:FB.mexican,r:4.6,rc:119,price:"$",cpp:12,hrs:"Daily · 7 AM–6 PM",ph:"+1 323-719-8590",addr:"1089 N Park Ave",tier:1,special:null,q:"One of the best Mexican food spots around. Very affordable, great portions, always friendly."},
-  {k:"dulans",n:"Dulan's Soul Food Kitchen",cat:"Soul Food",tags:["Soul Food","Food"],pid:"ChIJ77N7zgO3woARm6XPEyuhlUs",img:FB.soul,r:4.3,rc:4051,price:"$$",cpp:25,hrs:"Daily · 11 AM–8 PM",ph:"+1 310-671-3345",addr:"202 E Manchester Blvd",tier:2,special:null,q:"Definitely DELICIOUS! Great portions, great flavor, and great service."},
+  {k:"dulans",mdeal:"Members get a free peach cobbler with any plate",n:"Dulan's Soul Food Kitchen",cat:"Soul Food",tags:["Soul Food","Food"],pid:"ChIJ77N7zgO3woARm6XPEyuhlUs",img:FB.soul,r:4.3,rc:4051,price:"$$",cpp:25,hrs:"Daily · 11 AM–8 PM",ph:"+1 310-671-3345",addr:"202 E Manchester Blvd",tier:2,special:null,q:"Definitely DELICIOUS! Great portions, great flavor, and great service."},
   {k:"servingspoon",n:"The Serving Spoon",cat:"Soul Food",tags:["Soul Food","Brunch","Food"],pid:"ChIJkyCKVBO3woAR3AYohPB9qcA",img:FB.brunch,r:4.5,rc:2947,price:"$$",cpp:25,hrs:"Daily · 8 AM–2 PM",ph:"+1 310-412-3927",addr:"1403 Centinela Ave",tier:2,special:null,q:"Whenever I'm in LA I have to eat here. Always packed — the food is always good."},
   {k:"southernsoul",n:"Southern Soul LA",cat:"Soul Food",tags:["Soul Food","Food"],pid:"ChIJA4PpdRW3woAR_jUgyGvINhg",img:FB.soul,r:4.7,rc:92,price:"$$",cpp:28,hrs:"Wed–Sun · 12–7 PM",ph:"+1 310-383-2427",addr:"6732 Crenshaw Blvd",tier:1,special:null,q:"Super fresh seafood, perfectly seasoned shrimp, greens so flavorful, mac n cheese divine."},
   {k:"keokias",n:"Keokias Kitchen",cat:"Soul Food",tags:["Soul Food","Food"],pid:"ChIJLysPVwG3woARQrmQ6cN88C4",img:FB.soul,r:4.6,rc:5,price:"$$",cpp:22,hrs:"Daily · 11 AM–7 PM",ph:"",addr:"126 N Market St",tier:1,special:null,q:"The Louisiana inspired soul food here was delicious. Generous portions, great prices."},
   {k:"mdears",n:"M'Dears Bakery & Bistro",cat:"Soul Food",tags:["Soul Food","Dessert","Brunch"],pid:"ChIJbf98NC22woARg2U1SwBnPEE",img:FB.soul,r:4.2,rc:1545,price:"$$",cpp:28,hrs:"Daily · 7:30 AM–7:30 PM",ph:"+1 323-759-2020",addr:"7717 S Western Ave",tier:1,special:null,q:"Chicken wings and waffles, everything tasted amazing. Portions generous, server warm and welcoming."},
-  {k:"mrfries",n:"Mr Fries Man",cat:"American",tags:["American","Food","Late Night"],pid:"ChIJDSngdLu3woARermoBpHpTHE",img:FB.american,r:4.7,rc:1169,price:"$",cpp:18,hrs:"Daily · 10 AM–4 AM",ph:"+1 310-431-4213",addr:"401 E Hillcrest Blvd",tier:2,special:"Loaded fries combo special after 10 PM",q:"Honey garlic shrimp with steak — incredible, cooked perfectly. The customer service is Black Excellence."},
+  {k:"mrfries",mdeal:"Do Members: buy one loaded fry, get one 1/2 off",n:"Mr Fries Man",cat:"American",tags:["American","Food","Late Night"],pid:"ChIJDSngdLu3woARermoBpHpTHE",img:FB.american,r:4.7,rc:1169,price:"$",cpp:18,hrs:"Daily · 10 AM–4 AM",ph:"+1 310-431-4213",addr:"401 E Hillcrest Blvd",tier:2,special:"Loaded fries combo special after 10 PM",q:"Honey garlic shrimp with steak — incredible, cooked perfectly. The customer service is Black Excellence."},
   {k:"rustypot",n:"Rusty Pot Café",cat:"Soul Food",tags:["Soul Food","Brunch","American"],pid:"ChIJcZjf9AG3woARtuMPblEtqpE",img:FB.brunch,r:4.5,rc:969,price:"$$",cpp:24,hrs:"Daily · 8 AM–2 PM",ph:"+1 310-412-5901",addr:"324 S Market St",tier:1,special:null,q:"One of the best plates of my life — and it was breakfast! Fall-off-the-bone chicken and waffles."},
   {k:"toastjam",n:"The Toast and Jam",cat:"Brunch",tags:["Brunch","Food","American"],pid:"ChIJO4pLc5K3woARmIOztqQAZ4M",img:FB.brunch,r:4.8,rc:41,price:"$$",cpp:26,hrs:"Daily · 8 AM–2 PM",ph:"+1 310-412-5901",addr:"324 S Market St",tier:2,special:null,q:"Best catfish we've had. Cozy atmosphere with indoor and outdoor seating. We will be back."},
   {k:"reds",n:"Red's Flavor Table",cat:"Brunch",tags:["Brunch","Soul Food","Food"],pid:"ChIJA-m9jga3woARWkyj6utEtk8",img:FB.brunch,r:4.6,rc:320,price:"$$",cpp:24,hrs:"Wed–Sun · 7 AM–3 PM",ph:"+1 424-331-5000",addr:"254 N Market St",tier:1,special:null,q:"Shrimp & crab omelette had me in love. Biscuits delicious and flaky, staff so kind."},
@@ -1186,7 +1197,7 @@ function dbToApp(r){
     addr:r.address, ph:r.phone||"", web:r.website||undefined,
     pid:r.google_place_id||"", r:r.rating, rc:r.rating_count,
     price:r.price_level, cpp:r.avg_per_person||0, hrs:r.hours,
-    q:r.review_quote, tier:r.tier||1, special:r.special||null,
+    q:r.review_quote, tier:r.tier||1, special:r.special||null, mdeal:r.member_deal||null,
     book:r.booking_url||null, prov:r.reservation_provider||null,
     photos:r.photos||[], menu:r.menu||[],
     img: pickImg(r)
@@ -1381,7 +1392,21 @@ function buildHome(){
   var sc=document.getElementById('special-cards'); var offersSect=sc.closest('.sect');
   if(spec.length){ sc.innerHTML=spec.map(p=>cardHTML(p)).join(''); if(offersSect)offersSect.style.display=''; }
   else if(offersSect){ offersSect.style.display='none'; }   // hide "Offers Tonight" until a paid business posts a real special
+  // Member Deals — the download magnet
+  const deals=P.filter(p=>p.mdeal&&hasPhoto(p));
+  var mc=document.getElementById('member-cards'), msect=document.getElementById('member-sect');
+  if(deals.length){ mc.innerHTML=deals.map(dealCardHTML).join(''); if(msect)msect.style.display=''; }
+  else if(msect){ msect.style.display='none'; }
 }
+// A card that shows the deal (members) or a teaser (non-members).
+function dealCardHTML(p){
+  var reveal = CURRENT_USER ? xmlEsc(p.mdeal) : 'Join free to unlock &rarr;';
+  return `<div class="card" onclick="openListing('${p.k}','home')">
+    <div class="img" style="background-image:url('${p.img}')"><span class="chip chip-sponsored" style="position:absolute;top:8px;left:8px">&#11088; Member deal</span></div>
+    <div class="body"><div class="name">${p.n}</div><div class="meta" style="color:var(--gold);font-weight:700">${reveal}</div></div>
+  </div>`;
+}
+function memberJoinOrExplore(){ if(CURRENT_USER){ filterTo('All'); } else { acctPrompt('member'); } }
 
 /* EXPLORE */
 let curFilter="All";
@@ -1551,6 +1576,9 @@ function openListing(k,from){
     </div>
     ${(p.photos&&p.photos.length)?`<div style="display:flex;gap:8px;overflow-x:auto;margin:12px 0;padding-bottom:4px">${p.photos.map(u=>`<img src="${String(u).replace(/"/g,'&quot;')}" loading="lazy" style="height:120px;border-radius:12px;flex:0 0 auto">`).join('')}</div>`:''}
     ${p.special?`<div class="specialbox"><div class="st">&#127863; Active Special</div><div class="sd">${p.special}</div></div>`:''}
+    ${p.mdeal?(CURRENT_USER
+      ?`<div class="mdealbox"><div class="st">&#11088; Do Member deal</div><div class="sd">${xmlEsc(p.mdeal)}</div></div>`
+      :`<div class="mdealbox locked" onclick="acctPrompt('member')"><div class="st">&#128274; Members save here</div><div class="sd">Join Do Inglewood free to unlock this deal &rarr;</div></div>`):''}
     <div style="margin-top:12px">
       <div class="ldrow"><span class="k">Category</span><span class="v">${p.cat}</span></div>
       <div class="ldrow"><span class="k">Address</span><span class="v">${p.addr}${/Inglewood/.test(p.addr||'')?'':', Inglewood'}</span></div>
@@ -2332,6 +2360,7 @@ function acctPrompt(kind){
   if(kind==='star'){m.textContent="Sign in to save your favorite Inglewood spots — we'll email you a one-tap link.";}
   if(kind==='claim'){m.textContent="Sign in to claim your business — we'll email you a one-tap link, then finish your claim.";}
   if(kind==='reserve'){m.textContent="Sign in to reserve — we'll email you a one-tap link, then keep your reservation status updated here.";}
+  if(kind==='member'){t.textContent='Join Do Inglewood — free';m.textContent="Members unlock local discounts at Inglewood spots. Enter your email for a one-tap link — no password, no cost.";}
   document.getElementById('acctOverlay').classList.add('on');
 }
 function closeAcct(){document.getElementById('acctOverlay').classList.remove('on');}
