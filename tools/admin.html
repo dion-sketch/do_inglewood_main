@@ -66,7 +66,11 @@
     </div>
 
     <div class="card tabpane hidden" id="pane-events">
-      <div class="mut" style="margin-bottom:8px">Upcoming events. Delete removes them from the calendar. (Add events with the events spreadsheet/tools.)</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+        <button class="g" onclick="refreshEvents()">↻ Refresh from Ticketmaster</button>
+        <span class="mut" id="refresh-msg">Pulls the latest SoFi / Intuit Dome / Kia Forum events into the calendar.</span>
+      </div>
+      <div class="mut" style="margin-bottom:8px">Upcoming events. Delete removes one from the calendar.</div>
       <div id="events-list"><div class="mut">Loading…</div></div>
     </div>
   </div>
@@ -169,6 +173,16 @@ async function delBiz(id,name){
   try{ await fetch(SUPABASE_URL+'/rest/v1/di_businesses?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:HJ()}); var r=$('brow-'+id); if(r)r.remove(); msg('Deleted'); }catch(e){ msg('Error: '+e.message); }
 }
 
+async function refreshEvents(){
+  var el=$('refresh-msg'); if(el) el.textContent='Fetching from Ticketmaster…';
+  try{
+    const r=await fetch(SUPABASE_URL+'/functions/v1/refresh-events',{method:'POST',headers:{Authorization:'Bearer '+KEY}});
+    const j=await r.json().catch(function(){return {};});
+    if(!r.ok||j.error){ if(el) el.textContent='Error: '+(j.error||('HTTP '+r.status)); return; }
+    if(el) el.textContent='✓ Imported '+(j.imported!=null?j.imported:'?')+' events.';
+    loadEvents();
+  }catch(e){ if(el) el.textContent='Error: '+e.message; }
+}
 async function loadEvents(){
   try{
     const rows=await api('di_events?order=event_date.asc&limit=300',{headers:H()});
