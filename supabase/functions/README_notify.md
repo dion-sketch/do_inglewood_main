@@ -33,5 +33,5 @@ Supabase → **Database** → **Webhooks** → **Create a new hook**:
 Send a table request in the app for a business you own → within a few seconds the
 owner's alert email should arrive. If not, check Edge Functions → Logs.
 
-> Owners can change where alerts go in **My Business → "Reservation alerts to (email)"**.
+> Owners can change where alerts go in **My Business → Reservations → "Email for new-request alerts"**.
 > If left blank, alerts go to the email they signed in with.
