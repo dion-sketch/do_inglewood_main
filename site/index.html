@@ -1709,6 +1709,40 @@ function openDetail(i){
     if(p.cat==='Hotels')return 'overnight';
     return '~45 min';
   }
+  // Rough minutes a stop takes, for scheduling the day around the event.
+  function durMins(p){
+    if(!p) return 60;
+    if(p.tags.indexOf('Food')>=0 && p.price!=='$') return 90;
+    if(p.tags.indexOf('Food')>=0) return 60;
+    if(p.tags.indexOf('Lounge')>=0) return 90;
+    if(p.cat==='Casino') return 120;
+    if(['Dessert','Coffee'].indexOf(p.cat)>=0) return 40;
+    if(p.cat==='Landmark') return 20;
+    if(p.cat==='Park') return 40;
+    if(p.cat==='Florist') return 15;
+    if(p.cat==='Hotels') return 0;
+    return 60;
+  }
+  function evDurMins(e){
+    var k = e ? evKind(e) : '';
+    if(k==='football') return 200;   // ~3h20
+    if(k==='basketball') return 150; // ~2h30
+    if(k==='concert') return 150;
+    if(k==='comedy') return 105;
+    return 165;
+  }
+  // Timed itinerary: back-time the "before" stops to tip-off, forward-time the "after" stops.
+  if(hasAnchor && ev && anchorTime){
+    var TRAVEL=15, PREBUF=20;
+    var evStart=timeVal(anchorTime), evEnd=evStart+evDurMins(ev);
+    var endBy=evStart-PREBUF;   // be seated 20 min before start
+    for(var bi=groups.before.length-1; bi>=0; bi--){
+      var bp=PB[groups.before[bi].k]; var bd=durMins(bp)||60;
+      var bStart=endBy-bd; groups.before[bi]._time=fmtMins(bStart); endBy=bStart-TRAVEL;
+    }
+    var cur=evEnd+TRAVEL;
+    groups.after.forEach(function(st){ var ap=PB[st.k]; st._time=fmtMins(cur); cur+=(durMins(ap)||60)+TRAVEL; });
+  }
   function iconFor(p){
     return p.showtimes?'&#127902;':p.cat==='Casino'?'&#127920;':p.cat==='Stadium'?'&#127967;':p.cat==='Landmark'?'&#128247;':p.cat==='Park'?'&#127795;':p.cat==='Florist'?'&#128144;':(p.cat==='Dessert'||p.cat==='Coffee')?'&#127846;':p.tags.indexOf('Lounge')>=0?'&#127864;':'&#127869;';
   }
@@ -1720,8 +1754,9 @@ function openDetail(i){
     var h='<div class="phasehdr">'+title+'</div>';
     arr.forEach(function(st,idx){
       var p=PB[st.k]; if(!p)return; num++;
-      var sub=p.cat+' \u00b7 '+p.price+(p.cpp?' \u00b7 '+money(p.cpp*pl.ppl)+' est.':'')+' \u00b7 '+dur(p);
-      if(p.showtimes)sub='Movie \u00b7 '+anchorTime+' showtime \u00b7 '+p.price+' \u00b7 '+money(p.cpp*pl.ppl)+' est.';
+      var tPrefix = st._time ? '<b style="color:var(--gold)">'+st._time+'</b> \u00b7 ' : '';
+      var sub=tPrefix+p.cat+' \u00b7 '+p.price+(p.cpp?' \u00b7 '+money(p.cpp*pl.ppl)+' est.':'')+' \u00b7 '+dur(p);
+      if(p.showtimes)sub='<b style="color:var(--gold)">'+anchorTime+'</b> \u00b7 Movie showtime \u00b7 '+p.price+' \u00b7 '+money(p.cpp*pl.ppl)+' est.';
       if(p.special)sub+=' \u00b7 \u2728 '+p.special;
       var last=(arr===groups.after && idx===arr.length-1);
       h+=stopHTML(iconFor(p),num,p.n,sub,!last,st.k,true);
@@ -1777,7 +1812,8 @@ function stopHTML(icon,num,name,sub,connector,key,swappable){
 }
 function eventStopHTML(ev,num){
   var venue=ev.venue?(' · 📍 '+evEsc(ev.venue)):'';
-  var sub=evEsc(ev.category||'Event')+' · '+evEsc(ev.time||'')+venue;
+  var tm=ev.time?('<b style="color:var(--gold)">'+evEsc(ev.time)+'</b> · '):'';
+  var sub=tm+evLabel(ev)+venue;
   var tickets=ev.url?'<span class="tbtn" onclick="event.stopPropagation();window.open(\''+ev.url+'\',\'_blank\')">Tickets</span>':'';
   return '<div class="tstop"><div class="tline"><div class="tdot tnum" style="background:var(--gold);color:#1a1400">'+num+'</div><div class="tconnector"></div></div>'+
     '<div class="tbody" style="border:1px solid var(--gold);border-radius:12px;padding:8px 10px;background:rgba(245,197,66,.08)">'+
