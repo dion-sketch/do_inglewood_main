@@ -477,8 +477,9 @@
       <div class="builder-banner"><b>Activity Builder</b><span>A few quick questions &mdash; we build the day for you</span></div>
 
       <div class="build-step" data-step="1">
-        <div class="build-q"><div class="eyebrow">Step 1 of 4</div><h2>What's the plan &mdash; and when?</h2></div>
-        <div class="opts">
+        <div class="build-q"><div class="eyebrow">Step 1 of 4</div><h2 id="s1q">What's the plan &mdash; and when?</h2></div>
+        <div id="evAnchorName" style="display:none;margin:0 20px 12px;padding:11px 13px;border:1px solid var(--gold);border-radius:12px;background:rgba(245,197,66,.08);font-size:13.5px;color:var(--txt);line-height:1.35"></div>
+        <div class="opts" id="planGrid">
           <div class="opt" onclick="pick(this,'plan','Date Night')"><div class="ic">&#128150;</div><div class="lb">Date Night</div></div>
           <div class="opt" onclick="pick(this,'plan','Friends Night')"><div class="ic">&#128101;</div><div class="lb">Friends Night</div></div>
           <div class="opt" onclick="pick(this,'plan','Game Day')"><div class="ic">&#127944;</div><div class="lb">Game Day</div></div>
@@ -487,6 +488,11 @@
           <div class="opt" onclick="pick(this,'plan','Sightseeing')"><div class="ic">&#128247;</div><div class="lb">Sightseeing</div></div>
           <div class="opt" onclick="pick(this,'plan','After-Concert')"><div class="ic">&#127908;</div><div class="lb">After-Concert</div></div>
           <div class="opt" onclick="pick(this,'plan','Surprise Me')"><div class="ic">&#10024;</div><div class="lb">Surprise Me</div></div>
+        </div>
+        <div class="opts" id="evAnchorBlock" style="display:none">
+          <div class="opt" onclick="pickWhen(this,'before')"><div class="ic">&#127869;</div><div class="lb">Before</div></div>
+          <div class="opt" onclick="pickWhen(this,'after')"><div class="ic">&#127864;</div><div class="lb">After</div></div>
+          <div class="opt" onclick="pickWhen(this,'both')"><div class="ic">&#128257;</div><div class="lb">Before &amp; After</div></div>
         </div>
         <div style="display:flex;gap:10px;padding:16px 20px 0">
           <div style="flex:1"><label class="flbl">Date</label><input id="bDate" type="date" class="finput" onchange="sel.date=this.value"></div>
@@ -1524,8 +1530,12 @@ function openListing(k,from){
 
 /* BUILD FLOW */
 let step=1;const sel={plan:null,budget:null,people:null,food:null,extras:[],exp:[],start:null,move:null,parking:false,date:null,startTime:null};
-function resetBuild(){step=1;sel.plan=sel.budget=sel.people=sel.food=sel.move=sel.start=null;sel.extras=[];sel.exp=[];sel.parking=false;sel.date=null;sel.startTime=null;window.__anchorEvent=null;
+function resetBuild(){step=1;sel.plan=sel.budget=sel.people=sel.food=sel.move=sel.start=null;sel.extras=[];sel.exp=[];sel.parking=false;sel.date=null;sel.startTime=null;sel.when=null;window.__anchorEvent=null;
   document.querySelectorAll('.opt,.pill,.toggle').forEach(e=>e.classList.remove('sel'));
+  // Normal mode: show the plan-type grid, hide the event before/after choice.
+  var pg=document.getElementById('planGrid'), eb=document.getElementById('evAnchorBlock'), en=document.getElementById('evAnchorName'), q=document.getElementById('s1q');
+  if(pg)pg.style.display=''; if(eb)eb.style.display='none'; if(en)en.style.display='none';
+  if(q)q.innerHTML="What's the plan &mdash; and when?";
   var af=document.getElementById('addrField');if(af)af.style.display='none';
   var d=document.getElementById('bDate'); if(d){ if(!d.value) d.value=isoOf(new Date()); sel.date=d.value; }
   var t=document.getElementById('bTime'); if(t){ sel.startTime=t.value; }
@@ -1538,12 +1548,20 @@ function showStep(){
 }
 function pick(el,key,val){el.parentElement.querySelectorAll('.opt,.pill').forEach(e=>e.classList.remove('sel'));el.classList.add('sel');sel[key]=val;
   if(key==='start'){var af=document.getElementById('addrField');if(af)af.style.display=(val==='Enter address')?'block':'none';}}
+// Event-anchored: choose to go out before, after, or both around the game/show.
+function pickWhen(el,val){ el.parentElement.querySelectorAll('.opt').forEach(e=>e.classList.remove('sel')); el.classList.add('sel'); sel.when=val; }
 var EXPSET=['Stadium','Landmark','Park'];
 function multi(el,val){el.classList.toggle('sel');
   var arr = EXPSET.indexOf(val)>=0 ? sel.exp : sel.extras;
   var i=arr.indexOf(val); if(i>=0)arr.splice(i,1); else arr.push(val);}
 function buildNext(){
-  if(step===1){ if(!sel.plan){toast('Pick what you are planning');return;}
+  if(step===1){
+    if(window.__anchorEvent){
+      if(!sel.when){toast('Before, after, or both?');return;}
+      var ev1=window.__anchorEvent, kind=evKind(ev1);
+      var base=(kind==='concert')?'Concert':(kind==='comedy')?'Comedy':(kind==='basketball'||kind==='football')?'Game Day':'Event';
+      sel.plan=base+(sel.when==='before'?' · Before':sel.when==='after'?' · After':' · Before & After');
+    } else if(!sel.plan){ toast('Pick what you are planning'); return; }
     var d=document.getElementById('bDate'); if(d&&d.value)sel.date=d.value; if(!sel.date)sel.date=isoOf(new Date());
     var t=document.getElementById('bTime'); if(t&&t.value)sel.startTime=t.value; if(!sel.startTime)sel.startTime='6:00 PM'; }
   else if(step===2){ if(!sel.budget){toast('Pick a budget');return;} if(!sel.people){toast('How many people?');return;} }
@@ -1667,7 +1685,15 @@ function openDetail(i){
     return 'before';
   }
   var groups={before:[],show:[],after:[]};
-  pl.stops.forEach(function(st){groups[hasAnchor?phaseOf(st):'before'].push(st);});
+  pl.stops.forEach(function(st){
+    var g;
+    if(!hasAnchor){ g='before'; }
+    else if(ev && (sel.when==='before'||sel.when==='after')){
+      // User chose a side: keep the show where it belongs, force everything else there.
+      g = (phaseOf(st)==='show') ? 'show' : sel.when;
+    } else { g=phaseOf(st); }   // 'both', or a movie-showtime anchor
+    groups[g].push(st);
+  });
 
   function dur(p){
     if(p.showtimes)return '~2 hrs 15';
@@ -2053,10 +2079,14 @@ function planAround(id){
   window.__anchorEvent=e;                       // set AFTER reset so it persists through the build
   if(e.date){ sel.date=e.date; var _d=document.getElementById('bDate'); if(_d)_d.value=e.date; }
   if(e.time){ sel.startTime=e.time; }
-  toast('Building your day around '+(e.title||'the show')+' 🎟️');
-  setTimeout(function(){
-    document.querySelectorAll('#view-build .opt').forEach(function(o){ if(/After-Concert/i.test(o.textContent)) o.click(); });
-  },60);
+  // Event-anchored Step 1: ask before / after / both instead of the generic plan grid.
+  var pg=document.getElementById('planGrid'), eb=document.getElementById('evAnchorBlock'),
+      en=document.getElementById('evAnchorName'), q=document.getElementById('s1q');
+  if(pg)pg.style.display='none'; if(eb)eb.style.display='';
+  if(q)q.textContent='When do you want to go out?';
+  if(en){ en.style.display='block';
+    en.innerHTML='Around <b>'+evEsc(String(e.title).split('—')[0].trim())+'</b>'+(e.venue?' at '+evEsc(e.venue):'')+(e.time?' &middot; '+evEsc(e.time):''); }
+  toast('Planning around '+(String(e.title).split('—')[0].trim())+' 🎟️');
 }
 function renderHomeEvents(){
   var today=new Date();today.setHours(0,0,0,0);
