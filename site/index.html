@@ -841,7 +841,9 @@ function renderOwner(){
     '<div style="font-size:12px;color:var(--muted);margin:10px 0 4px">More photos</div>'+
     '<div id="ob_gallery" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">'+galleryThumbs(b.photos||[])+'</div>'+
     '<label class="btn btn-ghost" style="display:inline-block;cursor:pointer;margin-bottom:6px">&#10133; Add more photos<input type="file" accept="image/*" multiple style="display:none" onchange="uploadExtraPhotos(this.files)"></label>'+
-    fld('Business name','ob_name',b.name)+fld('Category','ob_cat',b.category)+fld('Address','ob_addr',b.address)+fld('Hours','ob_hours',b.hours)+
+    fld('Business name','ob_name',b.name)+
+    '<label class="flbl">Category</label>'+catSelect('ob_cat',b.category,"catResvHint('ob_cat','ob_cat_hint')")+'<div id="ob_cat_hint" style="font-size:11.5px;margin-top:5px"></div>'+
+    fld('Address','ob_addr',b.address)+fld('Hours','ob_hours',b.hours)+
     fld('Phone','ob_phone',b.phone)+fld('Website','ob_web',b.website)+fld('Price ($, $$, $$$)','ob_price',b.price_level)+
     fld('Avg per person ($)','ob_cpp',b.avg_per_person)+
     '<label class="flbl">Reservation / booking link</label><input id="ob_book" class="finput" placeholder="OpenTable / Resy / Booksy / your website" value="'+String(b.booking_url||'').replace(/"/g,'&quot;')+'">'+
@@ -861,6 +863,7 @@ function renderOwner(){
         '<button class="btn btn-ghost" style="width:100%" onclick="startUpgrade(3)">Go Premium &#183; $169/mo</button>'+
         '<div style="font-size:11px;color:var(--muted);margin-top:8px">Secure checkout by Stripe. Your new badge activates once payment clears.</div>'+
       '</div>')+'<div id="owner-resv"></div>';
+  catResvHint('ob_cat','ob_cat_hint');
   renderOwnerResv();
 }
 async function saveMyBiz(){
@@ -1084,7 +1087,44 @@ function dbToApp(r){
 }
 /* ---- Reservations: link out to the business's booking provider (OpenTable/Resy/etc.),
    else their website, else a search. No booking engine — that comes later. ---- */
-function isReservable(p){ return !!(p && ['Stadium','Landmark','Park','Movie'].indexOf(p.cat)<0); }
+// ---- Canonical business categories. `resv` = a sit-down venue that can take table reservations.
+// A business PICKS one of these at setup; that choice decides whether Reservations apply.
+var CATS=[
+  {n:'Restaurant',resv:1},{n:'Mexican',resv:1},{n:'Soul Food',resv:1},{n:'Caribbean',resv:1},
+  {n:'American',resv:1},{n:'Seafood',resv:1},{n:'Brunch',resv:1},{n:'Lounge',resv:1},{n:'Bar',resv:1},
+  {n:'Coffee',resv:0},{n:'Dessert',resv:0},{n:'Hotels',resv:0},{n:'Casino',resv:0},
+  {n:'Event Space',resv:0},{n:'Stadium',resv:0},{n:'Retail',resv:0},{n:'Beauty',resv:0},
+  {n:'Florist',resv:0},{n:'Landmark',resv:0},{n:'Park',resv:0},{n:'Movie',resv:0},{n:'Other',resv:0}
+];
+var _RESVCAT={}; CATS.forEach(function(c){ _RESVCAT[c.n.toLowerCase()]=!!c.resv; });
+function catTakesReservations(cat){
+  if(!cat) return false;
+  var k=String(cat).toLowerCase();
+  if(k in _RESVCAT) return _RESVCAT[k];
+  // Unknown/legacy free-text: fall back to food-venue keywords so a new cuisine still works.
+  return /food|restaurant|grill|kitchen|\bbar\b|lounge|bistro|eatery|dining|cantina|cocina|taqueria|cafe|café/.test(k);
+}
+// A business is reservable if its category is a dining venue OR it has an explicit booking link.
+function isReservable(p){ return !!(p && (catTakesReservations(p.cat) || p.book)); }
+// A grouped <select> that teaches which categories enable reservations.
+function catSelect(id,cur,onchange){
+  cur=cur||'';
+  function opt(c){ return '<option'+((cur.toLowerCase()===c.n.toLowerCase())?' selected':'')+'>'+c.n+'</option>'; }
+  var din=CATS.filter(function(c){return c.resv;}).map(opt).join('');
+  var non=CATS.filter(function(c){return !c.resv;}).map(opt).join('');
+  var known=CATS.some(function(c){return c.n.toLowerCase()===cur.toLowerCase();});
+  return '<select id="'+id+'" class="finput"'+(onchange?' onchange="'+onchange+'"':'')+'>'+
+    (known||!cur?'':'<option selected>'+String(cur).replace(/</g,'&lt;')+'</option>')+
+    '<optgroup label="Dining — takes reservations">'+din+'</optgroup>'+
+    '<optgroup label="Other — no table reservations">'+non+'</optgroup>'+
+  '</select>';
+}
+function catResvHint(selId,hintId){
+  var s=document.getElementById(selId), h=document.getElementById(hintId); if(!s||!h) return;
+  h.innerHTML = catTakesReservations(s.value)
+    ? '<span style="color:var(--gold)">'+ICON.cal+' Reservations can be turned on for this category</span>'
+    : '<span style="color:var(--muted)">Table reservations don\'t apply to this category</span>';
+}
 function bookingLink(p){
   if(!p) return null;
   if(p.book) return webUrl(p.book);
