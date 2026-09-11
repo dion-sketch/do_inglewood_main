@@ -968,9 +968,12 @@ function renderOwner(){
     : '';
   // Reservation + menu + special fields: Verified features. Free tier sees a locked list.
   var reservBlock = paid
-    ? '<label class="flbl">Reservation / booking link</label><input id="ob_book" class="finput" placeholder="OpenTable / Resy / Booksy / your website" value="'+String(b.booking_url||'').replace(/"/g,'&quot;')+'">'+
-      '<label class="flbl">Reservation provider</label><select id="ob_prov" class="finput">'+['','OpenTable','Resy','Booksy','Yelp Reservations','My own website','Phone only'].map(function(o){return '<option value="'+o+'"'+(((b.reservation_provider||'')===o)?' selected':'')+'>'+(o||'None yet — use Do Inglewood')+'</option>';}).join('')+'</select>'+
-      '<label class="flbl">Reservation alerts to (email)</label><input id="ob_notify" class="finput" type="email" placeholder="where new-request emails go" value="'+String(b.notify_email||(CURRENT_USER&&CURRENT_USER.email)||'').replace(/"/g,'&quot;')+'">'
+    ? '<div style="font-size:12px;font-weight:800;font-family:\'Barlow Condensed\';letter-spacing:1px;text-transform:uppercase;color:var(--gold);margin:18px 0 6px">'+ICON.cal+' Reservations</div>'+
+      '<div style="font-size:12px;color:var(--muted);margin-bottom:8px">Already take bookings online? Paste your link and the Reserve button sends customers straight there.</div>'+
+      '<label class="flbl">Booking link <span style="color:var(--muted);font-weight:500">(optional)</span></label><input id="ob_book" class="finput" placeholder="OpenTable / Resy / Booksy / your website" value="'+String(b.booking_url||'').replace(/"/g,'&quot;')+'">'+
+      '<label class="flbl">Booking provider</label><select id="ob_prov" class="finput">'+['','OpenTable','Resy','Booksy','Yelp Reservations','My own website','Phone only'].map(function(o){return '<option value="'+o+'"'+(((b.reservation_provider||'')===o)?' selected':'')+'>'+(o||'None yet — take requests in the app')+'</option>';}).join('')+'</select>'+
+      '<div style="background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:11px 12px;margin:13px 0 8px;font-size:12px;color:var(--muted);line-height:1.5"><b style="color:var(--txt)">No booking system?</b> Leave the link blank. Customers request a table right here &mdash; we email you to Accept or Decline, and Do Inglewood emails them back automatically.</div>'+
+      '<label class="flbl">Email for new-request alerts</label><input id="ob_notify" class="finput" type="email" placeholder="you@yourbusiness.com" value="'+String(b.notify_email||(CURRENT_USER&&CURRENT_USER.email)||'').replace(/"/g,'&quot;')+'"><div style="font-size:11px;color:var(--muted);margin-top:4px">Defaults to your login email if left blank.</div>'
     : '';
   var specialBlock = paid
     ? '<label class="flbl">Special / offer</label><input id="ob_special" class="finput" value="'+String(b.special||'').replace(/"/g,'&quot;')+'">'+
@@ -1262,6 +1265,9 @@ function catTakesReservations(cat){
 }
 // A business is reservable if its category is a dining venue OR it has an explicit booking link.
 function isReservable(p){ return !!(p && (catTakesReservations(p.cat) || p.book)); }
+// Reservations are ACTUALLY bookable only when the spot links out to a provider
+// OR is Verified+ (tier>=2) — a Free listing can't receive requests it can't manage.
+function canReserveNow(p){ return !!(p && isReservable(p) && (p.book || (p.tier||1)>=2)); }
 // A grouped <select> that teaches which categories enable reservations.
 function catSelect(id,cur,onchange){
   cur=cur||'';
@@ -1290,6 +1296,7 @@ function bookingLink(p){
 function reserveStop(key){
   var p=PB[key]; if(!p)return;
   if(p.book){ window.open(webUrl(p.book),'_blank'); return; }  // they use OpenTable/Resy/etc.
+  if(!canReserveNow(p)){ toast('Reservations aren’t on for this spot yet'); return; }
   if(!CURRENT_USER){ toast('Sign in to reserve — so we can track your status'); acctPrompt('reserve'); return; }
   openResv(key);                                              // else: native Do Inglewood request
 }
@@ -1628,7 +1635,7 @@ function openListing(k,from){
     </div>
     <iframe title="Map of ${xmlEsc(p.n)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" style="width:100%;height:120px;border:0;border-radius:14px;margin-top:14px;display:block" src="https://www.google.com/maps?q=${encodeURIComponent(p.n+', '+(p.addr||'')+', Inglewood CA')}&output=embed"></iframe>
     ${menuHTML(p)}
-    ${isReservable(p)?((p.book||p.tier>=2)
+    ${isReservable(p)?(canReserveNow(p)
       ?`<button class="btn btn-primary" style="width:100%;margin-top:16px;padding:14px;font-size:15px" onclick="reserveStop('${p.k}')">${ICON.cal} Reserve a Table</button>`
       :`<button class="btn" style="width:100%;margin-top:16px;padding:14px;font-size:14px;opacity:.5;background:var(--panel-2);color:var(--muted);border:1px solid var(--line);cursor:not-allowed" onclick="toast('Reservations are not on for this spot yet')">${ICON.cal} Reservations — coming soon</button>`
     ):''}
@@ -1645,7 +1652,7 @@ function openListing(k,from){
   go('listing');
   var rb=document.getElementById('reserveBar');
   if(rb){
-    if(isReservable(p)&&(p.book||p.tier>=2)){
+    if(canReserveNow(p)){
       rb.innerHTML='<button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px" onclick="reserveStop(\''+p.k+'\')">'+ICON.cal+' Reserve a Table</button>';
       rb.style.display='block';
     } else { rb.style.display='none'; }
@@ -1927,7 +1934,7 @@ function stopHTML(icon,num,name,sub,connector,key,swappable){
   else if(rstat==='requested') resv='<span class="tbtn" style="color:var(--gold)">Requested&#8230;</span>'+cancelBtn;
   else if(rstat==='declined') resv='<span class="tbtn pink" onclick="event.stopPropagation();reserveStop(\''+key+'\')">Try another time</span>';
   else if(rstat==='cancelled') resv='<span class="tbtn pink" onclick="event.stopPropagation();reserveStop(\''+key+'\')">Reserve again</span>';
-  else resv = (key&&PB[key]&&isReservable(PB[key])) ? '<span class="tbtn pink" onclick="event.stopPropagation();reserveStop(\''+key+'\')">Reserve</span>' : '';
+  else resv = (key&&PB[key]&&canReserveNow(PB[key])) ? '<span class="tbtn pink" onclick="event.stopPropagation();reserveStop(\''+key+'\')">Reserve</span>' : '';
   var swap = swappable&&key ? '<span class="tbtn" onclick="event.stopPropagation();swapStop(\''+key+'\')">Replace</span>' : '';
   var dirbtn=key?'<span class="tbtn" onclick="event.stopPropagation();openDirections(\''+key+'\')">Directions</span>':'';
   var click=key?'onclick="openListing(\''+key+'\',\'detail\')" style="cursor:pointer"':'';
