@@ -2165,7 +2165,16 @@ function renderEvents(){
       '</div>';
     }).join('');
   }
-  document.getElementById('events-list').innerHTML=head+body;
+  // ---- Coming up: every future event, so nothing is ever hidden by the month view ----
+  var up='', seenD={}, totalUp=0;
+  futureDates.forEach(function(ds){
+    if(seenD[ds])return; seenD[ds]=1;
+    var d2=parseD(ds), inner='';
+    eventsOn(ds).forEach(function(e){ totalUp++; inner+='<div class="upe"><span class="upe-ic">'+evIcon(e)+'</span> '+evEsc(e.title)+' <span>· '+evEsc(e.venue||'')+'</span></div>'; });
+    up+='<div class="uprow'+(ds===selDate?' sel':'')+'" onclick="selectDay(\''+ds+'\')"><div class="upd"><b>'+d2.getDate()+'</b><span>'+d2.toLocaleDateString(undefined,{month:'short'})+'</span></div><div class="upl">'+inner+'</div></div>';
+  });
+  up = totalUp ? ('<div class="uphead">Coming up <span style="font-size:13px;color:var(--muted);font-weight:600">· '+totalUp+' event'+(totalUp===1?'':'s')+'</span></div>'+up) : '';
+  document.getElementById('events-list').innerHTML=head+body+up;
 }
 function calShift(delta){ var d=new Date(calY,calM+delta,1); calY=d.getFullYear(); calM=d.getMonth(); renderEvents(); }
 function selectDay(iso){ selDate=iso; var d=parseD(iso); calY=d.getFullYear(); calM=d.getMonth(); renderEvents(); document.getElementById('screen').scrollTop=0; }
