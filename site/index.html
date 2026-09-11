@@ -304,6 +304,8 @@
   .upl{flex:1;min-width:0;}
   .upe{font-size:13px;margin:3px 0;}
   .upe span{color:var(--muted);}
+  .upe-ic{display:inline-block;vertical-align:-3px;color:var(--muted);}
+  .upe-ic svg{width:15px;height:15px;}
   .dchip{flex:0 0 auto;width:52px;text-align:center;padding:9px 0;border-radius:14px;background:var(--panel);border:1px solid var(--line);cursor:pointer;transition:.15s;}
   .dchip .dw{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);}
   .dchip .dn{font-size:19px;font-weight:800;margin-top:2px;font-variant-numeric:tabular-nums;}
@@ -317,7 +319,8 @@
   .evrow{display:flex;gap:12px;align-items:center;margin:0 16px 10px;padding:12px;background:var(--panel);border:1px solid var(--line);border-radius:16px;}
   .evrow .evtime{flex:0 0 54px;text-align:center;}
   .evrow .evtime .t{font-size:13px;font-weight:800;color:var(--gold);line-height:1.15;}
-  .evrow .evtime .ic{font-size:20px;margin-top:2px;}
+  .evrow .evtime .ic{margin-top:4px;color:var(--gold);display:flex;justify-content:center;}
+  .evrow .evtime .ic svg{width:20px;height:20px;}
   .evrow .evbody{flex:1;min-width:0;}
   .evrow .evname{font-size:15px;font-weight:700;line-height:1.25;}
   .evrow .evmeta{font-size:12.5px;color:var(--muted);margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
@@ -442,6 +445,7 @@
     <!-- EVENTS / CALENDAR -->
     <div class="view" id="view-events">
       <div class="head-bar"><div class="back" onclick="go('home')">&#8249;</div><div class="logo-mini" role="img" aria-label="Do Inglewood" title="Home" onclick="go('home')"></div><span class="htitle">What's Happening</span></div>
+      <div class="filterbar" id="evfilters"></div>
       <div class="monthjump" id="monthjump"></div>
       <div class="datestrip" id="datestrip"></div>
       <div id="events-list"></div>
@@ -1733,7 +1737,7 @@ function eventStopHTML(ev,num){
   var tickets=ev.url?'<span class="tbtn" onclick="event.stopPropagation();window.open(\''+ev.url+'\',\'_blank\')">Tickets</span>':'';
   return '<div class="tstop"><div class="tline"><div class="tdot tnum" style="background:var(--gold);color:#1a1400">'+num+'</div><div class="tconnector"></div></div>'+
     '<div class="tbody" style="border:1px solid var(--gold);border-radius:12px;padding:8px 10px;background:rgba(245,197,66,.08)">'+
-    '<div class="tname">🎤 '+evEsc(ev.title)+' <span class="chip chip-special" style="vertical-align:middle">Event</span></div>'+
+    '<div class="tname"><span style="vertical-align:-3px">'+evIcon(ev)+'</span> '+evEsc(ev.title)+' <span class="chip chip-special" style="vertical-align:middle">Event</span></div>'+
     '<div class="tsub">'+sub+'</div><div class="tactions">'+tickets+'</div></div></div>';
 }
 function swapStop(key){
@@ -1899,12 +1903,68 @@ async function loadEvents(){
   }catch(e){ console.warn('Events load failed — using built-in list.',e); }
   EV=EVENTS_FALLBACK.map(e=>Object.assign({},e));
 }
+// Monochrome line icons for events (match the app's grayscale language).
+var EVICON={
+  basketball:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v18"/><path d="M3 12h18"/><path d="M5.6 5.6a12 12 0 0 0 0 12.8"/><path d="M18.4 5.6a12 12 0 0 1 0 12.8"/></svg>',
+  football:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="9" ry="5.5"/><path d="M8.5 12h7"/><path d="M10 10.4v3.2M12 9.9v4.2M14 10.4v3.2"/></svg>',
+  concert:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V6l10-2v10"/><circle cx="6.5" cy="18" r="2.4"/><circle cx="16.5" cy="14" r="2.4"/></svg>',
+  comedy:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0"/><path d="M12 17v4"/><path d="M9 21h6"/></svg>',
+  community:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 3 14.6 8.6 21 9.3 16.3 13.6 17.8 20 12 16.4 6.2 20 7.7 13.6 3 9.3 9.4 8.6"/></svg>',
+  ticket:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1.5a2 2 0 0 0 0 4v1.5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1.5a2 2 0 0 0 0-4z"/><path d="M15 6.5v11"/></svg>'
+};
+var _NBA=/clippers|lakers|celtics|76ers|sixers|warriors|suns|magic|wizards|spurs|pistons|grizzlies|bucks|\bheat\b|knicks|\bnets\b|\bhawks\b|bulls|cavaliers|cavs|mavericks|mavs|nuggets|rockets|jazz|kings|pelicans|pacers|hornets|raptors|timberwolves|thunder|blazers|\bnba\b|basketball/;
+var _NFL=/chargers|\brams\b|chiefs|seahawks|49ers|niners|cowboys|eagles|raiders|broncos|bills|dolphins|patriots|\bjets\b|steelers|ravens|bengals|browns|texans|colts|jaguars|titans|packers|bears|lions|vikings|falcons|panthers|saints|buccaneers|cardinals|commanders|giants|\bnfl\b|football/;
+// Work out what an event actually is (category first, then VENUE, then teams).
+function evKind(e){
+  var t=String((e&&e.title)||'').toLowerCase();
+  var v=String((e&&e.venue)||'').toLowerCase();
+  var c=String((e&&e.category)||'').toLowerCase();
+  if(c.indexOf('concert')>=0||c.indexOf('music')>=0) return 'concert';
+  if(c.indexOf('comedy')>=0) return 'comedy';
+  if(c.indexOf('community')>=0||c.indexOf('festival')>=0) return 'community';
+  if(c.indexOf('sport')>=0 || / vs\.? /.test(' '+t+' ') || / at /.test(t)){
+    // Venue is the strongest signal: Intuit Dome = Clippers (basketball), SoFi = football.
+    if(v.indexOf('intuit dome')>=0) return 'basketball';
+    if(v.indexOf('sofi')>=0) return 'football';
+    if(_NFL.test(t)) return 'football';
+    if(_NBA.test(t)) return 'basketball';
+    return 'ticket';
+  }
+  if(_NFL.test(t)) return 'football';
+  if(_NBA.test(t)) return 'basketball';
+  return 'ticket';
+}
+function evIcon(e){ return EVICON[evKind(e)]||EVICON.ticket; }
+function evLabel(e){ var L={basketball:'Basketball',football:'Football',concert:'Concert',comedy:'Comedy',community:'Community'}; return L[evKind(e)]||(e&&e.category)||'Event'; }
+function evKindClass(e){ var k=evKind(e); return (k==='basketball'||k==='football')?'sports':(k==='community'?'community':'concert'); }
 function evEmoji(c){return ({Concert:'🎤',Sports:'🏈',Community:'🎪',Comedy:'🎭',Special:'🍸'})[c]||'🎟️';}
 function evTagClass(c){return ({Concert:'concert',Sports:'sports',Community:'community',Special:'special'})[c]||'concert';}
 function parseD(iso){var p=String(iso||'').split('-');return new Date(+p[0],(+p[1]||1)-1,(+p[2]||1));}
 function isoOf(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function timeVal(t){if(!t)return 0;var m=String(t).match(/(\d+):(\d+)\s*(AM|PM)/i);if(!m)return 0;var h=(+m[1])%12+(/pm/i.test(m[3])?12:0);return h*60+(+m[2]);}
-function eventsOn(iso){return EV.filter(e=>e.date===iso).sort((a,b)=>timeVal(a.time)-timeVal(b.time));}
+let evFilter='all';
+function evMatch(e){
+  if(evFilter==='all') return true;
+  var k=evKind(e);
+  if(evFilter==='games') return k==='basketball'||k==='football';
+  if(evFilter==='concerts') return k==='concert';
+  if(evFilter==='comedy') return k==='comedy';
+  if(evFilter==='community') return k==='community';
+  return true;
+}
+function setEvFilter(f){ evFilter=f; renderEvents(); document.getElementById('screen').scrollTop=0; }
+function buildEvFilters(){
+  var host=document.getElementById('evfilters'); if(!host) return;
+  var kinds={}; EV.forEach(function(e){ kinds[evKind(e)]=1; });
+  var chips=[['all','All']];
+  if(kinds.basketball||kinds.football) chips.push(['games','Games']);
+  if(kinds.concert) chips.push(['concerts','Concerts']);
+  if(kinds.comedy) chips.push(['comedy','Comedy']);
+  if(kinds.community) chips.push(['community','Community']);
+  if(chips.length<=1){ host.innerHTML=''; return; }   // nothing to filter
+  host.innerHTML=chips.map(function(c){ return '<div class="fchip'+(evFilter===c[0]?' on':'')+'" onclick="setEvFilter(\''+c[0]+'\')">'+c[1]+'</div>'; }).join('');
+}
+function eventsOn(iso){return EV.filter(e=>e.date===iso&&evMatch(e)).sort((a,b)=>timeVal(a.time)-timeVal(b.time));}
 let selDate=null;
 function monthKey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
 function jumpMonth(y,m){
@@ -1915,8 +1975,9 @@ function jumpMonth(y,m){
   selectDay(target);
 }
 function renderEvents(){
+  buildEvFilters();
   var today=new Date();today.setHours(0,0,0,0);
-  var futureDates=EV.map(function(e){return e.date;}).filter(function(d){return parseD(d)>=today;}).sort();
+  var futureDates=EV.filter(function(e){return evMatch(e)&&parseD(e.date)>=today;}).map(function(e){return e.date;}).sort();
   if(!selDate){ selDate=futureDates.length?futureDates[0]:isoOf(today); }
   // Strip spans from today through the last event (so a full season of games is browsable), capped ~13 months
   var lastEv=futureDates.length?parseD(futureDates[futureDates.length-1]):today;
@@ -1945,9 +2006,9 @@ function renderEvents(){
   }else{
     body=evs.map(function(e){
       return '<div class="evrow">'+
-        '<div class="evtime"><div class="t">'+evEsc(e.time||'')+'</div><div class="ic">'+evEmoji(e.category)+'</div></div>'+
+        '<div class="evtime"><div class="t">'+evEsc(e.time||'')+'</div><div class="ic">'+evIcon(e)+'</div></div>'+
         '<div class="evbody"><div class="evname">'+evEsc(e.title)+'</div>'+
-        '<div class="evmeta"><span class="evtag '+evTagClass(e.category)+'">'+evEsc((e.category||'Event').toUpperCase())+'</span>'+
+        '<div class="evmeta"><span class="evtag '+evKindClass(e)+'">'+evEsc(evLabel(e).toUpperCase())+'</span>'+
         '📍 '+evEsc(e.venue||'')+(e.price?' · '+evEsc(e.price):'')+'</div></div>'+
         '<button class="evplan" onclick="planAround(\''+e.id+'\')">Plan my day</button>'+
       '</div>';
@@ -1958,7 +2019,7 @@ function renderEvents(){
   futureDates.forEach(function(ds){
     if(seenD[ds])return; seenD[ds]=1;
     var d2=parseD(ds), inner='';
-    eventsOn(ds).forEach(function(e){ inner+='<div class="upe">'+evEmoji(e.category)+' '+evEsc(e.title)+' <span>· '+evEsc(e.venue||'')+'</span></div>'; });
+    eventsOn(ds).forEach(function(e){ inner+='<div class="upe"><span class="upe-ic">'+evIcon(e)+'</span> '+evEsc(e.title)+' <span>· '+evEsc(e.venue||'')+'</span></div>'; });
     up+='<div class="uprow'+(ds===selDate?' sel':'')+'" onclick="selectDay(\''+ds+'\')"><div class="upd"><b>'+d2.getDate()+'</b><span>'+d2.toLocaleDateString(undefined,{month:'short'})+'</span></div><div class="upl">'+inner+'</div></div>';
   });
   if(up) up='<div class="uphead">All upcoming</div>'+up;
