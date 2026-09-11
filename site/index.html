@@ -95,7 +95,9 @@
   .catgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;padding:4px 20px 0;}
   .cat{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:13px 4px;text-align:center;cursor:pointer;}
   .cat:active{background:var(--panel-2);}
-  .cat .ic{font-size:20px;}
+  .cat:active .ic{color:var(--pink);transform:scale(.92);}
+  .cat .ic{color:var(--muted);transition:color .12s,transform .12s;}
+  .cat .ic svg{width:23px;height:23px;display:block;margin:0 auto;}
   .cat .lb{font-family:'Barlow Condensed';font-weight:600;font-size:11px;margin-top:5px;letter-spacing:.3px;}
 
   /* EXPLORE */
@@ -410,14 +412,14 @@
       <div class="sect">
         <div class="sect-head"><h3>Explore Inglewood</h3></div>
         <div class="catgrid">
-          <div class="cat" onclick="filterTo('Food')"><div class="ic">&#127869;</div><div class="lb">Food</div></div>
-          <div class="cat" onclick="filterTo('Lounges')"><div class="ic">&#127863;</div><div class="lb">Lounges</div></div>
-          <div class="cat" onclick="filterTo('Casino')"><div class="ic">&#127920;</div><div class="lb">Casino</div></div>
-          <div class="cat" onclick="filterTo('Hotels')"><div class="ic">&#127976;</div><div class="lb">Hotels</div></div>
-          <div class="cat" onclick="filterTo('Dessert')"><div class="ic">&#9749;</div><div class="lb">Coffee &amp; Dessert</div></div>
-          <div class="cat" onclick="filterTo('Seafood')"><div class="ic">&#129424;</div><div class="lb">Seafood</div></div>
-          <div class="cat" onclick="filterTo('Brunch')"><div class="ic">&#127859;</div><div class="lb">Brunch</div></div>
-          <div class="cat" onclick="filterTo('All')"><div class="ic">&#128450;</div><div class="lb">All</div></div>
+          <div class="cat" onclick="filterTo('Food')"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2v7a2 2 0 0 1-4 0V2"/><line x1="5" y1="9" x2="5" y2="22"/><path d="M18 2c-1.7 0-3 2-3 5s1.3 4 3 4"/><line x1="18" y1="2" x2="18" y2="22"/></svg></div><div class="lb">Food</div></div>
+          <div class="cat" onclick="filterTo('Lounges')"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16l-8 9z"/><line x1="12" y1="13" x2="12" y2="20"/><line x1="8" y1="20" x2="16" y2="20"/></svg></div><div class="lb">Lounges</div></div>
+          <div class="cat" onclick="filterTo('Casino')"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="8.5" cy="8.5" r="1" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1" fill="currentColor" stroke="none"/></svg></div><div class="lb">Casino</div></div>
+          <div class="cat" onclick="filterTo('Hotels')"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18V9a1 1 0 0 1 1-1h13a3 3 0 0 1 3 3v7"/><path d="M3 14h18"/><path d="M7 11h3"/><line x1="3" y1="18" x2="3" y2="20"/><line x1="21" y1="18" x2="21" y2="20"/></svg></div><div class="lb">Hotels</div></div>
+          <div class="cat" onclick="filterTo('Dessert')"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h11v5a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4z"/><path d="M16 9h2a2 2 0 0 1 0 4h-2"/><line x1="7" y1="2" x2="7" y2="4.5"/><line x1="11" y1="2" x2="11" y2="4.5"/></svg></div><div class="lb">Coffee &amp; Dessert</div></div>
+          <div class="cat" onclick="filterTo('Seafood')"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 12c2.5-4 7-5 11-3.5 1.8.7 3.5 2 3.5 3.5s-1.7 2.8-3.5 3.5C13.5 17 9 16 6.5 12z"/><path d="M6.5 12 3 8.5v7z"/><circle cx="16.5" cy="11" r=".7" fill="currentColor" stroke="none"/></svg></div><div class="lb">Seafood</div></div>
+          <div class="cat" onclick="filterTo('Brunch')"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="4"/><path d="M12 4v2M5 7l1.5 1.5M19 7l-1.5 1.5M3 13h2M19 13h2"/></svg></div><div class="lb">Brunch</div></div>
+          <div class="cat" onclick="filterTo('All')"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div><div class="lb">All</div></div>
         </div>
       </div>
 
