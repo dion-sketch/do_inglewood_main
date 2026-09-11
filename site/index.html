@@ -650,6 +650,8 @@
         </ul>
         <button class="tb-paid" onclick="openClaimForm(null,3)">Claim to Upgrade</button>
       </div>
+      <div style="margin:2px 20px 8px;text-align:center;font-size:13px;color:var(--muted)">Don't see your business in the directory?<br><a onclick="openAddForm()" style="color:var(--gold);font-weight:700;cursor:pointer">Add your business →</a></div>
+      <div style="margin:0 20px 6px;text-align:center;font-size:11.5px;color:var(--muted)">Hotel or large venue? Ask about our Enterprise plans built for event weekends.</div>
       <div class="disclaimer" style="margin:0 20px 16px;">Your listing is free — always. Claim it to take control, then upgrade to Verified or Premium anytime for more reach. Cancel whenever you like.</div>
     </div>
 
@@ -693,6 +695,56 @@
 
         <button class="btn btn-primary" style="width:100%;font-size:15px;padding:14px" onclick="submitClaim()">Submit Claim &#8594;</button>
         <div style="font-size:12px;color:var(--muted);margin-top:12px;text-align:center;line-height:1.5;">We review every claim within 72 hours. You'll get an email at the address above once you're approved.</div>
+      </div>
+    </div>
+
+    <!-- ADD A NEW BUSINESS (not in the directory yet) -->
+    <div class="view" id="view-add">
+      <div class="head-bar"><div class="back" onclick="go('claim')">&#8249;</div><div class="logo-mini" role="img" aria-label="Do Inglewood" title="Home" onclick="go('home')"></div><span class="htitle">Add Your Business</span></div>
+      <div style="padding:16px 20px 40px;">
+        <div style="font-size:13px;color:var(--gold);margin-bottom:6px;font-weight:600;">Don't see your business? Add it here — free.</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.5;">We review every submission (usually within 72 hours) to confirm it's a real business before it goes live. Your free listing shows your name, info &amp; one photo. Add more photos, a menu &amp; reservations by upgrading later.</div>
+
+        <label class="flbl">Business name</label>
+        <input id="ab_name" class="finput" placeholder="e.g. Auntie's Kitchen" autocomplete="off">
+
+        <label class="flbl">Category</label>
+        <div id="ab_cat_wrap"></div>
+        <div id="ab_cat_hint" style="font-size:11.5px;margin-top:5px"></div>
+
+        <label class="flbl">Address</label>
+        <input id="ab_addr" class="finput" placeholder="Street, City (Inglewood or nearby)" autocomplete="off">
+
+        <label class="flbl">Hours</label>
+        <input id="ab_hours" class="finput" placeholder="e.g. Daily · 11 AM–9 PM" autocomplete="off">
+
+        <label class="flbl">Phone</label>
+        <input id="ab_phone" class="finput" type="tel" placeholder="(310) 555-1234" autocomplete="off">
+
+        <label class="flbl">Website (optional)</label>
+        <input id="ab_web" class="finput" placeholder="https://…" autocomplete="off">
+
+        <label class="flbl">Short description</label>
+        <textarea id="ab_desc" class="finput" rows="3" placeholder="Tell visitors what makes you special."></textarea>
+
+        <div style="border-top:1px solid var(--line);margin:18px 0 4px"></div>
+        <div style="font-weight:700;font-size:14px;font-family:'Barlow Condensed'">Your details (so we can verify you)</div>
+        <div style="display:flex;gap:10px">
+          <div style="flex:1"><label class="flbl">First name</label><input id="ab_first" class="finput" autocomplete="off"></div>
+          <div style="flex:1"><label class="flbl">Last name</label><input id="ab_last" class="finput" autocomplete="off"></div>
+        </div>
+        <label class="flbl">Your email</label>
+        <input id="ab_email" class="finput" type="email" placeholder="you@yourbusiness.com" autocomplete="off">
+        <label class="flbl">Your role</label>
+        <select id="ab_role" class="finput"><option>Owner</option><option>Manager</option><option>Authorized representative</option></select>
+
+        <label style="display:flex;gap:10px;align-items:flex-start;margin:16px 0;font-size:13px;color:var(--muted);cursor:pointer;line-height:1.45;">
+          <input id="ab_attest" type="checkbox" style="margin-top:2px;width:18px;height:18px;flex:none;accent-color:var(--gold)">
+          <span>I certify that I am the owner or an authorized representative of this business, and the information above is accurate.</span>
+        </label>
+
+        <button class="btn btn-primary" style="width:100%;font-size:15px;padding:14px" onclick="submitAddBiz()">Submit for Review &#8594;</button>
+        <div style="font-size:12px;color:var(--muted);margin-top:12px;text-align:center;line-height:1.5;">Once approved, it appears in the directory and shows up in your dashboard to manage.</div>
       </div>
     </div>
 
@@ -775,29 +827,15 @@ async function onAuthChange(){
 async function loadMyBusiness(){
   if(!CURRENT_USER){ MY_BIZ=null; return; }
   try{ var r=await SB.from('di_businesses').select('*').eq('claimed_by',CURRENT_USER.id); MY_BIZ=(r.data&&r.data[0])||null; }catch(e){ MY_BIZ=null; }
-  // If they've paid (Verified+) and were holding draft edits, publish them now.
-  try{
-    if(MY_BIZ && (MY_BIZ.tier||1)>=2 && MY_BIZ.draft && Object.keys(MY_BIZ.draft).length){
-      await SB.from('di_businesses').update(Object.assign({}, MY_BIZ.draft, {draft:null})).eq('id',MY_BIZ.id);
-      var r2=await SB.from('di_businesses').select('*').eq('claimed_by',CURRENT_USER.id);
-      MY_BIZ=(r2.data&&r2.data[0])||MY_BIZ;
-    }
-  }catch(e){}
 }
-// True once they've paid — edits publish straight to the public listing.
+// True once they've paid (Verified+) — unlocks gallery, menu, reservations, specials.
 function ownerIsPaid(){ return !!(MY_BIZ && (MY_BIZ.tier||1)>=2); }
-// What the OWNER should see/edit: live for paid, live+draft for unpaid.
-function ownerView(){ return ownerIsPaid() ? (MY_BIZ||{}) : Object.assign({}, MY_BIZ||{}, (MY_BIZ&&MY_BIZ.draft)||{}); }
-// Route an owner edit: paid -> live columns; unpaid -> held in `draft`.
+// What the OWNER sees/edits (basic listing is live for every tier).
+function ownerView(){ return MY_BIZ||{}; }
+// Write an owner edit straight to the live listing.
 async function ownerWrite(patch){
   if(!MY_BIZ) return {error:{message:'No business linked'}};
-  if(ownerIsPaid()){
-    return await SB.from('di_businesses').update(patch).eq('id',MY_BIZ.id);
-  }
-  var d=Object.assign({}, MY_BIZ.draft||{}, patch);
-  var res=await SB.from('di_businesses').update({draft:d}).eq('id',MY_BIZ.id);
-  if(!res.error) MY_BIZ.draft=d;   // keep local copy in sync for immediate re-render
-  return res;
+  return await SB.from('di_businesses').update(patch).eq('id',MY_BIZ.id);
 }
 async function sendMagicLink(){
   var email=gv('authEmail'); if(!email){ toast('Enter your email'); return; }
@@ -817,67 +855,83 @@ function updateAccountUI(){
 function renderOwner(){
   var host=document.getElementById('owner-body'); if(!host)return;
   if(!CURRENT_USER){ host.innerHTML='<div class="ev-empty"><div class="big">&#128100;</div>Sign in to manage your business.<br><button class="btn btn-primary" style="margin-top:14px" onclick="acctPrompt(\'signin\')">Sign In</button></div>'; return; }
-  if(!MY_BIZ){ host.innerHTML='<div class="ev-empty"><div class="big">&#127978;</div>No business linked to your account yet.<br>Claim your business — once we approve it (within 72 hours) it shows here to manage.<br><button class="btn btn-primary" style="margin-top:14px" onclick="go(\'claim\')">Claim a Business</button></div>'; return; }
-  // Unpaid owners edit into `draft`; show THEM their pending edits (public still sees live).
-  var paid=(MY_BIZ.tier||1)>=2;
-  var hasDraft=!!(MY_BIZ.draft && Object.keys(MY_BIZ.draft).length);
-  var b = paid ? MY_BIZ : Object.assign({}, MY_BIZ, MY_BIZ.draft||{});
+  if(!MY_BIZ){ host.innerHTML='<div class="ev-empty"><div class="big">&#127978;</div>No business linked to your account yet.<br>Claim a listing that\'s already here, or add a new one — we approve it (within 72 hours), then it shows here to manage.<br><button class="btn btn-primary" style="margin-top:14px" onclick="go(\'claim\')">Claim a Business</button><br><button class="btn btn-ghost" style="margin-top:8px" onclick="openAddForm()">Add a New Business</button></div>'; return; }
+  var b=MY_BIZ;
+  var tier=(b.tier||1), paid=tier>=2, large=!!b.is_large;
+  var planTag=large?'Enterprise':'Verified', pv=priceFor(2,large), pp=priceFor(3,large);
   function fld(lbl,id,v){ return '<label class="flbl">'+lbl+'</label><input id="'+id+'" class="finput" value="'+String(v==null?'':v).replace(/"/g,'&quot;')+'">'; }
-  var badge=b.tier>=3?'<span class="chip chip-sponsored">&#11088; Premium</span>':(b.tier>=2?'<span class="chip chip-verified">Verified</span>':'<span class="chip chip-import">Free</span>');
-  var draftBanner = paid ? '' :
-    '<div style="margin:0 0 14px;padding:12px 14px;border-radius:12px;background:rgba(255,46,126,.08);border:1px solid rgba(255,46,126,.35)">'+
-      '<div style="font-weight:800;font-size:13px;font-family:\'Barlow Condensed\';letter-spacing:.3px">'+
-        (hasDraft?'&#9998; Draft saved &#183; not public yet':'&#128274; Your listing is in draft mode')+'</div>'+
-      '<div style="font-size:12px;color:var(--muted);margin-top:3px">Edit freely and save — visitors still see your current listing. '+
-        '<b style="color:var(--txt)">Publish it live &amp; turn on reservations</b> by going Verified.</div>'+
-      '<button class="btn btn-primary" style="width:100%;margin-top:10px;padding:11px" onclick="startUpgrade(2)">Publish live &#183; Go Verified &#183; $69/mo</button>'+
+  function lockRow(title){ return '<div style="display:flex;align-items:center;gap:8px;padding:11px 12px;border:1px dashed var(--line);border-radius:11px;margin-bottom:8px;color:var(--muted);font-size:13px"><span>'+title+'</span><span style="margin-left:auto;font-size:11px;color:var(--gold);font-weight:700">'+planTag+'</span></div>'; }
+  var badge=tier>=3?'<span class="chip chip-sponsored">&#11088; Premium</span>':(tier>=2?'<span class="chip chip-verified">Verified</span>':'<span class="chip chip-import">Free</span>')+(large?' <span class="chip chip-verified">Enterprise</span>':'');
+  // Gallery: a Verified feature. Free tier gets one main photo only.
+  var galleryBlock = paid
+    ? '<div style="font-size:12px;color:var(--muted);margin:10px 0 4px">More photos</div>'+
+      '<div id="ob_gallery" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">'+galleryThumbs(b.photos||[])+'</div>'+
+      '<label class="btn btn-ghost" style="display:inline-block;cursor:pointer;margin-bottom:6px">&#10133; Add more photos<input type="file" accept="image/*" multiple style="display:none" onchange="uploadExtraPhotos(this.files)"></label>'
+    : '';
+  // Reservation + menu + special fields: Verified features. Free tier sees a locked list.
+  var reservBlock = paid
+    ? '<label class="flbl">Reservation / booking link</label><input id="ob_book" class="finput" placeholder="OpenTable / Resy / Booksy / your website" value="'+String(b.booking_url||'').replace(/"/g,'&quot;')+'">'+
+      '<label class="flbl">Reservation provider</label><select id="ob_prov" class="finput">'+['','OpenTable','Resy','Booksy','Yelp Reservations','My own website','Phone only'].map(function(o){return '<option value="'+o+'"'+(((b.reservation_provider||'')===o)?' selected':'')+'>'+(o||'None yet — use Do Inglewood')+'</option>';}).join('')+'</select>'+
+      '<label class="flbl">Reservation alerts to (email)</label><input id="ob_notify" class="finput" type="email" placeholder="where new-request emails go" value="'+String(b.notify_email||(CURRENT_USER&&CURRENT_USER.email)||'').replace(/"/g,'&quot;')+'">'
+    : '';
+  var specialBlock = paid
+    ? '<label class="flbl">Special / offer</label><input id="ob_special" class="finput" value="'+String(b.special||'').replace(/"/g,'&quot;')+'">'
+    : '<input id="ob_special" type="hidden" value="'+String(b.special||'').replace(/"/g,'&quot;')+'">';
+  var menuBlock = paid
+    ? '<div style="font-size:12px;color:var(--muted);margin:16px 0 6px">&#127860; Menu — show your best dishes</div>'+
+      '<div id="ob_menu">'+menuRowsHTML(b.menu||[])+'</div>'+
+      '<button type="button" class="btn btn-ghost" style="margin-bottom:2px" onclick="addMenuRow()">+ Add dish</button>'
+    : '<div id="ob_menu" style="display:none"></div>';
+  var upsell = paid ? '' :
+    '<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--line)">'+
+      '<div style="font-weight:800;font-size:15px;font-family:\'Barlow Condensed\';margin-bottom:8px">Unlock more with '+planTag+'</div>'+
+      lockRow('Add more photos (gallery)')+lockRow('Add your menu')+lockRow('Turn on reservations')+lockRow('Post a special / offer')+
+      '<button class="btn btn-primary" style="width:100%;margin-top:4px;padding:12px" onclick="startUpgrade(2)">Go '+planTag+' &#183; $'+pv+'/mo</button>'+
+      '<button class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="startUpgrade(3)">Go '+(large?'Enterprise Premium':'Premium')+' &#183; $'+pp+'/mo &#183; top placement</button>'+
+      '<div style="font-size:11px;color:var(--muted);margin-top:8px">'+(large?'Enterprise plans are billed by our team — tap and we’ll email your invoice.':'Secure checkout by Stripe. Your new badge activates once payment clears.')+'</div>'+
     '</div>';
+  var premiumUp = (paid && tier<3) ?
+    '<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--line)">'+
+      '<div style="font-weight:800;font-size:15px;font-family:\'Barlow Condensed\';margin-bottom:4px">Go Premium</div>'+
+      '<div style="font-size:12px;color:var(--muted);margin-bottom:10px">Top of your category, Sponsored badge, event-weekend promotion.</div>'+
+      '<button class="btn btn-ghost" style="width:100%" onclick="startUpgrade(3)">Go '+(large?'Enterprise Premium':'Premium')+' &#183; $'+pp+'/mo</button>'+
+    '</div>' : '';
   host.innerHTML =
     '<div style="font-weight:800;font-size:20px;font-family:\'Barlow Condensed\'">'+(b.name||'')+' '+badge+'</div>'+
-    '<div style="font-size:12px;color:var(--muted);margin:4px 0 14px">'+(paid?'Edit your listing — changes go live instantly.':'Edit your listing — saved privately until you publish.')+'</div>'+
-    draftBanner+
+    '<div style="font-size:12px;color:var(--muted);margin:4px 0 14px">'+(paid?'Edit your listing — changes go live instantly.':'Your free listing is live. Edit your info &amp; photo below; upgrade to add more.')+'</div>'+
     '<div style="height:150px;border-radius:12px;background:#0f0f15 center/cover no-repeat;background-image:url(\''+(b.photo_url||'')+'\');border:1px solid var(--line);margin-bottom:8px"></div>'+
     '<label class="btn btn-ghost" style="display:inline-block;cursor:pointer;margin-bottom:6px">&#128247; Upload main photo<input type="file" accept="image/*" style="display:none" onchange="uploadMainPhoto(this.files[0])"></label>'+
-    '<div style="font-size:12px;color:var(--muted);margin:10px 0 4px">More photos</div>'+
-    '<div id="ob_gallery" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">'+galleryThumbs(b.photos||[])+'</div>'+
-    '<label class="btn btn-ghost" style="display:inline-block;cursor:pointer;margin-bottom:6px">&#10133; Add more photos<input type="file" accept="image/*" multiple style="display:none" onchange="uploadExtraPhotos(this.files)"></label>'+
+    galleryBlock+
     fld('Business name','ob_name',b.name)+
     '<label class="flbl">Category</label>'+catSelect('ob_cat',b.category,"catResvHint('ob_cat','ob_cat_hint')")+'<div id="ob_cat_hint" style="font-size:11.5px;margin-top:5px"></div>'+
     fld('Address','ob_addr',b.address)+fld('Hours','ob_hours',b.hours)+
     fld('Phone','ob_phone',b.phone)+fld('Website','ob_web',b.website)+fld('Price ($, $$, $$$)','ob_price',b.price_level)+
     fld('Avg per person ($)','ob_cpp',b.avg_per_person)+
-    '<label class="flbl">Reservation / booking link</label><input id="ob_book" class="finput" placeholder="OpenTable / Resy / Booksy / your website" value="'+String(b.booking_url||'').replace(/"/g,'&quot;')+'">'+
-    '<label class="flbl">Reservation provider</label><select id="ob_prov" class="finput">'+['','OpenTable','Resy','Booksy','Yelp Reservations','My own website','Phone only'].map(function(o){return '<option value="'+o+'"'+(((b.reservation_provider||'')===o)?' selected':'')+'>'+(o||'None yet — use Do Inglewood')+'</option>';}).join('')+'</select>'+
-    '<label class="flbl">Reservation alerts to (email)</label><input id="ob_notify" class="finput" type="email" placeholder="where new-request emails go" value="'+String(b.notify_email||(CURRENT_USER&&CURRENT_USER.email)||'').replace(/"/g,'&quot;')+'">'+
     '<label class="flbl">Description</label><textarea id="ob_desc" class="finput" rows="3">'+String(b.review_quote||'').replace(/</g,'&lt;')+'</textarea>'+
-    (b.tier>=3?'<label class="flbl">Special / offer (Premium)</label><input id="ob_special" class="finput" value="'+String(b.special||'').replace(/"/g,'&quot;')+'">':'<input id="ob_special" type="hidden" value="'+String(b.special||'').replace(/"/g,'&quot;')+'">')+
-    '<div style="font-size:12px;color:var(--muted);margin:16px 0 6px">&#127860; Menu — show your best dishes</div>'+
-    '<div id="ob_menu">'+menuRowsHTML(b.menu||[])+'</div>'+
-    '<button type="button" class="btn btn-ghost" style="margin-bottom:2px" onclick="addMenuRow()">+ Add dish</button>'+
-    '<button class="btn btn-primary" style="width:100%;margin-top:16px;padding:14px" onclick="saveMyBiz()">'+(paid?'Save changes':'Save draft')+'</button>'+
-    (b.tier>=3?''
-      :'<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--line)">'+
-        '<div style="font-weight:800;font-size:15px;font-family:\'Barlow Condensed\';margin-bottom:4px">Upgrade your listing</div>'+
-        '<div style="font-size:12px;color:var(--muted);margin-bottom:10px">More reach, more bookings — cancel anytime.</div>'+
-        (b.tier<2?'<button class="btn btn-ghost" style="width:100%;margin-bottom:8px" onclick="startUpgrade(2)">Go Verified &#183; $69/mo</button>':'')+
-        '<button class="btn btn-ghost" style="width:100%" onclick="startUpgrade(3)">Go Premium &#183; $169/mo</button>'+
-        '<div style="font-size:11px;color:var(--muted);margin-top:8px">Secure checkout by Stripe. Your new badge activates once payment clears.</div>'+
-      '</div>')+'<div id="owner-resv"></div>';
+    reservBlock+specialBlock+menuBlock+
+    '<button class="btn btn-primary" style="width:100%;margin-top:16px;padding:14px" onclick="saveMyBiz()">Save changes</button>'+
+    upsell+premiumUp+'<div id="owner-resv"></div>';
   catResvHint('ob_cat','ob_cat_hint');
   renderOwnerResv();
 }
 async function saveMyBiz(){
   if(!MY_BIZ)return;
-  var provEl=document.getElementById('ob_prov');
-  var upd={ name:gv('ob_name'), category:gv('ob_cat'), address:gv('ob_addr'), hours:gv('ob_hours'), phone:gv('ob_phone'), website:gv('ob_web'), price_level:gv('ob_price'), avg_per_person:(+gv('ob_cpp')||null), review_quote:gv('ob_desc'), booking_url:gv('ob_book')||null, reservation_provider:(provEl&&provEl.value)||null, notify_email:gv('ob_notify')||null };
-  var sp=document.getElementById('ob_special'); if(sp) upd.special=(sp.value||'').trim()||null;
-  var menu=[]; document.querySelectorAll('#ob_menu .menu-item').forEach(function(row){ var ne=row.querySelector('.menu-name'), pe=row.querySelector('.menu-price'); var n=(ne&&ne.value||'').trim(); if(n) menu.push({name:n, price:(pe&&pe.value||'').trim()}); });
-  upd.menu = menu.length?menu:null;
-  var wasPaid=ownerIsPaid();
-  var r=await ownerWrite(upd);
+  // Basic listing (free tier included) is live.
+  var upd={ name:gv('ob_name'), category:gv('ob_cat'), address:gv('ob_addr'), hours:gv('ob_hours'), phone:gv('ob_phone'), website:gv('ob_web'), price_level:gv('ob_price'), avg_per_person:(+gv('ob_cpp')||null), review_quote:gv('ob_desc') };
+  // Premium fields only exist / save when paid (Verified+).
+  if(ownerIsPaid()){
+    var provEl=document.getElementById('ob_prov');
+    upd.booking_url=gv('ob_book')||null;
+    upd.reservation_provider=(provEl&&provEl.value)||null;
+    upd.notify_email=gv('ob_notify')||null;
+    var sp=document.getElementById('ob_special'); if(sp) upd.special=(sp.value||'').trim()||null;
+    var menu=[]; document.querySelectorAll('#ob_menu .menu-item').forEach(function(row){ var ne=row.querySelector('.menu-name'), pe=row.querySelector('.menu-price'); var n=(ne&&ne.value||'').trim(); if(n) menu.push({name:n, price:(pe&&pe.value||'').trim()}); });
+    upd.menu = menu.length?menu:null;
+  }
+  var r=await SB.from('di_businesses').update(upd).eq('id',MY_BIZ.id);
   if(r.error){ toast('Save failed: '+r.error.message); return; }
-  toast(wasPaid?'Saved &#10003;':'Draft saved &#10003;'); await loadMyBusiness(); renderOwner();
-  if(wasPaid){ try{ await loadBusinesses(); buildHome(); }catch(e){} }   // only paid edits change the public site
+  toast('Saved &#10003;'); await loadMyBusiness(); renderOwner();
+  try{ await loadBusinesses(); buildHome(); }catch(e){}
 }
 async function uploadMainPhoto(file){
   if(!MY_BIZ||!file)return;
@@ -887,11 +941,10 @@ async function uploadMainPhoto(file){
   var up=await SB.storage.from('business-photos').upload(path,file,{upsert:true,contentType:file.type});
   if(up.error){ toast('Upload failed: '+up.error.message); return; }
   var url=SB.storage.from('business-photos').getPublicUrl(path).data.publicUrl;
-  var wasPaid=ownerIsPaid();
   var r=await ownerWrite({photo_url:url});
   if(r.error){ toast('Update failed: '+r.error.message); return; }
-  toast(wasPaid?'Photo updated &#10003;':'Photo saved to draft &#10003;'); await loadMyBusiness(); renderOwner();
-  if(wasPaid){ try{ await loadBusinesses(); buildHome(); }catch(e){} }
+  toast('Photo updated &#10003;'); await loadMyBusiness(); renderOwner();
+  try{ await loadBusinesses(); buildHome(); }catch(e){}
 }
 function galleryThumbs(arr){
   return (arr||[]).map(function(u,i){
@@ -913,21 +966,19 @@ async function uploadExtraPhotos(files){
     if(up.error){ toast('Upload failed: '+up.error.message); return; }
     arr.push(SB.storage.from('business-photos').getPublicUrl(path).data.publicUrl);
   }
-  var wasPaid=ownerIsPaid();
   var r=await ownerWrite({photos:arr});
   if(r.error){ toast('Save failed: '+r.error.message); return; }
-  toast(wasPaid?'Photos added ✓':'Photos saved to draft ✓'); await loadMyBusiness(); renderOwner();
-  if(wasPaid){ try{ await loadBusinesses(); buildHome(); }catch(e){} }
+  toast('Photos added ✓'); await loadMyBusiness(); renderOwner();
+  try{ await loadBusinesses(); buildHome(); }catch(e){}
 }
 async function removePhoto(i){
   if(!MY_BIZ) return;
   var arr=(ownerView().photos||[]).slice(); if(i<0||i>=arr.length) return;
   arr.splice(i,1);
-  var wasPaid=ownerIsPaid();
   var r=await ownerWrite({photos:arr});
   if(r.error){ toast('Failed: '+r.error.message); return; }
   await loadMyBusiness(); renderOwner();
-  if(wasPaid){ try{ await loadBusinesses(); buildHome(); }catch(e){} }
+  try{ await loadBusinesses(); buildHome(); }catch(e){}
 }
 function menuRow(name,price){
   return '<div class="menu-item" style="display:flex;gap:8px;margin-bottom:6px">'+
@@ -1221,7 +1272,7 @@ async function loadBusinesses(){
     }
     if(all.length){
       P.length = 0;
-      all.filter(function(r){return r.is_active!==false;}).forEach(r=>P.push(dbToApp(r)));   // paused businesses are hidden
+      all.filter(function(r){return r.is_active!==false && r.approved!==false;}).forEach(r=>P.push(dbToApp(r)));   // paused + not-yet-approved businesses are hidden
       for(const k in PB){ delete PB[k]; }
       P.forEach(p=>PB[p.k]=p);
       console.log('✓ Loaded '+P.length+' businesses live from Supabase');
@@ -1704,7 +1755,48 @@ function swapStop(key){
 }
 
 /* NAV */
-const views=['home','explore','events','build','loading','results','detail','listing','claim','claimform','saved','owner'];
+const views=['home','explore','events','build','loading','results','detail','listing','claim','claimform','add','saved','owner'];
+function openAddForm(){
+  if(!CURRENT_USER){ toast('Sign in first to add your business'); acctPrompt('signin'); return; }
+  var w=document.getElementById('ab_cat_wrap');
+  if(w) w.innerHTML=catSelect('ab_cat','',"catResvHint('ab_cat','ab_cat_hint')");
+  catResvHint('ab_cat','ab_cat_hint');
+  go('add');
+}
+function slugId(name){
+  var s=String(name||'biz').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'').slice(0,40);
+  return (s||'biz')+'-'+Date.now().toString(36);
+}
+async function submitAddBiz(){
+  if(!CURRENT_USER){ toast('Sign in first'); acctPrompt('signin'); return; }
+  var name=gv('ab_name').trim();
+  var catEl=document.getElementById('ab_cat');
+  var cat=(catEl&&catEl.value||'').trim();
+  var addr=gv('ab_addr').trim(), hours=gv('ab_hours').trim(), phone=gv('ab_phone').trim();
+  var web=gv('ab_web').trim(), desc=gv('ab_desc').trim();
+  var first=gv('ab_first').trim(), last=gv('ab_last').trim(), email=gv('ab_email').trim(), role=(document.getElementById('ab_role')||{}).value;
+  var attest=(document.getElementById('ab_attest')||{}).checked;
+  if(!name){ toast('Enter your business name'); return; }
+  if(!cat){ toast('Pick a category'); return; }
+  if(!addr){ toast('Enter your address'); return; }
+  if(!first||!last){ toast('Enter your first and last name'); return; }
+  if(!email){ toast('Enter your email'); return; }
+  if(!attest){ toast('Please check the certification box'); return; }
+  var id=slugId(name);
+  var row={ id:id, name:name, category:cat, address:addr, hours:hours||null, phone:phone||null,
+    website:web||null, review_quote:desc||null, tier:1, is_large:false, approved:false, is_active:true,
+    claimed_by:CURRENT_USER.id };
+  var r=await SB.from('di_businesses').insert(row);
+  if(r && r.error){ toast('Could not submit: '+r.error.message); return; }
+  // Record who submitted it (so you have their contact for verification).
+  try{ await SB.from('di_claims').insert({ business_id:id, requested_tier:1, status:'pending', user_id:CURRENT_USER.id,
+    contact_first_name:first, contact_last_name:last, role:role, contact_email:email, contact_phone:phone, attested:true }); }catch(e){}
+  ['ab_name','ab_addr','ab_hours','ab_phone','ab_web','ab_desc','ab_first','ab_last','ab_email'].forEach(function(x){var el=document.getElementById(x); if(el)el.value='';});
+  var at=document.getElementById('ab_attest'); if(at)at.checked=false;
+  toast('Submitted ✓ We’ll review within 72 hours');
+  try{ await loadMyBusiness(); }catch(e){}
+  setTimeout(function(){ go('home'); }, 1600);
+}
 
 /* ============ BUSINESS CLAIM FLOW ============ */
 // Stripe checkout links (TEST placeholders — replace with your real $69/$169
@@ -1728,9 +1820,14 @@ function openClaimForm(bizKey, tier){
   document.getElementById('claimTierNote').textContent=notes[window._claimTier]||notes[1];
   go('claimform');
 }
+// Price by feature tier (2=Verified,3=Premium) and business size (large=Enterprise).
+function priceFor(tier,large){ return large ? (tier>=3?800:500) : (tier>=3?169:69); }
+function planName(large){ return large?'Enterprise':''; }
 // Owner starts a paid upgrade from their dashboard (Verified=2 / Premium=3).
 function startUpgrade(tier){
   if(!MY_BIZ){ toast('Claim your business first'); return; }
+  // Large businesses (hotels / chains) are billed by our team — no self-serve link yet.
+  if(MY_BIZ.is_large){ toast('Enterprise plan — we’ll email you an invoice to activate.'); return; }
   var link=STRIPE_LINKS[tier]; if(!link){ toast('Upgrade unavailable'); return; }
   var email=(CURRENT_USER&&CURRENT_USER.email)||'';
   var url=link+'?client_reference_id='+encodeURIComponent(MY_BIZ.id)+'&prefilled_email='+encodeURIComponent(email);

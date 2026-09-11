@@ -114,7 +114,7 @@ async function approve(claimId){
   var c=CLAIMS[claimId]; if(!c){ msg('Claim not found — reload'); return; }
   var tier=c.requested_tier||2;
   try{
-    var body={tier:tier};
+    var body={tier:tier, approved:true};   // approving publishes the business (self-added ones start hidden)
     if(c.user_id) body.claimed_by=c.user_id;
     if(c.booking_url) body.booking_url=c.booking_url;
     if(c.reservation_provider) body.reservation_provider=c.reservation_provider;
@@ -134,15 +134,19 @@ async function doSearchBiz(){
   var q=$('bizsearch').value.trim();
   if(q.length<2){ $('biz-list').innerHTML='<div class="mut">Type a name to find a business.</div>'; return; }
   try{
-    const rows=await api('di_businesses?select=id,name,category,tier,address,is_active&name=ilike.*'+encodeURIComponent(q)+'*&limit=40',{headers:H()});
+    const rows=await api('di_businesses?select=id,name,category,tier,address,is_active,approved,is_large&name=ilike.*'+encodeURIComponent(q)+'*&limit=40',{headers:H()});
     if(!rows.length){ $('biz-list').innerHTML='<div class="mut">No matches.</div>'; return; }
     $('biz-list').innerHTML=rows.map(function(b){
       var paused=(b.is_active===false);
-      return '<div class="row" id="brow-'+b.id+'"><div class="grow"><div class="nm">'+esc(b.name)+(paused?' <span class="pill p1">Paused</span>':'')+'</div>'+
+      var pending=(b.approved===false);
+      return '<div class="row" id="brow-'+b.id+'"><div class="grow"><div class="nm">'+esc(b.name)+
+        (pending?' <span class="pill p1">Pending — hidden</span>':'')+(paused?' <span class="pill p1">Paused</span>':'')+'</div>'+
         '<div class="mut">'+esc(b.category||'')+'</div>'+
         '<input id="addr-'+b.id+'" type="text" value="'+esc(b.address||'')+'" placeholder="address" style="margin-top:6px"></div>'+
+        '<label class="mut" style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="large-'+b.id+'"'+(b.is_large?' checked':'')+'> Large (Enterprise)</label>'+
         '<select id="tier-'+b.id+'"><option value="1"'+(b.tier==1?' selected':'')+'>Free</option><option value="2"'+(b.tier==2?' selected':'')+'>Verified</option><option value="3"'+(b.tier==3?' selected':'')+'>Premium ⭐</option></select>'+
         '<button class="primary" onclick="saveBiz(\''+b.id+'\')">Save</button>'+
+        (pending?'<button class="g" onclick="approveBiz(\''+b.id+'\')">Approve → publish</button>':'')+
         '<button onclick="pauseBiz(\''+b.id+'\','+paused+')">'+(paused?'Unpause':'Pause')+'</button>'+
         '<button class="r" onclick="delBiz(\''+b.id+'\',\''+esc(b.name).replace(/\'/g,"")+'\')">Delete</button></div>';
     }).join('');
@@ -150,9 +154,12 @@ async function doSearchBiz(){
 }
 async function saveBiz(id){
   var t=+$('tier-'+id).value;
-  var addrEl=$('addr-'+id);
-  var body={tier:t}; if(addrEl) body.address=addrEl.value;
-  try{ await fetch(SUPABASE_URL+'/rest/v1/di_businesses?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:HJ(),body:JSON.stringify(body)}); msg('Saved ✓ tier '+t); }catch(e){ msg('Error: '+e.message); }
+  var addrEl=$('addr-'+id), largeEl=$('large-'+id);
+  var body={tier:t}; if(addrEl) body.address=addrEl.value; if(largeEl) body.is_large=largeEl.checked;
+  try{ await fetch(SUPABASE_URL+'/rest/v1/di_businesses?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:HJ(),body:JSON.stringify(body)}); msg('Saved ✓ tier '+t+(largeEl&&largeEl.checked?' · Enterprise':'')); }catch(e){ msg('Error: '+e.message); }
+}
+async function approveBiz(id){
+  try{ await fetch(SUPABASE_URL+'/rest/v1/di_businesses?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:HJ(),body:JSON.stringify({approved:true})}); msg('Approved ✓ now visible in the app'); doSearchBiz(); }catch(e){ msg('Error: '+e.message); }
 }
 async function pauseBiz(id, activate){
   try{ await fetch(SUPABASE_URL+'/rest/v1/di_businesses?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:HJ(),body:JSON.stringify({is_active:activate})}); msg(activate?'Unpaused ✓':'Paused (hidden from app)'); doSearchBiz(); }catch(e){ msg('Error: '+e.message); }

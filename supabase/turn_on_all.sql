@@ -161,7 +161,18 @@ alter table di_businesses add column if not exists menu jsonb;
 alter table di_reservations add column if not exists customer_email text;
 
 -- ===== 14_draft_publish.sql =====
--- Draft edits vs. published listing. Unpaid owners edit into `draft`;
--- the public keeps seeing live columns until they upgrade, at which point
--- the app promotes draft -> live automatically.
+-- Draft column (kept for compatibility; premium extras staging).
 alter table di_businesses add column if not exists draft jsonb;
+
+-- ===== 15_self_add.sql =====
+-- Businesses can add themselves (approval-gated) + size class for pricing.
+alter table di_businesses add column if not exists approved boolean default true;
+alter table di_businesses add column if not exists is_large boolean default false;
+drop policy if exists di_businesses_self_add on di_businesses;
+create policy di_businesses_self_add on di_businesses for insert to authenticated
+  with check (
+    claimed_by = auth.uid()
+    and approved = false
+    and coalesce(is_large,false) = false
+    and coalesce(tier,1) = 1
+  );
