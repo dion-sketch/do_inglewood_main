@@ -241,6 +241,7 @@
 
   /* TABBAR */
   .tabbar{position:absolute;bottom:0;left:0;right:0;height:74px;background:rgba(16,16,19,.96);backdrop-filter:blur(12px);border-top:1px solid var(--line);display:flex;align-items:flex-start;padding:9px 6px 0;z-index:20;}
+  @media print{ .tabbar,#reserveBar,.detail-actions,.head-bar .back,.filterbar{display:none!important;} .phone{box-shadow:none!important;border:0!important;height:auto!important;} .view{position:static!important;} }
   .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:var(--muted);cursor:pointer;font-weight:600;}
   .tab .ic{font-size:19px;}
   .tab .ic svg{width:23px;height:23px;display:block;}
@@ -394,7 +395,7 @@
         <div class="hero-bg"></div>
         <div class="topbar">
           <div class="logo-home" role="img" aria-label="Do Inglewood" title="Home" onclick="go('home')"></div>
-          <div style="display:flex;gap:8px"><div class="bell" onclick="toast('Notifications')">&#128276;</div><div class="bell" onclick="openMenu()">&#9776;</div></div>
+          <div style="display:flex;gap:8px"><div class="bell" onclick="go('events')" title="What's Happening">&#128276;</div><div class="bell" onclick="openMenu()">&#9776;</div></div>
         </div>
         <div class="eatplay" style="margin-top:14px"><span class="e">Eat. Play. Stay.</span></div>
         <div style="font-size:13px;color:var(--muted);margin-top:6px">What do you want to do in the city?</div>
@@ -610,10 +611,9 @@
         <button class="btn btn-primary" style="flex:1;font-size:16px;padding:14px" onclick="savePlanLocal()">&#11088; Save Plan</button>
         <button class="btn btn-ghost" style="flex:1;font-size:16px;padding:14px" onclick="sharePlan()">&#128228; Share</button>
       </div>
-      <div class="detail-actions" style="grid-template-columns:repeat(3,1fr)">
-        <div class="da" onclick="acctPrompt('star')"><div class="ic">&#9734;</div>Star a Spot</div>
-        <div class="da" onclick="toast('Saved as PDF')"><div class="ic">&#128196;</div>PDF</div>
-        <div class="da" onclick="toast('Added to calendar')"><div class="ic">&#128197;</div>Calendar</div>
+      <div class="detail-actions" style="grid-template-columns:repeat(2,1fr)">
+        <div class="da" onclick="printPlan()"><div class="ic">&#128196;</div>Save as PDF</div>
+        <div class="da" onclick="addPlanToCalendar()"><div class="ic">&#128197;</div>Add to Calendar</div>
       </div>
       <div style="height:14px"></div>
     </div>
@@ -626,7 +626,7 @@
 
     <!-- LISTING -->
     <div class="view" id="view-listing">
-      <div class="ldhero" id="ldhero"><div class="back" onclick="go(lastList)">&#8249;</div><div class="fav" onclick="toast('Saved to favorites')">&#9825;</div></div>
+      <div class="ldhero" id="ldhero"><div class="back" onclick="go(lastList)">&#8249;</div><div class="fav" id="ldFav" onclick="toggleFav(window._curListing,event)">&#9825;</div></div>
       <div class="ldbody" id="ldbody"></div>
       <div style="height:20px"></div>
     </div>
@@ -754,6 +754,22 @@
 
         <label class="flbl">Short description</label>
         <textarea id="ab_desc" class="finput" rows="3" placeholder="Tell visitors what makes you special."></textarea>
+
+        <div id="ab_resv_wrap" style="display:none">
+          <div style="border-top:1px solid var(--line);margin:18px 0 4px"></div>
+          <div style="font-weight:700;font-size:14px;font-family:'Barlow Condensed'">Reservations (optional)</div>
+          <div style="font-size:12px;color:var(--muted);margin:3px 0 6px">Already on OpenTable / Resy / Booksy? Paste your link. Otherwise leave it blank and take requests through Do Inglewood — they’ll go to your email below. <b style="color:var(--txt)">Activates when you upgrade to Verified.</b></div>
+          <label class="flbl">Your booking link (if you have one)</label>
+          <input id="ab_book" class="finput" placeholder="OpenTable / Resy / Booksy / your website URL" autocomplete="off">
+          <label class="flbl">Booking provider</label>
+          <select id="ab_prov" class="finput">
+            <option value="">None yet — I’ll use Do Inglewood</option>
+            <option>OpenTable</option><option>Resy</option><option>Booksy</option>
+            <option>Yelp Reservations</option><option>My own website</option><option>Phone only</option>
+          </select>
+          <label class="flbl">Send reservation requests to (email)</label>
+          <input id="ab_notify" class="finput" type="email" placeholder="where new-request emails go" autocomplete="off">
+        </div>
 
         <div style="border-top:1px solid var(--line);margin:18px 0 4px"></div>
         <div style="font-weight:700;font-size:14px;font-family:'Barlow Condensed'">Your details (so we can verify you)</div>
@@ -892,7 +908,7 @@ function renderOwner(){
   var badge=tier>=3?'<span class="chip chip-sponsored">&#11088; Premium</span>':(tier>=2?'<span class="chip chip-verified">Verified</span>':'<span class="chip chip-import">Free</span>')+(large?' <span class="chip chip-verified">Enterprise</span>':'');
   // Gallery: a Verified feature. Free tier gets one main photo only.
   var galleryBlock = paid
-    ? '<div style="font-size:12px;color:var(--muted);margin:10px 0 4px">More photos</div>'+
+    ? '<div style="font-size:12px;color:var(--muted);margin:10px 0 4px">More photos <span style="opacity:.7">(up to 7 total)</span></div>'+
       '<div id="ob_gallery" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">'+galleryThumbs(b.photos||[])+'</div>'+
       '<label class="btn btn-ghost" style="display:inline-block;cursor:pointer;margin-bottom:6px">&#10133; Add more photos<input type="file" accept="image/*" multiple style="display:none" onchange="uploadExtraPhotos(this.files)"></label>'
     : '';
@@ -982,10 +998,15 @@ function galleryThumbs(arr){
       '<span onclick="removePhoto('+i+')" title="Remove" style="position:absolute;top:1px;right:2px;background:rgba(0,0,0,.65);color:#fff;border-radius:50%;width:17px;height:17px;line-height:17px;text-align:center;font-size:12px;cursor:pointer">&times;</span></div>';
   }).join('');
 }
+var MAX_GALLERY=6;   // + 1 main photo = up to 7 images total
 async function uploadExtraPhotos(files){
   if(!MY_BIZ||!files||!files.length) return;
-  toast('Uploading…');
   var arr=(ownerView().photos||[]).slice();
+  var room=MAX_GALLERY-arr.length;
+  if(room<=0){ toast('That’s the max — up to 7 photos'); return; }
+  if(files.length>room){ toast('Adding '+room+' — 7 photos max'); }
+  files=Array.prototype.slice.call(files,0,room);
+  toast('Uploading…');
   for(var i=0;i<files.length;i++){
     var file=files[i];
     var ext=((file.name.split('.').pop())||'jpg').toLowerCase();
@@ -1223,6 +1244,7 @@ async function cancelResv(id){
   toast('Reservation cancelled');
   await loadMyReservations();
   if(document.getElementById('view-detail').classList.contains('active') && window._lastPlanIdx!=null){ openDetail(window._lastPlanIdx); }
+  else if(document.getElementById('view-listing').classList.contains('active') && window._curListing){ openListing(window._curListing, lastList); }
 }
 
 /* ---- Native reservations (for businesses NOT on a booking provider) ---- */
@@ -1238,6 +1260,7 @@ function openResv(bizKey){
   var p=PB[bizKey]; if(!p) return;
   window._resvBiz=bizKey;
   document.getElementById('resvTitle').textContent='Request a table · '+p.n;
+  var _rs=document.getElementById('resvSub'); if(_rs) _rs.textContent=(p.hrs?('Open '+p.hrs+' · '):'')+'pick a time — the business confirms.';
   var d=document.getElementById('rv_date'); if(d) d.value=(typeof sel!=='undefined'&&sel.date)||isoOf(new Date());
   var t=document.getElementById('rv_time'); if(t&&typeof sel!=='undefined'&&sel.startTime){ for(var i=0;i<t.options.length;i++){ if(t.options[i].value===sel.startTime){ t.selectedIndex=i; break; } } }
   var party=document.getElementById('rv_party'); if(party&&!party.value){ party.value=(typeof sel!=='undefined'&&sel.people==='1')?1:2; }
@@ -1257,6 +1280,7 @@ async function submitResv(){
   toast('Request sent ✓ '+(PB[biz]?PB[biz].n:'The business')+' will confirm');
   await loadMyReservations();
   if(document.getElementById('view-detail').classList.contains('active') && window._lastPlanIdx!=null){ openDetail(window._lastPlanIdx); }
+  else if(document.getElementById('view-listing').classList.contains('active') && window._curListing){ openListing(window._curListing, lastList); }
 }
 /* Owner side — see & accept/decline requests in "My Business" */
 async function renderOwnerResv(){
@@ -1427,6 +1451,31 @@ var ICON={
   cal:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'
 };
 function openDirections(k){ var p=PB[k]; if(!p)return; var u='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(p.n+', '+(p.addr||'')+' Inglewood CA'); if(p.pid)u+='&destination_place_id='+encodeURIComponent(p.pid); window.open(u,'_blank'); }
+/* ---- Favorites (saved on this device) ---- */
+function diFavs(){ try{ return JSON.parse(localStorage.getItem('di_favs')||'[]'); }catch(e){ return []; } }
+function isFav(k){ return diFavs().indexOf(k)>=0; }
+function toggleFav(k,ev){ if(ev&&ev.stopPropagation)ev.stopPropagation(); if(!k)return;
+  var a=diFavs(), i=a.indexOf(k), on=i<0;
+  if(on)a.push(k); else a.splice(i,1);
+  try{ localStorage.setItem('di_favs',JSON.stringify(a)); }catch(e){}
+  toast(on?'Saved to favorites ♥':'Removed from favorites');
+  var h=document.getElementById('ldFav'); if(h){ h.innerHTML=on?'&#9829;':'&#9825;'; h.style.color=on?'var(--pink)':''; }
+}
+/* ---- Save the itinerary as a PDF (via the browser's print dialog) ---- */
+function printPlan(){ toast('Choose “Save as PDF” in the print dialog'); setTimeout(function(){ try{ window.print(); }catch(e){} }, 400); }
+/* ---- Add the day to Google Calendar (real event link) ---- */
+function _stamp(iso,min){ var d=parseD(iso); min=((min%1440)+1440)%1440; var h=Math.floor(min/60),mm=min%60; function p2(x){return String(x).padStart(2,'0');} return d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate())+'T'+p2(h)+p2(mm)+'00'; }
+function addPlanToCalendar(){
+  var pl=currentPlans[window._lastPlanIdx||0]; if(!pl){ toast('Open an itinerary first'); return; }
+  var ev=window.__anchorEvent||null;
+  var dateIso=sel.date||isoOf(new Date());
+  var startHHMM=ev&&ev.time?ev.time:(sel.startTime||'6:00 PM');
+  var startMin=timeVal(startHHMM);
+  var title='Do Inglewood — '+(ev?String(ev.title).split('—')[0].trim():(pl.label||'My Day'));
+  var s=_stamp(dateIso,startMin), e=_stamp(dateIso,startMin+240);
+  var url='https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(title)+'&dates='+s+'/'+e+'&details='+encodeURIComponent(planTextSummary(pl))+'&location='+encodeURIComponent('Inglewood, CA');
+  window.open(url,'_blank');
+}
 function shareBiz(k){ var p=PB[k]; if(!p)return; var text=p.n+' · '+(p.cat||'')+' in Inglewood\n'+(p.addr||'')+'\nFound on Do Inglewood 🎟️'; if(navigator.share){ navigator.share({title:p.n,text:text}).catch(function(){}); } else if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(function(){toast('Copied — paste it anywhere');}); } else { toast('Sharing not supported'); } }
 /* Best-effort "Open now" from free-text hours. Returns null when unsure (never guesses wrong). */
 function openNow(hrs){
@@ -1472,6 +1521,8 @@ function similarSpots(p){
 }
 function openListing(k,from){
   lastList=from||'home';const p=PB[k];
+  window._curListing=k;
+  var _fav=document.getElementById('ldFav'); if(_fav){ var on=isFav(k); _fav.innerHTML=on?'&#9829;':'&#9825;'; _fav.style.color=on?'var(--pink)':''; }
   document.getElementById('ldhero').style.backgroundImage=`url('${p.img}')`;
   const badge=p.tier>=2?'<span class="chip chip-verified">Verified</span>':'<span class="chip chip-import">Imported</span>';
   var _o=openNow(p.hrs);
@@ -1843,9 +1894,15 @@ const views=['home','explore','events','build','loading','results','detail','lis
 function openAddForm(){
   if(!CURRENT_USER){ toast('Sign in first to add your business'); acctPrompt('signin'); return; }
   var w=document.getElementById('ab_cat_wrap');
-  if(w) w.innerHTML=catSelect('ab_cat','',"catResvHint('ab_cat','ab_cat_hint')");
-  catResvHint('ab_cat','ab_cat_hint');
+  if(w) w.innerHTML=catSelect('ab_cat','',"abCatChange()");
+  abCatChange();
   go('add');
+}
+// Reservation setup only makes sense for dining categories.
+function abCatChange(){
+  catResvHint('ab_cat','ab_cat_hint');
+  var s=document.getElementById('ab_cat'), wrap=document.getElementById('ab_resv_wrap');
+  if(wrap) wrap.style.display = (s&&catTakesReservations(s.value))?'block':'none';
 }
 function slugId(name){
   var s=String(name||'biz').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'').slice(0,40);
@@ -1867,8 +1924,11 @@ async function submitAddBiz(){
   if(!email){ toast('Enter your email'); return; }
   if(!attest){ toast('Please check the certification box'); return; }
   var id=slugId(name);
+  var provEl=document.getElementById('ab_prov');
   var row={ id:id, name:name, category:cat, address:addr, hours:hours||null, phone:phone||null,
     website:web||null, review_quote:desc||null, tier:1, is_large:false, approved:false, is_active:true,
+    booking_url:(gv('ab_book')||'').trim()||null, reservation_provider:(provEl&&provEl.value)||null,
+    notify_email:(gv('ab_notify')||'').trim()||email||null,
     claimed_by:CURRENT_USER.id };
   var r=await SB.from('di_businesses').insert(row);
   if(r && r.error){ toast('Could not submit: '+r.error.message); return; }
