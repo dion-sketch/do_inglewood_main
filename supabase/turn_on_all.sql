@@ -152,3 +152,16 @@ alter table di_businesses add column if not exists is_active boolean default tru
 -- Extra photos (gallery). The main photo stays in photo_url; these are additional.
 alter table di_businesses add column if not exists photos text[];
 
+-- ===== 12_menu.sql =====
+-- Business menu (dishes + prices), stored as JSON: [{"name":..,"price":..}]
+alter table di_businesses add column if not exists menu jsonb;
+
+-- ===== 13_customer_email.sql =====
+-- Customer email on reservations (so we can email the confirm/decline).
+alter table di_reservations add column if not exists customer_email text;
+
+-- ===== 14_draft_publish.sql =====
+-- Draft edits vs. published listing. Unpaid owners edit into `draft`;
+-- the public keeps seeing live columns until they upgrade, at which point
+-- the app promotes draft -> live automatically.
+alter table di_businesses add column if not exists draft jsonb;

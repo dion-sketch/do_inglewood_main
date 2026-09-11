@@ -775,6 +775,29 @@ async function onAuthChange(){
 async function loadMyBusiness(){
   if(!CURRENT_USER){ MY_BIZ=null; return; }
   try{ var r=await SB.from('di_businesses').select('*').eq('claimed_by',CURRENT_USER.id); MY_BIZ=(r.data&&r.data[0])||null; }catch(e){ MY_BIZ=null; }
+  // If they've paid (Verified+) and were holding draft edits, publish them now.
+  try{
+    if(MY_BIZ && (MY_BIZ.tier||1)>=2 && MY_BIZ.draft && Object.keys(MY_BIZ.draft).length){
+      await SB.from('di_businesses').update(Object.assign({}, MY_BIZ.draft, {draft:null})).eq('id',MY_BIZ.id);
+      var r2=await SB.from('di_businesses').select('*').eq('claimed_by',CURRENT_USER.id);
+      MY_BIZ=(r2.data&&r2.data[0])||MY_BIZ;
+    }
+  }catch(e){}
+}
+// True once they've paid — edits publish straight to the public listing.
+function ownerIsPaid(){ return !!(MY_BIZ && (MY_BIZ.tier||1)>=2); }
+// What the OWNER should see/edit: live for paid, live+draft for unpaid.
+function ownerView(){ return ownerIsPaid() ? (MY_BIZ||{}) : Object.assign({}, MY_BIZ||{}, (MY_BIZ&&MY_BIZ.draft)||{}); }
+// Route an owner edit: paid -> live columns; unpaid -> held in `draft`.
+async function ownerWrite(patch){
+  if(!MY_BIZ) return {error:{message:'No business linked'}};
+  if(ownerIsPaid()){
+    return await SB.from('di_businesses').update(patch).eq('id',MY_BIZ.id);
+  }
+  var d=Object.assign({}, MY_BIZ.draft||{}, patch);
+  var res=await SB.from('di_businesses').update({draft:d}).eq('id',MY_BIZ.id);
+  if(!res.error) MY_BIZ.draft=d;   // keep local copy in sync for immediate re-render
+  return res;
 }
 async function sendMagicLink(){
   var email=gv('authEmail'); if(!email){ toast('Enter your email'); return; }
@@ -795,12 +818,24 @@ function renderOwner(){
   var host=document.getElementById('owner-body'); if(!host)return;
   if(!CURRENT_USER){ host.innerHTML='<div class="ev-empty"><div class="big">&#128100;</div>Sign in to manage your business.<br><button class="btn btn-primary" style="margin-top:14px" onclick="acctPrompt(\'signin\')">Sign In</button></div>'; return; }
   if(!MY_BIZ){ host.innerHTML='<div class="ev-empty"><div class="big">&#127978;</div>No business linked to your account yet.<br>Claim your business — once we approve it (within 72 hours) it shows here to manage.<br><button class="btn btn-primary" style="margin-top:14px" onclick="go(\'claim\')">Claim a Business</button></div>'; return; }
-  var b=MY_BIZ;
+  // Unpaid owners edit into `draft`; show THEM their pending edits (public still sees live).
+  var paid=(MY_BIZ.tier||1)>=2;
+  var hasDraft=!!(MY_BIZ.draft && Object.keys(MY_BIZ.draft).length);
+  var b = paid ? MY_BIZ : Object.assign({}, MY_BIZ, MY_BIZ.draft||{});
   function fld(lbl,id,v){ return '<label class="flbl">'+lbl+'</label><input id="'+id+'" class="finput" value="'+String(v==null?'':v).replace(/"/g,'&quot;')+'">'; }
   var badge=b.tier>=3?'<span class="chip chip-sponsored">&#11088; Premium</span>':(b.tier>=2?'<span class="chip chip-verified">Verified</span>':'<span class="chip chip-import">Free</span>');
+  var draftBanner = paid ? '' :
+    '<div style="margin:0 0 14px;padding:12px 14px;border-radius:12px;background:rgba(255,46,126,.08);border:1px solid rgba(255,46,126,.35)">'+
+      '<div style="font-weight:800;font-size:13px;font-family:\'Barlow Condensed\';letter-spacing:.3px">'+
+        (hasDraft?'&#9998; Draft saved &#183; not public yet':'&#128274; Your listing is in draft mode')+'</div>'+
+      '<div style="font-size:12px;color:var(--muted);margin-top:3px">Edit freely and save — visitors still see your current listing. '+
+        '<b style="color:var(--txt)">Publish it live &amp; turn on reservations</b> by going Verified.</div>'+
+      '<button class="btn btn-primary" style="width:100%;margin-top:10px;padding:11px" onclick="startUpgrade(2)">Publish live &#183; Go Verified &#183; $69/mo</button>'+
+    '</div>';
   host.innerHTML =
     '<div style="font-weight:800;font-size:20px;font-family:\'Barlow Condensed\'">'+(b.name||'')+' '+badge+'</div>'+
-    '<div style="font-size:12px;color:var(--muted);margin:4px 0 14px">Edit your listing — changes go live instantly.</div>'+
+    '<div style="font-size:12px;color:var(--muted);margin:4px 0 14px">'+(paid?'Edit your listing — changes go live instantly.':'Edit your listing — saved privately until you publish.')+'</div>'+
+    draftBanner+
     '<div style="height:150px;border-radius:12px;background:#0f0f15 center/cover no-repeat;background-image:url(\''+(b.photo_url||'')+'\');border:1px solid var(--line);margin-bottom:8px"></div>'+
     '<label class="btn btn-ghost" style="display:inline-block;cursor:pointer;margin-bottom:6px">&#128247; Upload main photo<input type="file" accept="image/*" style="display:none" onchange="uploadMainPhoto(this.files[0])"></label>'+
     '<div style="font-size:12px;color:var(--muted);margin:10px 0 4px">More photos</div>'+
@@ -817,7 +852,7 @@ function renderOwner(){
     '<div style="font-size:12px;color:var(--muted);margin:16px 0 6px">&#127860; Menu — show your best dishes</div>'+
     '<div id="ob_menu">'+menuRowsHTML(b.menu||[])+'</div>'+
     '<button type="button" class="btn btn-ghost" style="margin-bottom:2px" onclick="addMenuRow()">+ Add dish</button>'+
-    '<button class="btn btn-primary" style="width:100%;margin-top:16px;padding:14px" onclick="saveMyBiz()">Save changes</button>'+
+    '<button class="btn btn-primary" style="width:100%;margin-top:16px;padding:14px" onclick="saveMyBiz()">'+(paid?'Save changes':'Save draft')+'</button>'+
     (b.tier>=3?''
       :'<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--line)">'+
         '<div style="font-weight:800;font-size:15px;font-family:\'Barlow Condensed\';margin-bottom:4px">Upgrade your listing</div>'+
@@ -835,10 +870,11 @@ async function saveMyBiz(){
   var sp=document.getElementById('ob_special'); if(sp) upd.special=(sp.value||'').trim()||null;
   var menu=[]; document.querySelectorAll('#ob_menu .menu-item').forEach(function(row){ var ne=row.querySelector('.menu-name'), pe=row.querySelector('.menu-price'); var n=(ne&&ne.value||'').trim(); if(n) menu.push({name:n, price:(pe&&pe.value||'').trim()}); });
   upd.menu = menu.length?menu:null;
-  var r=await SB.from('di_businesses').update(upd).eq('id',MY_BIZ.id);
+  var wasPaid=ownerIsPaid();
+  var r=await ownerWrite(upd);
   if(r.error){ toast('Save failed: '+r.error.message); return; }
-  toast('Saved &#10003;'); await loadMyBusiness(); renderOwner();
-  try{ await loadBusinesses(); buildHome(); }catch(e){}
+  toast(wasPaid?'Saved &#10003;':'Draft saved &#10003;'); await loadMyBusiness(); renderOwner();
+  if(wasPaid){ try{ await loadBusinesses(); buildHome(); }catch(e){} }   // only paid edits change the public site
 }
 async function uploadMainPhoto(file){
   if(!MY_BIZ||!file)return;
@@ -848,9 +884,11 @@ async function uploadMainPhoto(file){
   var up=await SB.storage.from('business-photos').upload(path,file,{upsert:true,contentType:file.type});
   if(up.error){ toast('Upload failed: '+up.error.message); return; }
   var url=SB.storage.from('business-photos').getPublicUrl(path).data.publicUrl;
-  var r=await SB.from('di_businesses').update({photo_url:url}).eq('id',MY_BIZ.id);
+  var wasPaid=ownerIsPaid();
+  var r=await ownerWrite({photo_url:url});
   if(r.error){ toast('Update failed: '+r.error.message); return; }
-  toast('Photo updated &#10003;'); await loadMyBusiness(); renderOwner();
+  toast(wasPaid?'Photo updated &#10003;':'Photo saved to draft &#10003;'); await loadMyBusiness(); renderOwner();
+  if(wasPaid){ try{ await loadBusinesses(); buildHome(); }catch(e){} }
 }
 function galleryThumbs(arr){
   return (arr||[]).map(function(u,i){
@@ -863,7 +901,7 @@ function galleryThumbs(arr){
 async function uploadExtraPhotos(files){
   if(!MY_BIZ||!files||!files.length) return;
   toast('Uploading…');
-  var arr=(MY_BIZ.photos||[]).slice();
+  var arr=(ownerView().photos||[]).slice();
   for(var i=0;i<files.length;i++){
     var file=files[i];
     var ext=((file.name.split('.').pop())||'jpg').toLowerCase();
@@ -872,17 +910,21 @@ async function uploadExtraPhotos(files){
     if(up.error){ toast('Upload failed: '+up.error.message); return; }
     arr.push(SB.storage.from('business-photos').getPublicUrl(path).data.publicUrl);
   }
-  var r=await SB.from('di_businesses').update({photos:arr}).eq('id',MY_BIZ.id);
+  var wasPaid=ownerIsPaid();
+  var r=await ownerWrite({photos:arr});
   if(r.error){ toast('Save failed: '+r.error.message); return; }
-  toast('Photos added ✓'); await loadMyBusiness(); renderOwner();
+  toast(wasPaid?'Photos added ✓':'Photos saved to draft ✓'); await loadMyBusiness(); renderOwner();
+  if(wasPaid){ try{ await loadBusinesses(); buildHome(); }catch(e){} }
 }
 async function removePhoto(i){
   if(!MY_BIZ) return;
-  var arr=(MY_BIZ.photos||[]).slice(); if(i<0||i>=arr.length) return;
+  var arr=(ownerView().photos||[]).slice(); if(i<0||i>=arr.length) return;
   arr.splice(i,1);
-  var r=await SB.from('di_businesses').update({photos:arr}).eq('id',MY_BIZ.id);
+  var wasPaid=ownerIsPaid();
+  var r=await ownerWrite({photos:arr});
   if(r.error){ toast('Failed: '+r.error.message); return; }
   await loadMyBusiness(); renderOwner();
+  if(wasPaid){ try{ await loadBusinesses(); buildHome(); }catch(e){} }
 }
 function menuRow(name,price){
   return '<div class="menu-item" style="display:flex;gap:8px;margin-bottom:6px">'+
@@ -1316,7 +1358,7 @@ function openListing(k,from){
   var _o=openNow(p.hrs);
   var _statusParts=[];
   if(_o) _statusParts.push('<span style="color:'+(_o.open?'var(--green)':'#ff7a7a')+';font-weight:700">&#9679; '+_o.label+'</span>');
-  if(isReservable(p)&&(p.book||p.tier>=3)) _statusParts.push('<span style="color:var(--gold);font-weight:700">'+ICON.cal+' Takes reservations</span>');
+  if(isReservable(p)&&(p.book||p.tier>=2)) _statusParts.push('<span style="color:var(--gold);font-weight:700">'+ICON.cal+' Takes reservations</span>');
   var statusLine=_statusParts.length?'<div style="font-size:12.5px;margin-top:8px;display:flex;gap:14px;flex-wrap:wrap">'+_statusParts.join('')+'</div>':'';
   var tagsRow=(p.tags&&p.tags.length)?'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">'+p.tags.slice(0,4).map(function(t){return '<span style="font-size:11px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:3px 9px">'+xmlEsc(t)+'</span>';}).join('')+'</div>':'';
   document.getElementById('ldbody').innerHTML=`
@@ -1343,7 +1385,7 @@ function openListing(k,from){
     </div>
     <iframe title="Map of ${xmlEsc(p.n)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" style="width:100%;height:120px;border:0;border-radius:14px;margin-top:14px;display:block" src="https://www.google.com/maps?q=${encodeURIComponent(p.n+', '+(p.addr||'')+', Inglewood CA')}&output=embed"></iframe>
     ${menuHTML(p)}
-    ${isReservable(p)?((p.book||p.tier>=3)
+    ${isReservable(p)?((p.book||p.tier>=2)
       ?`<button class="btn btn-primary" style="width:100%;margin-top:16px;padding:14px;font-size:15px" onclick="reserveStop('${p.k}')">${ICON.cal} Reserve a Table</button>`
       :`<button class="btn" style="width:100%;margin-top:16px;padding:14px;font-size:14px;opacity:.5;background:var(--panel-2);color:var(--muted);border:1px solid var(--line);cursor:not-allowed" onclick="toast('Reservations are not on for this spot yet')">${ICON.cal} Reservations — coming soon</button>`
     ):''}
@@ -1360,7 +1402,7 @@ function openListing(k,from){
   go('listing');
   var rb=document.getElementById('reserveBar');
   if(rb){
-    if(isReservable(p)&&(p.book||p.tier>=3)){
+    if(isReservable(p)&&(p.book||p.tier>=2)){
       rb.innerHTML='<button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px" onclick="reserveStop(\''+p.k+'\')">'+ICON.cal+' Reserve a Table</button>';
       rb.style.display='block';
     } else { rb.style.display='none'; }
