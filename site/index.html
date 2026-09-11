@@ -66,8 +66,10 @@
   .heroimg .cap span{font-size:11px;color:#d4d4dc;}
 
   /* PLAN YOUR ACTIVITY hero card */
-  .planactivity{margin:16px 20px 4px;border-radius:18px;padding:20px 18px;background:var(--grad);color:#1a0010;position:relative;overflow:hidden;cursor:pointer;animation:glow 3.5s ease-in-out infinite;}
+  .planactivity{margin:16px 20px 4px;border-radius:20px;padding:20px 18px;background:linear-gradient(155deg,#ff6aa6 0%,#ff2e7e 30%,#ff6a4d 62%,#f5b93c 100%);color:#2a0012;position:relative;overflow:hidden;cursor:pointer;animation:glow 3.5s ease-in-out infinite;box-shadow:inset 0 1.5px 0 rgba(255,255,255,.5),inset 0 -6px 18px rgba(120,0,40,.28),0 12px 30px rgba(255,46,126,.32);}
+  .planactivity::before{content:"";position:absolute;left:0;right:0;top:0;height:42%;background:linear-gradient(180deg,rgba(255,255,255,.4),rgba(255,255,255,0));pointer-events:none;}
   .planactivity:active{transform:scale(.99);}
+  .planactivity>*{position:relative;z-index:1;}
   .planactivity .pa-k{font-family:'Barlow Condensed';font-weight:700;font-size:11px;letter-spacing:2px;text-transform:uppercase;opacity:.7;}
   .planactivity h2{font-family:'Barlow Condensed';font-weight:800;font-size:27px;line-height:.95;margin-top:3px;}
   .planactivity p{font-size:12.5px;font-weight:500;margin-top:6px;opacity:.85;max-width:78%;line-height:1.4;}
@@ -157,9 +159,12 @@
   .toggle{flex:1;background:var(--panel);border:1.5px solid var(--line);border-radius:11px;padding:13px;text-align:center;font-family:'Barlow Condensed';font-weight:600;font-size:15px;cursor:pointer;}
   .toggle.sel{border-color:var(--green);background:rgba(54,211,154,.12);color:var(--green);}
   .build-foot{padding:14px 20px 4px;}
-  .btn{border:none;border-radius:13px;padding:16px;font-family:'Barlow Condensed';font-weight:700;font-size:18px;letter-spacing:.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;text-transform:uppercase;width:100%;}
-  .btn-primary{background:var(--grad);color:#1a0010;}
-  .btn-ghost{background:transparent;color:var(--gold);border:1.5px solid var(--gold);}
+  .btn{border:none;border-radius:14px;padding:16px;font-family:'Barlow Condensed';font-weight:700;font-size:18px;letter-spacing:.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;text-transform:uppercase;width:100%;position:relative;overflow:hidden;}
+  /* Glossy 3D gold→pink pill — matches brand button assets */
+  .btn-primary{background:linear-gradient(180deg,#ff6aa6 0%,#ff2e7e 24%,#ff6a4d 58%,#f5b93c 100%);color:#2a0012;text-shadow:0 1px 0 rgba(255,255,255,.28);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.6),inset 0 -3px 8px rgba(120,0,40,.32),0 8px 22px rgba(255,46,126,.34),0 2px 5px rgba(0,0,0,.35);}
+  .btn-primary::before{content:"";position:absolute;left:6%;right:6%;top:0;height:46%;background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,0));border-radius:0 0 60% 60%/0 0 100% 100%;pointer-events:none;}
+  .btn-primary:active{transform:translateY(1px) scale(.99);box-shadow:inset 0 2px 7px rgba(120,0,40,.42),0 3px 12px rgba(255,46,126,.3);}
+  .btn-ghost{background:transparent;color:var(--gold);border:1.5px solid var(--gold);box-shadow:inset 0 1px 0 rgba(245,197,66,.25);}
   .btn:active{transform:scale(.98);}
   .hint{text-align:center;font-size:12px;color:var(--muted);padding:4px 20px 0;}
 
@@ -232,7 +237,8 @@
   .claimbox{background:var(--panel);border:1px dashed var(--gold);border-radius:12px;padding:14px;margin:14px 0;text-align:center;}
   .claimbox b{font-family:'Barlow Condensed';font-weight:700;font-size:16px;display:block;}
   .claimbox span{font-size:12px;color:var(--muted);display:block;margin:4px 0 11px;}
-  .claimbtn{background:var(--gold);color:#1a1400;border:none;border-radius:10px;padding:11px 20px;font-weight:700;font-size:14px;cursor:pointer;}
+  .claimbtn{background:linear-gradient(180deg,#ffe08a 0%,#f5c542 45%,#e0a81f 100%);color:#1a1400;border:none;border-radius:11px;padding:11px 20px;font-weight:700;font-size:14px;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -2px 6px rgba(120,80,0,.28),0 5px 14px rgba(245,197,66,.3);text-shadow:0 1px 0 rgba(255,255,255,.35);}
+  .claimbtn:active{transform:translateY(1px) scale(.99);}
 
   /* CLAIM / TIERS */
   .tier{margin:0 20px 14px;border:1px solid var(--line);border-radius:16px;padding:18px;background:var(--panel);}
@@ -866,6 +872,17 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+/* ============ BRAND LOGO — auto-upgrade to real export if present ============
+   The header/splash logo uses the CSS var --logo (a built-in fallback badge).
+   Drop a file named  logo.png  next to index.html and it takes over instantly,
+   no code change needed. (Optional: logo-splash.png for a larger splash art.) */
+(function(){
+  try{
+    var i=new Image();
+    i.onload=function(){ if(i.naturalWidth>1) document.documentElement.style.setProperty('--logo',"url('logo.png')"); };
+    i.src='logo.png';
+  }catch(e){}
+})();
 /* ============ SUPABASE — live data connection ============ */
 const SUPABASE_URL = "https://eojlkqxnwzoelwvrxgzc.supabase.co";
 const SUPABASE_KEY = "sb_publishable_WeSqJHxHWza5rgyq8XcF0g_bYF7VE7R"; // publishable (safe) key
