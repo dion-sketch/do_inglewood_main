@@ -1004,7 +1004,7 @@ function renderOwner(){
       lockRow('Add more photos (gallery)')+lockRow('Add your menu')+lockRow('Turn on reservations')+lockRow('Post a special / offer')+
       '<button class="btn btn-primary" style="width:100%;margin-top:4px;padding:12px" onclick="startUpgrade(2)">Go '+planTag+' &#183; $'+pv+'/mo</button>'+
       '<button class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="startUpgrade(3)">Go '+(large?'Enterprise Premium':'Premium')+' &#183; $'+pp+'/mo &#183; top placement</button>'+
-      '<div style="font-size:11px;color:var(--muted);margin-top:8px">'+(large?'Enterprise plans are billed by our team — tap and we’ll email your invoice.':'Secure checkout by Stripe. Your new badge activates once payment clears.')+'</div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-top:8px">'+(large?'Enterprise plans are billed by our team — tap and we’ll email your invoice.':'Secure checkout by Stripe. We activate your upgrade once your payment is confirmed — usually within a few hours.')+'</div>'+
     '</div>';
   var premiumUp = (paid && tier<3) ?
     '<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--line)">'+
@@ -1392,6 +1392,17 @@ function refreshPendingUI(){
     if(lbl) lbl.textContent=(MY_PENDING===1?'New table request':'New table requests');
   } else { ban.remove(); }
 }
+// Parse "7:00 PM" / "19:00" to minutes-from-midnight (defaults to 7pm).
+function timeToMin(t){ t=String(t||'').trim(); var m=t.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i); if(!m) return 19*60; var h=+m[1], mm=+m[2]; var ap=(m[3]||'').toUpperCase(); if(ap==='PM'&&h<12) h+=12; if(ap==='AM'&&h===12) h=0; return h*60+mm; }
+// A Google Calendar "add event" link for a confirmed reservation (owner or guest can save it).
+function resvCalUrl(x){
+  var biz=(MY_BIZ&&MY_BIZ.id===x.business_id&&MY_BIZ.name)||(PB[x.business_id]&&PB[x.business_id].n)||'Reservation';
+  var iso=x.resv_date||isoOf(new Date()); var st=timeToMin(x.resv_time);
+  var s=_stamp(iso,st), e=_stamp(iso,st+120);
+  var title=encodeURIComponent(biz+' · table for '+(x.party_size||2));
+  var det=encodeURIComponent('Reservation for '+(x.customer_name||'guest')+' · party of '+(x.party_size||2)+(x.customer_phone?' · '+x.customer_phone:'')+' · via Do Inglewood');
+  return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+title+'&dates='+s+'/'+e+'&details='+det;
+}
 function resvRowHTML(x){
   var badge = x.status==='confirmed' ? '<span class="chip chip-verified">Confirmed &#10003;</span>'
             : x.status==='declined'  ? '<span class="chip chip-import" style="color:#ff7a7a">Declined</span>'
@@ -1399,7 +1410,9 @@ function resvRowHTML(x){
   var actions = x.status==='requested'
     ? '<button class="btn btn-primary" style="padding:8px 14px;font-size:13px" onclick="setResv(\''+x.id+'\',\'confirmed\')">Accept</button>'
       +'<button class="btn btn-ghost" style="padding:8px 14px;font-size:13px" onclick="setResv(\''+x.id+'\',\'declined\')">Decline</button>'
-    : '';
+    : (x.status==='confirmed'
+        ? '<a href="'+resvCalUrl(x)+'" target="_blank" rel="noopener" class="tbtn" style="text-decoration:none">&#128197; Add to calendar</a>'
+        : '');
   return '<div style="border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px">'+
     '<div style="font-weight:700">'+xmlEsc(x.customer_name||'Guest')+' &#183; '+(x.party_size||'?')+' ppl</div>'+
     '<div style="font-size:12px;color:var(--muted);margin:2px 0 8px">'+xmlEsc(String(x.resv_date||''))+(x.resv_time?' &#183; '+xmlEsc(x.resv_time):'')+' &#183; '+xmlEsc(x.customer_phone||'')+'</div>'+
@@ -1967,7 +1980,7 @@ function stopHTML(icon,num,name,sub,connector,key,swappable){
   var rstat = rObj?rObj.status:null;
   var cancelBtn = rObj ? '<span class="tbtn" onclick="event.stopPropagation();cancelResv(\''+rObj.id+'\')">Cancel</span>' : '';
   var resv;
-  if(rstat==='confirmed') resv='<span class="tbtn" style="color:var(--green);border-color:var(--green)">Confirmed &#10003;</span>'+cancelBtn;
+  if(rstat==='confirmed') resv='<span class="tbtn" style="color:var(--green);border-color:var(--green)">Confirmed &#10003;</span>'+'<a href="'+resvCalUrl(rObj)+'" target="_blank" rel="noopener" class="tbtn" style="text-decoration:none" onclick="event.stopPropagation()">&#128197; Calendar</a>'+cancelBtn;
   else if(rstat==='requested') resv='<span class="tbtn" style="color:var(--gold)">Requested&#8230;</span>'+cancelBtn;
   else if(rstat==='declined') resv='<span class="tbtn pink" onclick="event.stopPropagation();reserveStop(\''+key+'\')">Try another time</span>';
   else if(rstat==='cancelled') resv='<span class="tbtn pink" onclick="event.stopPropagation();reserveStop(\''+key+'\')">Reserve again</span>';
