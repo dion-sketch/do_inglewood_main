@@ -111,6 +111,14 @@
   .cat.has-art{background:none;border:none;padding:0;overflow:visible;}
   .cat.has-art img{width:100%;aspect-ratio:1/1;object-fit:contain;display:block;}
   .cat.has-art:active{background:none;transform:scale(.94);}
+  /* Designed art versions of the Do badge + brand buttons (load when the file is present). */
+  .tab.build-tab .ic.art{background:none;border:0;box-shadow:none;}
+  .tab.build-tab .ic.art img{width:100%;height:100%;object-fit:contain;display:block;}
+  .pa-sub button.art{background:none;border:0;padding:0;overflow:visible;}
+  .pa-sub button.art img{width:100%;display:block;}
+  .dopill.art{background:none!important;border:0;box-shadow:none;padding:0;}
+  .dopill.art::before{display:none;}
+  .dopill.art img{width:100%;display:block;}
 
   /* EXPLORE */
   .head-bar{padding:14px 20px 10px;display:flex;align-items:center;gap:12px;position:sticky;top:0;background:var(--bg);z-index:5;border-bottom:1px solid var(--line);}
@@ -2463,8 +2471,10 @@ function obNext(){
   if(ob>2){document.getElementById('onboard').style.display='none';return;}
   document.querySelectorAll('.ob-slide').forEach(s=>s.classList.toggle('on',+s.dataset.ob===ob));
   document.querySelectorAll('.ob-dots span').forEach((d,i)=>d.classList.toggle('on',i===ob));
-  document.getElementById('obNextLbl').textContent=ob===2?'Get Started':'Next';
-  document.getElementById('obNextSub').textContent=ob===2?'Explore · Plan · Experience':(ob===1?'Build My Day':"Let's Explore");
+  var _l=document.getElementById('obNextLbl'), _s=document.getElementById('obNextSub');
+  if(_l) _l.textContent=ob===2?'Get Started':'Next';
+  if(_s) _s.textContent=ob===2?'Explore · Plan · Experience':(ob===1?'Build My Day':"Let's Explore");
+  setObArt(ob);
 }
 
 /* HERO ROTATOR */
@@ -2530,8 +2540,27 @@ function loadCatArt(){
     probe.src=src;
   });
 }
+// Swap the onboarding button to the designed art for the given slide (0,1,2) when present.
+var OB_ART=['btn-explore','btn-buildmyday','btn-getstarted'];
+function setObArt(slide){
+  var btn=document.getElementById('obNext'); if(!btn) return;
+  var src=(OB_ART[slide]||OB_ART[0])+'.png';
+  var p=new Image();
+  p.onload=function(){ if(p.naturalWidth>1){ btn.classList.add('art'); btn.innerHTML='<img src="'+src+'" alt="Continue">'; } };
+  p.src=src;
+}
+// Upgrade the Do badge + brand buttons to designed art when the files are present.
+function loadBrandArt(){
+  function tryArt(el,src,apply){ if(!el) return; var p=new Image(); p.onload=function(){ if(p.naturalWidth>1) apply(el,src); }; p.src=src; }
+  tryArt(document.querySelector('.tab.build-tab .ic'),'do-badge.png',function(el,src){ el.classList.add('art'); el.innerHTML='<img src="'+src+'" alt="Do">'; });
+  var sub=document.querySelectorAll('.pa-sub button');
+  if(sub[0]) tryArt(sub[0],'btn-popping.png',function(el,src){ el.classList.add('art'); el.innerHTML='<img src="'+src+'" alt="See What\'s Popping">'; });
+  if(sub[1]) tryArt(sub[1],'btn-forbusiness.png',function(el,src){ el.classList.add('art'); el.innerHTML='<img src="'+src+'" alt="For Business">'; });
+  setObArt(typeof ob!=='undefined'?ob:0);
+}
 async function initApp(){
   loadCatArt();
+  loadBrandArt();
   await loadBusinesses();
   await loadEvents();
   buildHome();buildFilters();showStep();buildHero();renderHomeEvents();
