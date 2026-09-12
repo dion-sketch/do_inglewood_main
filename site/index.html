@@ -434,9 +434,9 @@
       <p>Eat. Play. Stay. Every restaurant, lounge, hotel and hot spot in California's Entertainment City — in one place.</p>
     </div>
     <div class="ob-slide" data-ob="1">
-      <div class="ob-ic">&#127863;</div>
-      <h2>See what's <span class="g">popping tonight</span></h2>
-      <p>Live specials, happy hours and members' deals across the city — and reserve a table in a tap.</p>
+      <div class="ob-ic">&#127881;</div>
+      <h2>See what's <span class="g">good today</span></h2>
+      <p>Specials, deals and members' offers all over the city — breakfast, brunch, family spots, dinner and late night. Reserve a table in a tap.</p>
     </div>
     <div class="ob-dots"><span class="on"></span><span></span></div>
     <div class="ob-foot">
@@ -469,7 +469,7 @@
       <div class="planactivity" onclick="go('specials')">
         <div class="pa-k">Do Inglewood</div>
         <h2>Today's Specials</h2>
-        <p>Every deal, happy hour and members-only offer in the city — right now.</p>
+        <p>Every special, deal and members-only offer in the city, all day — breakfast to last call.</p>
         <div class="pa-go">&#8594;</div>
       </div>
       <div class="pa-sub">
@@ -488,7 +488,7 @@
       </div>
 
       <div class="sect" style="display:none">
-        <div class="sect-head"><h3>Offers Tonight</h3><a onclick="filterTo('Specials')">See all</a></div>
+        <div class="sect-head"><h3>Today's Offers</h3><a onclick="filterTo('Specials')">See all</a></div>
         <div class="hscroll" id="special-cards"></div>
       </div>
 
@@ -1392,7 +1392,7 @@ function buildHome(){
   const spec=P.filter(p=>p.special&&hasPhoto(p));
   var sc=document.getElementById('special-cards'); var offersSect=sc.closest('.sect');
   if(spec.length){ sc.innerHTML=spec.map(p=>cardHTML(p)).join(''); if(offersSect)offersSect.style.display=''; }
-  else if(offersSect){ offersSect.style.display='none'; }   // hide "Offers Tonight" until a paid business posts a real special
+  else if(offersSect){ offersSect.style.display='none'; }   // hide "Today's Offers" until a paid business posts a real special
   // Member Deals — the download magnet
   const deals=P.filter(p=>p.mdeal&&hasPhoto(p));
   var mc=document.getElementById('member-cards'), msect=document.getElementById('member-sect');
@@ -1474,11 +1474,13 @@ function renderExplore(instant){
 /* ===== DAILY SPECIALS: category filter + Groupon-style daily greeter ===== */
 var specialsCat='all';
 // [key, label] — the vibes a person can pick. "all" always shows.
-var SPECIAL_CATS=[['all','\u2728 Everything'],['Restaurants','\uD83C\uDF7D\uFE0F Restaurants'],['Lounges','\uD83C\uDF78 Lounges'],['Coffee & Dessert','\u2615 Coffee & Dessert'],['Casino','\uD83C\uDFB0 Casino'],['Hotels','\uD83C\uDFE8 Hotels']];
+var SPECIAL_CATS=[['all','\u2728 Everything'],['Brunch','\uD83E\uDD50 Breakfast & Brunch'],['Restaurants','\uD83C\uDF7D\uFE0F Restaurants'],['Coffee & Dessert','\u2615 Coffee & Dessert'],['Lounges','\uD83C\uDF78 Lounges'],['Casino','\uD83C\uDFB0 Casino'],['Hotels','\uD83C\uDFE8 Hotels']];
 function specialsCatMatch(p,cat){
   if(cat==='all')return true;
-  if(cat==='Restaurants')return (p.tags||[]).indexOf('Food')>=0||['Restaurant','Mexican','Soul Food','Caribbean','American','Seafood','Brunch','Italian','Vegan'].indexOf(p.cat)>=0;
-  if(cat==='Lounges')return p.cat==='Lounge'||p.cat==='Bar'||(p.tags||[]).indexOf('Lounge')>=0;
+  var tags=p.tags||[];
+  if(cat==='Brunch')return p.cat==='Brunch'||tags.indexOf('Brunch')>=0||tags.indexOf('Breakfast')>=0;
+  if(cat==='Restaurants')return tags.indexOf('Food')>=0||['Restaurant','Mexican','Soul Food','Caribbean','American','Seafood','Brunch','Italian','Vegan'].indexOf(p.cat)>=0;
+  if(cat==='Lounges')return p.cat==='Lounge'||p.cat==='Bar'||tags.indexOf('Lounge')>=0;
   if(cat==='Coffee & Dessert')return p.cat==='Coffee'||p.cat==='Dessert';
   if(cat==='Casino')return p.cat==='Casino';
   if(cat==='Hotels')return p.cat==='Hotels';
@@ -1539,7 +1541,7 @@ function surpriseMe(){
   if(!good.length) good=P.filter(hasPhoto);
   if(!good.length){ toast('Nothing to pick yet'); return; }
   var pick=good[Math.floor(Math.random()*good.length)];
-  toast('Tonight’s pick ✨');
+  toast('Today’s pick ✨');
   openListing(pick.k,'specials');
 }
 
