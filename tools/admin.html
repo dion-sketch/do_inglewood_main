@@ -61,6 +61,10 @@
     </div>
 
     <div class="card tabpane hidden" id="pane-biz">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;padding-bottom:10px;border-bottom:1px solid #262a33">
+        <button class="g" onclick="importBusinesses()">↻ Import Inglewood businesses</button>
+        <span class="mut" id="import-msg">Pulls new local spots from Google Places. Safe — never overwrites existing ones.</span>
+      </div>
       <input type="text" id="bizsearch" placeholder="Search a business by name…" oninput="searchBiz()">
       <div id="biz-list" style="margin-top:10px"><div class="mut">Type a name to find a business.</div></div>
     </div>
@@ -173,6 +177,15 @@ async function delBiz(id,name){
   try{ await fetch(SUPABASE_URL+'/rest/v1/di_businesses?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:HJ()}); var r=$('brow-'+id); if(r)r.remove(); msg('Deleted'); }catch(e){ msg('Error: '+e.message); }
 }
 
+async function importBusinesses(){
+  var el=$('import-msg'); if(el) el.textContent='Importing from Google Places… (this can take ~30s)';
+  try{
+    const r=await fetch(SUPABASE_URL+'/functions/v1/import-businesses',{method:'POST',headers:{Authorization:'Bearer '+KEY}});
+    const t=await r.text();
+    if(!r.ok){ if(el) el.textContent='Error: '+(t||('HTTP '+r.status)); return; }
+    if(el) el.textContent='✓ '+t;
+  }catch(e){ if(el) el.textContent='Error: '+e.message+' — is the import-businesses function deployed?'; }
+}
 async function refreshEvents(){
   var el=$('refresh-msg'); if(el) el.textContent='Fetching from Ticketmaster…';
   try{
