@@ -531,167 +531,14 @@
       <div class="ev-note">Marquee events are pulled from Inglewood's venues &amp; the City calendar. Businesses can post their own game-day specials &amp; nights here. Confirm times with the venue before you go.</div>
     </div>
 
-    <!-- BUILD -->
-    <div class="view" id="view-build">
-      <div class="head-bar"><div class="back" onclick="buildBack()">&#8249;</div><div class="logo-mini" role="img" aria-label="Do Inglewood" title="Home" onclick="go('home')"></div><span class="htitle">Activity Builder</span></div>
-      <div class="progress"><div class="fill" id="pfill"></div></div>
-      <div class="builder-banner"><b>Activity Builder</b><span>A few quick questions &mdash; we build the day for you</span></div>
-
-      <div class="build-step" data-step="1">
-        <div class="build-q"><div class="eyebrow">Step 1 of 4</div><h2 id="s1q">What's the plan &mdash; and when?</h2></div>
-        <div id="evAnchorName" style="display:none;margin:0 20px 12px;padding:11px 13px;border:1px solid var(--gold);border-radius:12px;background:rgba(245,197,66,.08);font-size:13.5px;color:var(--txt);line-height:1.35"></div>
-        <div class="opts" id="planGrid">
-          <div class="opt" onclick="pick(this,'plan','Date Night')"><div class="ic">&#128150;</div><div class="lb">Date Night</div></div>
-          <div class="opt" onclick="pick(this,'plan','Friends Night')"><div class="ic">&#128101;</div><div class="lb">Friends Night</div></div>
-          <div class="opt" onclick="pick(this,'plan','Game Day')"><div class="ic">&#127944;</div><div class="lb">Game Day</div></div>
-          <div class="opt" onclick="pick(this,'plan','Family Day')"><div class="ic">&#128106;</div><div class="lb">Family Day</div></div>
-          <div class="opt" onclick="pick(this,'plan','Solo')"><div class="ic">&#129485;</div><div class="lb">Solo</div></div>
-          <div class="opt" onclick="pick(this,'plan','Sightseeing')"><div class="ic">&#128247;</div><div class="lb">Sightseeing</div></div>
-          <div class="opt" onclick="pick(this,'plan','After-Concert')"><div class="ic">&#127908;</div><div class="lb">After-Concert</div></div>
-          <div class="opt" onclick="pick(this,'plan','Surprise Me')"><div class="ic">&#10024;</div><div class="lb">Surprise Me</div></div>
-        </div>
-        <div class="opts" id="evAnchorBlock" style="display:none">
-          <div class="opt" onclick="pickWhen(this,'before')"><div class="ic">&#127869;</div><div class="lb">Before</div></div>
-          <div class="opt" onclick="pickWhen(this,'after')"><div class="ic">&#127864;</div><div class="lb">After</div></div>
-          <div class="opt" onclick="pickWhen(this,'both')"><div class="ic">&#128257;</div><div class="lb">Before &amp; After</div></div>
-        </div>
-        <div style="display:flex;gap:8px;padding:14px 20px 0">
-          <div class="datechip on" onclick="quickDate(this,0)">Today</div>
-          <div class="datechip" onclick="quickDate(this,1)">Tomorrow</div>
-          <div class="datechip" onclick="quickDate(this,'weekend')">This Weekend</div>
-        </div>
-        <div style="display:flex;gap:10px;padding:10px 20px 0">
-          <div style="flex:1"><label class="flbl">Or pick a date</label><input id="bDate" type="date" class="finput" onchange="sel.date=this.value;document.querySelectorAll('.datechip').forEach(function(c){c.classList.remove('on');})"></div>
-          <div style="flex:1"><label class="flbl">Start time</label>
-            <select id="bTime" class="finput" onchange="sel.startTime=this.value">
-              <option>10:00 AM</option><option>11:00 AM</option><option>12:00 PM</option><option>1:00 PM</option><option>2:00 PM</option><option>3:00 PM</option><option>4:00 PM</option><option>5:00 PM</option><option selected>6:00 PM</option><option>7:00 PM</option><option>8:00 PM</option><option>9:00 PM</option>
-            </select></div>
-        </div>
-        <div class="hint">Date &amp; time so we can line up reservations.</div>
-      </div>
-
-      <div class="build-step" data-step="2" style="display:none">
-        <div class="build-q"><div class="eyebrow">Step 2 of 4</div><h2>Budget &amp; group size</h2></div>
-        <div style="padding:2px 20px 6px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">Your budget</div>
-        <div class="opts-row">
-          <div class="pill" onclick="pick(this,'budget','$50')">$50</div>
-          <div class="pill" onclick="pick(this,'budget','$100')">$100</div>
-          <div class="pill" onclick="pick(this,'budget','$150')">$150</div>
-          <div class="pill" onclick="pick(this,'budget','$250')">$250</div>
-        </div>
-        <div class="hint">Total for everything, all people included</div>
-        <div style="padding:16px 20px 6px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">How many people</div>
-        <div class="opts-row">
-          <div class="pill" onclick="pick(this,'people','1')">1</div>
-          <div class="pill" onclick="pick(this,'people','2')">2</div>
-          <div class="pill" onclick="pick(this,'people','3-4')">3&#8211;4</div>
-          <div class="pill" onclick="pick(this,'people','5-8')">5&#8211;8</div>
-        </div>
-      </div>
-
-      <div class="build-step" data-step="3" style="display:none">
-        <div class="build-q"><div class="eyebrow">Step 3 of 4</div><h2>Food &amp; extras</h2></div>
-        <div style="padding:2px 20px 6px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">What do you feel like?</div>
-        <div class="opts3">
-          <div class="opt" onclick="pick(this,'food','Mexican')"><div class="ic">&#127790;</div><div class="lb">Mexican</div></div>
-          <div class="opt" onclick="pick(this,'food','Soul Food')"><div class="ic">&#127831;</div><div class="lb">Soul Food</div></div>
-          <div class="opt" onclick="pick(this,'food','Seafood')"><div class="ic">&#129424;</div><div class="lb">Seafood</div></div>
-          <div class="opt" onclick="pick(this,'food','American')"><div class="ic">&#127828;</div><div class="lb">American</div></div>
-          <div class="opt" onclick="pick(this,'food','Caribbean')"><div class="ic">&#127857;</div><div class="lb">Caribbean</div></div>
-          <div class="opt" onclick="pick(this,'food','Italian')"><div class="ic">&#127837;</div><div class="lb">Italian</div></div>
-          <div class="opt" onclick="pick(this,'food','Vegan')"><div class="ic">&#129382;</div><div class="lb">Vegan</div></div>
-          <div class="opt" onclick="pick(this,'food','Surprise')"><div class="ic">&#10024;</div><div class="lb">Anything</div></div>
-        </div>
-        <div style="padding:16px 20px 6px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">Add to your day — pick as many as you like</div>
-        <div class="opts3">
-          <div class="opt" onclick="multi(this,'Movie')"><div class="ic">&#127902;</div><div class="lb">Movie</div></div>
-          <div class="opt" onclick="multi(this,'Lounge')"><div class="ic">&#127864;</div><div class="lb">Lounge</div></div>
-          <div class="opt" onclick="multi(this,'Casino')"><div class="ic">&#127920;</div><div class="lb">Casino</div></div>
-          <div class="opt" onclick="multi(this,'Dessert')"><div class="ic">&#9749;</div><div class="lb">Coffee &amp; Dessert</div></div>
-          <div class="opt" onclick="multi(this,'Event')"><div class="ic">&#127908;</div><div class="lb">Event</div></div>
-          <div class="opt" onclick="multi(this,'Club')"><div class="ic">&#127881;</div><div class="lb">Club</div></div>
-          <div class="opt" onclick="multi(this,'Landmark')"><div class="ic">&#127914;</div><div class="lb">Landmarks</div></div>
-          <div class="opt" onclick="multi(this,'Stadium')"><div class="ic">&#127967;</div><div class="lb">Stadium Stop</div></div>
-          <div class="opt" onclick="multi(this,'Park')"><div class="ic">&#127795;</div><div class="lb">Park / Walk</div></div>
-        </div>
-        <div class="hint">Tap any you want — or skip</div>
-      </div>
-
-      <div class="build-step" data-step="4" style="display:none">
-        <div class="build-q"><div class="eyebrow">Step 4 of 4</div><h2>Getting around</h2></div>
-        <div style="padding:2px 20px 6px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">Where are you starting?</div>
-        <div class="opts">
-          <div class="opt" onclick="pick(this,'start','Use my location')"><div class="ic">&#128205;</div><div class="lb">Use my location (GPS)</div></div>
-          <div class="opt" onclick="pick(this,'start','Enter address')"><div class="ic">&#9999;</div><div class="lb">Enter an address</div></div>
-          <div class="opt" onclick="pick(this,'start','Near SoFi Stadium')"><div class="ic">&#127944;</div><div class="lb">Near SoFi Stadium</div></div>
-          <div class="opt" onclick="pick(this,'start','Near Intuit Dome')"><div class="ic">&#127936;</div><div class="lb">Near Intuit Dome</div></div>
-          <div class="opt" onclick="pick(this,'start','Near Kia Forum')"><div class="ic">&#127908;</div><div class="lb">Near Kia Forum</div></div>
-          <div class="opt" onclick="pick(this,'start','Already in Inglewood')"><div class="ic">&#127968;</div><div class="lb">I'm already here</div></div>
-        </div>
-        <div id="addrField" style="display:none;padding:4px 20px 0"><input id="addrInput" placeholder="Type your starting address..." style="width:100%;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:13px;color:var(--txt);font-size:14px"></div>
-        <div style="padding:16px 20px 6px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">How do you want to move?</div>
-        <div class="opts">
-          <div class="opt" onclick="pick(this,'move','Drive + Parking')"><div class="ic">&#128663;</div><div class="lb">Drive + Parking</div></div>
-          <div class="opt" onclick="pick(this,'move','Metro / Bus')"><div class="ic">&#128649;</div><div class="lb">Metro / Bus</div></div>
-          <div class="opt" onclick="pick(this,'move','Rideshare')"><div class="ic">&#128661;</div><div class="lb">Rideshare</div></div>
-          <div class="opt" onclick="pick(this,'move','Mix It For Me')"><div class="ic">&#10024;</div><div class="lb">Mix It For Me</div></div>
-        </div>
-        <div class="toggle-row" style="margin-top:4px">
-          <div class="toggle" id="parkToggle" onclick="this.classList.toggle('sel');sel.parking=this.classList.contains('sel')">&#128658; Show Parking Near Stops</div>
-        </div>
-      </div>
-
-      <div class="build-foot"><button class="btn btn-primary" id="buildNext" onclick="buildNext()">Next</button></div>
-    </div>
-
-    <!-- BUILDING LOADER -->
-    <div class="view" id="view-loading">
-      <div class="loader">
-        <div class="spin"></div>
-        <div class="lt" id="loadText">Building your night...</div>
-        <div class="ls" id="loadSub">Pulling real Inglewood spots</div>
-      </div>
-    </div>
-
-    <!-- RESULTS -->
-    <div class="view" id="view-results">
-      <div class="head-bar"><div class="back" onclick="go('build')">&#8249;</div><div class="logo-mini" role="img" aria-label="Do Inglewood" title="Home" onclick="go('home')"></div><span class="htitle">Your Do Plans</span></div>
-      <div class="planhead"><p id="planSummary"></p></div>
-      <div class="sortbar">
-        <div class="sc on" onclick="sortPlans('best',this)">Best Match</div>
-        <div class="sc" onclick="sortPlans('specials',this)">&#127863; Specials First</div>
-        <div class="sc" onclick="sortPlans('price',this)">Lowest Price</div>
-      </div>
-      <div id="plans-list"></div>
-      <div class="surprise" onclick="openDetail(0)"><b>&#10024; Let the City Decide</b><span>Surprise me with the best plan</span></div>
-      <div style="height:8px"></div>
-    </div>
-
-    <!-- DETAIL -->
-    <div class="view" id="view-detail">
-      <div class="head-bar"><div class="back" onclick="go('results')">&#8249;</div><div class="logo-mini" role="img" aria-label="Do Inglewood" title="Home" onclick="go('home')"></div><span class="htitle" id="detailTitle">Do Plan</span></div>
-      <div class="planhead"><p id="detailMeta"></p></div>
-      <div class="timeline" id="timeline"></div>
-      <div style="display:flex;gap:10px;padding:14px 16px 6px;border-top:1px solid var(--line);margin-top:6px">
-        <button class="btn btn-primary" style="flex:1;font-size:16px;padding:14px" onclick="savePlanLocal()">&#11088; Save Plan</button>
-        <button class="btn btn-ghost" style="flex:1;font-size:16px;padding:14px" onclick="sharePlan()">&#128228; Share</button>
-      </div>
-      <div class="detail-actions" style="grid-template-columns:repeat(2,1fr)">
-        <div class="da" onclick="printPlan()"><div class="ic">&#128196;</div>Save as PDF</div>
-        <div class="da" onclick="addPlanToCalendar()"><div class="ic">&#128197;</div>Add to Calendar</div>
-      </div>
-      <div style="height:14px"></div>
-    </div>
-
     <!-- SAVED ITINERARIES -->
     <div class="view" id="view-saved">
-      <div class="head-bar"><div class="back" onclick="go('home')">&#8249;</div><div class="logo-mini" role="img" aria-label="Do Inglewood" title="Home" onclick="go('home')"></div><span class="htitle">My Do Inglewood</span></div>
+      <div class="head-bar"><div class="back" onclick="go('home')">&#8249;</div><div class="logo-mini" role="img" aria-label="Do Inglewood" title="Home" onclick="go('home')"></div><span class="htitle">Saved Spots</span></div>
       <div id="fav-sect" style="padding:14px 16px 0;display:none">
         <div class="sect-head" style="margin:0 0 10px"><h3>&#9829; Favorite Spots</h3></div>
         <div id="fav-list" class="hscroll"></div>
       </div>
-      <div style="padding:16px 16px 4px"><div class="sect-head" style="margin:0"><h3>My Itineraries</h3></div></div>
-      <div id="saved-list" style="padding:6px 16px 20px"></div>
+      <div id="saved-empty" style="padding:44px 20px;text-align:center;color:var(--muted);font-size:14px;display:none">No saved spots yet.<br><br>Tap the &#9825; on any place to save it here.</div>
     </div>
 
     <!-- LISTING -->
@@ -1383,8 +1230,7 @@ async function cancelResv(id){
   if(r&&r.error){ toast('Could not cancel: '+r.error.message); return; }
   toast('Reservation cancelled');
   await loadMyReservations();
-  if(document.getElementById('view-detail').classList.contains('active') && window._lastPlanIdx!=null){ openDetail(window._lastPlanIdx); }
-  else if(document.getElementById('view-listing').classList.contains('active') && window._curListing){ openListing(window._curListing, lastList); }
+  if(document.getElementById('view-listing').classList.contains('active') && window._curListing){ openListing(window._curListing, lastList); }
 }
 
 /* ---- Native reservations (for businesses NOT on a booking provider) ---- */
@@ -1401,9 +1247,8 @@ function openResv(bizKey){
   window._resvBiz=bizKey;
   document.getElementById('resvTitle').textContent='Request a table · '+p.n;
   var _rs=document.getElementById('resvSub'); if(_rs) _rs.textContent=(p.hrs?('Open '+p.hrs+' · '):'')+'pick a time — the business confirms.';
-  var d=document.getElementById('rv_date'); if(d) d.value=(typeof sel!=='undefined'&&sel.date)||isoOf(new Date());
-  var t=document.getElementById('rv_time'); if(t&&typeof sel!=='undefined'&&sel.startTime){ for(var i=0;i<t.options.length;i++){ if(t.options[i].value===sel.startTime){ t.selectedIndex=i; break; } } }
-  var party=document.getElementById('rv_party'); if(party&&!party.value){ party.value=(typeof sel!=='undefined'&&sel.people==='1')?1:2; }
+  var d=document.getElementById('rv_date'); if(d&&!d.value) d.value=isoOf(new Date());
+  var party=document.getElementById('rv_party'); if(party&&!party.value){ party.value=2; }
   document.getElementById('resvOverlay').classList.add('on');
 }
 function closeResv(){ document.getElementById('resvOverlay').classList.remove('on'); }
@@ -1419,8 +1264,7 @@ async function submitResv(){
   closeResv();
   toast('Request sent ✓ '+(PB[biz]?PB[biz].n:'The business')+' will confirm');
   await loadMyReservations();
-  if(document.getElementById('view-detail').classList.contains('active') && window._lastPlanIdx!=null){ openDetail(window._lastPlanIdx); }
-  else if(document.getElementById('view-listing').classList.contains('active') && window._curListing){ openListing(window._curListing, lastList); }
+  if(document.getElementById('view-listing').classList.contains('active') && window._curListing){ openListing(window._curListing, lastList); }
 }
 /* Owner side — see & accept/decline requests in "My Business" */
 async function renderOwnerResv(){
@@ -1682,21 +1526,6 @@ function toggleFav(k,ev){ if(ev&&ev.stopPropagation)ev.stopPropagation(); if(!k)
   toast(on?'Saved to favorites ♥':'Removed from favorites');
   var h=document.getElementById('ldFav'); if(h){ h.innerHTML=on?'&#9829;':'&#9825;'; h.style.color=on?'var(--pink)':''; }
 }
-/* ---- Save the itinerary as a PDF (via the browser's print dialog) ---- */
-function printPlan(){ toast('Choose “Save as PDF” in the print dialog'); setTimeout(function(){ try{ window.print(); }catch(e){} }, 400); }
-/* ---- Add the day to Google Calendar (real event link) ---- */
-function _stamp(iso,min){ var d=parseD(iso); min=((min%1440)+1440)%1440; var h=Math.floor(min/60),mm=min%60; function p2(x){return String(x).padStart(2,'0');} return d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate())+'T'+p2(h)+p2(mm)+'00'; }
-function addPlanToCalendar(){
-  var pl=currentPlans[window._lastPlanIdx||0]; if(!pl){ toast('Open an itinerary first'); return; }
-  var ev=window.__anchorEvent||null;
-  var dateIso=sel.date||isoOf(new Date());
-  var startHHMM=ev&&ev.time?ev.time:(sel.startTime||'6:00 PM');
-  var startMin=timeVal(startHHMM);
-  var title='Do Inglewood — '+(ev?String(ev.title).split('—')[0].trim():(pl.label||'My Day'));
-  var s=_stamp(dateIso,startMin), e=_stamp(dateIso,startMin+240);
-  var url='https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(title)+'&dates='+s+'/'+e+'&details='+encodeURIComponent(planTextSummary(pl))+'&location='+encodeURIComponent('Inglewood, CA');
-  window.open(url,'_blank');
-}
 function shareBiz(k){ var p=PB[k]; if(!p)return; var text=p.n+' · '+(p.cat||'')+' in Inglewood\n'+(p.addr||'')+'\nFound on Do Inglewood 🎟️'; if(navigator.share){ navigator.share({title:p.n,text:text}).catch(function(){}); } else if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(function(){toast('Copied — paste it anywhere');}); } else { toast('Sharing not supported'); } }
 /* Best-effort "Open now" from free-text hours. Returns null when unsure (never guesses wrong). */
 function openNow(hrs){
@@ -1780,9 +1609,8 @@ function openListing(k,from){
     <iframe title="Map of ${xmlEsc(p.n)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" style="width:100%;height:120px;border:0;border-radius:14px;margin-top:14px;display:block" src="https://www.google.com/maps?q=${encodeURIComponent(p.n+', '+(p.addr||'')+', Inglewood CA')}&output=embed"></iframe>
     ${menuHTML(p)}
     ${reserveCTA(p)}
-    <div style="display:flex;gap:9px;margin-top:${isReservable(p)?'9':'16'}px">
-      <button class="btn ${isReservable(p)?'btn-ghost':'btn-primary'}" style="font-size:15px;padding:13px" onclick="planAroundBiz('${p.k}')">Build a Plan Around This</button>
-      <button class="tbtn pink" style="padding:0 16px" onclick="openDirections('${p.k}')">Directions</button>
+    <div style="margin-top:${isReservable(p)?'9':'16'}px">
+      <button class="btn btn-ghost" style="width:100%;font-size:15px;padding:13px" onclick="openDirections('${p.k}')">${ICON.nav} Directions</button>
     </div>
     ${similarSpots(p)}
     ${p.tier<2?`<div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line);text-align:center;font-size:12px;color:var(--muted)">Own this business? <span onclick="openClaimForm('${p.k}',1)" style="color:var(--pink);cursor:pointer;font-weight:700">Claim it &rarr;</span></div>`
@@ -1801,340 +1629,8 @@ function openListing(k,from){
   }
 }
 
-/* BUILD FLOW */
-let step=1;const sel={plan:null,budget:null,people:null,food:null,extras:[],exp:[],start:null,move:null,parking:false,date:null,startTime:null};
-function resetBuild(){step=1;sel.plan=sel.budget=sel.people=sel.food=sel.move=sel.start=null;sel.extras=[];sel.exp=[];sel.parking=false;sel.date=null;sel.startTime=null;sel.when=null;window.__anchorEvent=null;window.__anchorBiz=null;
-  document.querySelectorAll('.opt,.pill,.toggle').forEach(e=>e.classList.remove('sel'));
-  // Normal mode: show the plan-type grid, hide the event before/after choice.
-  var pg=document.getElementById('planGrid'), eb=document.getElementById('evAnchorBlock'), en=document.getElementById('evAnchorName'), q=document.getElementById('s1q');
-  if(pg)pg.style.display=''; if(eb)eb.style.display='none'; if(en)en.style.display='none';
-  if(q)q.innerHTML="What's the plan &mdash; and when?";
-  var af=document.getElementById('addrField');if(af)af.style.display='none';
-  var d=document.getElementById('bDate'); if(d){ if(!d.value) d.value=isoOf(new Date()); sel.date=d.value; }
-  var t=document.getElementById('bTime'); if(t){ sel.startTime=t.value; }
-  showStep();}
-// Quick date presets (Today / Tomorrow / This Weekend) — a tap instead of typing.
-function quickDate(el,off){
-  document.querySelectorAll('.datechip').forEach(function(c){c.classList.remove('on');}); if(el)el.classList.add('on');
-  var d=new Date();
-  if(off==='weekend'){ var day=d.getDay(); var add=(6-day+7)%7; d.setDate(d.getDate()+add); }
-  else d.setDate(d.getDate()+(+off||0));
-  var iso=isoOf(d); sel.date=iso; var bd=document.getElementById('bDate'); if(bd)bd.value=iso;
-}
-// Start the builder anchored to a specific business — every generated plan includes it.
-function planAroundBiz(key){
-  go('build'); resetBuild();
-  if(!PB[key]) return;
-  window.__anchorBiz=key;
-  var q=document.getElementById('s1q');
-  if(q) q.innerHTML='Building around <span style="color:var(--gold)">'+xmlEsc(PB[key].n)+'</span> &mdash; set the vibe.';
-}
-function showStep(){
-  document.querySelectorAll('.build-step').forEach(s=>s.style.display=(+s.dataset.step===step)?'block':'none');
-  document.getElementById('pfill').style.width=(step/4*100)+'%';
-  var nb=document.getElementById('buildNext');
-  nb.textContent = step===4 ? 'Build My Plans →' : 'Next';
-}
-function pick(el,key,val){el.parentElement.querySelectorAll('.opt,.pill').forEach(e=>e.classList.remove('sel'));el.classList.add('sel');sel[key]=val;
-  if(key==='start'){var af=document.getElementById('addrField');if(af)af.style.display=(val==='Enter address')?'block':'none';}}
-// Event-anchored: choose to go out before, after, or both around the game/show.
-function pickWhen(el,val){ el.parentElement.querySelectorAll('.opt').forEach(e=>e.classList.remove('sel')); el.classList.add('sel'); sel.when=val; }
-var EXPSET=['Stadium','Landmark','Park'];
-function multi(el,val){el.classList.toggle('sel');
-  var arr = EXPSET.indexOf(val)>=0 ? sel.exp : sel.extras;
-  var i=arr.indexOf(val); if(i>=0)arr.splice(i,1); else arr.push(val);}
-function buildNext(){
-  if(step===1){
-    if(window.__anchorEvent){
-      if(!sel.when){toast('Before, after, or both?');return;}
-      var ev1=window.__anchorEvent, kind=evKind(ev1);
-      var base=(kind==='concert')?'Concert':(kind==='comedy')?'Comedy':(kind==='basketball'||kind==='football')?'Game Day':'Event';
-      sel.plan=base+(sel.when==='before'?' · Before':sel.when==='after'?' · After':' · Before & After');
-    } else if(!sel.plan){ toast('Pick what you are planning'); return; }
-    var d=document.getElementById('bDate'); if(d&&d.value)sel.date=d.value; if(!sel.date)sel.date=isoOf(new Date());
-    var t=document.getElementById('bTime'); if(t&&t.value)sel.startTime=t.value; if(!sel.startTime)sel.startTime='6:00 PM'; }
-  else if(step===2){ if(!sel.budget){toast('Pick a budget');return;} if(!sel.people){toast('How many people?');return;} }
-  else if(step===3){ if(!sel.food){toast('Pick what you feel like');return;} }
-  else if(step===4){ if(!sel.start){toast('Where are you starting?');return;} if(!sel.move){toast('How do you want to move?');return;} }
-  if(step<4){step++;showStep();document.getElementById('screen').scrollTop=0;}
-  else{runLoader();}
-}
-function buildBack(){if(step>1){step--;showStep();}else go('home');}
-
-/* LOADER then results */
-function runLoader(){
-  go('loading');
-  const steps=[['Reading your budget...','$'+sel.budget],['Finding spots in the city...',sel.food+' + more'],['Pricing your night...','incl. transport'],['Locking your Do Plans...','almost there']];
-  let i=0;
-  const lt=document.getElementById('loadText'),ls=document.getElementById('loadSub');
-  lt.textContent=steps[0][0];ls.textContent=steps[0][1];
-  const iv=setInterval(()=>{i++;if(i<steps.length){lt.textContent=steps[i][0];ls.textContent=steps[i][1];}
-    else{clearInterval(iv);buildResults();go('results');}},620);
-}
-
-/* RESULTS */
-let currentPlans=[],curSort='best';
-function money(n){return '$'+Math.round(n);}
-function fmtDate(iso){ if(!iso)return 'Today'; try{ return parseD(iso).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'}); }catch(e){ return iso; } }
-function fmtMins(m){ m=((m%1440)+1440)%1440; var h=Math.floor(m/60),mm=m%60,ap=h<12?'AM':'PM',h12=h%12||12; return h12+':'+String(mm).padStart(2,'0')+' '+ap; }
-function pickFood(){
-  const map={Mexican:['lafonda','fiesta','frijoles','barbarita'],'Soul Food':['dulans','servingspoon','southernsoul','rustypot'],
-    Seafood:['conis','chente','bigfish','lalos'],American:['meeting','mrfries','threeout'],Caribbean:['twohommes'],
-    Italian:['sixseven','meeting','martins'],Vegan:['hilltop','awakening','luua'],Surprise:['twohommes','dulans','conis','lafonda']};
-  return (map[sel.food]||map.Surprise);
-}
-function expKeyFor(tag){
-  var m={Stadium:['intuit','forum','sofi'],Landmark:['welcomemural','grevillea'],Park:['edvincent']};
-  return (m[tag]||[])[0];
-}
-function extraKeyFor(tag,used){
-  var m={Movie:['cinepolis'],Lounge:['sixseven','nile','legends'],Casino:['casino'],
-    Club:['greenhorse','nile','legends'],Dessert:['luua','baba','antojitos','awakening'],Event:['forum','intuit','sofi']};
-  var list=m[tag]||[];
-  for(var i=0;i<list.length;i++){if(used.indexOf(list[i])<0)return list[i];}
-  return list[0];
-}
-function buildResults(){
-  const ppl=sel.people==='1'?1:sel.people==='2'?2:sel.people==='3-4'?4:6;
-  const moveCost=sel.move==='Rideshare'?18:sel.move==='Drive + Parking'?25:sel.move==='Metro / Bus'?7:15;
-  const moveLabel=sel.move==='Mix It For Me'?'Rideshare + Walking':sel.move;
-  const startLabel=sel.start==='Enter address'?(document.getElementById('addrInput')&&document.getElementById('addrInput').value||'your address'):sel.start;
-  document.getElementById('planSummary').textContent=`${fmtDate(sel.date)}${sel.startTime?' · '+sel.startTime:''} · ${sel.plan} · ${sel.people} ${ppl>1?'people':'person'} · ${sel.budget} · ${sel.food} · from ${startLabel} · ${sel.move}`;
-  const foods=pickFood();
-
-  // Build a shared stop list each plan varies slightly
-  // "Build a Plan Around This": force the viewed business into every plan.
-  var anchorK=(window.__anchorBiz&&PB[window.__anchorBiz])?window.__anchorBiz:null;
-  var anchorIsFood=anchorK&&(PB[anchorK].tags||[]).indexOf('Food')>=0;
-  function compose(primaryFood){
-    var stops=[]; var used=[];
-    // experience BEFORE dinner (photo/flowers/coffee) - keep it light
-    sel.exp.forEach(function(tag){var k=expKeyFor(tag);if(k&&used.indexOf(k)<0){stops.push({k:k,phase:'pre'});used.push(k);}});
-    // dinner — if anchored to a food spot, that IS the meal
-    var food = anchorIsFood ? anchorK : primaryFood;
-    stops.push({k:food,phase:'food'}); used.push(food);
-    // a non-food anchor (lounge, casino, venue, hotel) rides along as its own stop
-    if(anchorK && !anchorIsFood && used.indexOf(anchorK)<0){ stops.push({k:anchorK,phase:'anchor'}); used.push(anchorK); }
-    // night extras (movie/lounge/casino/dessert/event/hotel) in sensible order
-    var order=['Movie','Event','Lounge','Club','Casino','Dessert'];
-    order.forEach(function(tag){ if(sel.extras.indexOf(tag)>=0){var k=extraKeyFor(tag,used);if(k&&used.indexOf(k)<0){stops.push({k:k,phase:tag.toLowerCase()});used.push(k);}}});
-    // PLANNING RULE: cap at 5 stops so a plan stays realistic (anchor is early, so it survives)
-    if(stops.length>5){ stops=stops.slice(0,5); }
-    return stops;
-  }
-
-  currentPlans=[
-    {tag:sel.plan,conf:'Mostly verified',stops:compose(foods[0])},
-    {tag:'Friends Pick',conf:'Imported · confirm hours',stops:compose(foods[1]||foods[0])},
-    {tag:'Budget Pick',conf:'Estimated pricing',stops:compose(foods[2]||foods[1]||foods[0])}
-  ];
-  currentPlans.forEach(function(pl){
-    pl.ppl=ppl;pl.move=moveLabel;pl.moveCost=moveCost;
-    var f=0; pl.stops.forEach(function(st){if(PB[st.k])f+=PB[st.k].cpp;});
-    pl.total=f*ppl+moveCost;
-    pl.hasSpecial=pl.stops.some(function(st){return PB[st.k]&&PB[st.k].special;})?1:0;
-    pl.label=pl.stops.map(function(st){return PB[st.k]?PB[st.k].cat:'';}).filter(Boolean).join(' + ');
-  });
-  renderPlans();
-}
-function sortPlans(mode,el){curSort=mode;document.querySelectorAll('.sortbar .sc').forEach(s=>s.classList.remove('on'));el.classList.add('on');renderPlans();}
-function renderPlans(){
-  let plans=[...currentPlans];
-  if(curSort==='specials')plans.sort((a,b)=>b.hasSpecial-a.hasSpecial);
-  if(curSort==='price')plans.sort((a,b)=>a.total-b.total);
-  document.getElementById('plans-list').innerHTML=plans.map((pl,i)=>{
-    const idx=currentPlans.indexOf(pl);
-    return `<div class="plan ${i===0?'best':''}" style="animation-delay:${i*0.06}s" onclick="openDetail(${idx})">
-      <div class="ptop">
-        <span class="ptag">${pl.tag}</span>${i===0?'<span class="pbadge">Best Match</span>':pl.hasSpecial?'<span class="pbadge">&#127863; Has Special</span>':''}
-        <h4>${pl.label}</h4>
-        <div class="pmeta">${pl.ppl} ${pl.ppl>1?'people':'person'} · ${pl.stops[0]&&PB[pl.stops[0].k]?PB[pl.stops[0].k].addr:'Inglewood'}</div>
-        <div class="conf">&#9679; ${pl.conf}</div>
-      </div>
-      <div class="pbot"><div><div class="price">${money(pl.total)}</div><div style="font-size:10px;color:var(--muted)">est. total incl. transport</div></div><span class="move">${pl.move}</span></div>
-    </div>`;}).join('');
-}
-
-/* PLAN DETAIL */
-function openDetail(i){
-  const pl=currentPlans[i]||currentPlans[0];
-  window._lastPlanIdx=i;
-  document.getElementById('detailTitle').textContent='Do Inglewood Itinerary';
-  const startLabel=sel.start==='Enter address'?(document.getElementById('addrInput')&&document.getElementById('addrInput').value||'your address'):(sel.start||'your location');
-
-  // find a real anchor: a calendar event (from "Plan my day") or a movie showtime
-  var ev=window.__anchorEvent||null;
-  var anchor=pl.stops.find(function(st){return PB[st.k]&&PB[st.k].showtimes;});
-  var hasAnchor=!!(ev||anchor);
-  var anchorTime=ev?(ev.time||null):(anchor?(PB[anchor.k].showtimes[2]||PB[anchor.k].showtimes[0]):null);
-  var anchorLabel=ev?((String(ev.title).split('\u2014')[0].trim())+(anchorTime?(' at '+anchorTime):'')):(anchorTime?('Show at '+anchorTime):'');
-  document.getElementById('detailMeta').innerHTML=`${fmtDate(sel.date)}${sel.startTime?' \u00b7 '+sel.startTime:''} \u00b7 ${sel.plan} \u00b7 ${pl.ppl} ${pl.ppl>1?'people':'person'} \u00b7 Est. ${money(pl.total)}`+(anchorLabel?` \u00b7 <span style="color:var(--gold)">${anchorLabel}</span>`:'');
-
-  // classify each stop into BEFORE / SHOW / AFTER
-  function phaseOf(st){
-    var p=PB[st.k]; if(!p)return 'before';
-    if(p.showtimes||p.cat==='Stadium')return 'show';
-    if(['Dessert','Coffee'].indexOf(p.cat)>=0 && st.phase!=='pre')return 'after';
-    if(p.tags.indexOf('Lounge')>=0 || p.cat==='Casino')return 'after';
-    if(p.cat==='Hotels')return 'after';
-    return 'before';
-  }
-  var groups={before:[],show:[],after:[]};
-  pl.stops.forEach(function(st){
-    var g;
-    if(!hasAnchor){ g='before'; }
-    else if(ev && (sel.when==='before'||sel.when==='after')){
-      // User chose a side: keep the show where it belongs, force everything else there.
-      g = (phaseOf(st)==='show') ? 'show' : sel.when;
-    } else { g=phaseOf(st); }   // 'both', or a movie-showtime anchor
-    groups[g].push(st);
-  });
-
-  function dur(p){
-    if(p.showtimes)return '~2 hrs 15';
-    if(p.cat==='Stadium')return 'event time';
-    if(p.tags.indexOf('Food')>=0 && p.price!=='$')return '~90 min';
-    if(p.tags.indexOf('Food')>=0)return '~45 min';
-    if(p.tags.indexOf('Lounge')>=0)return '~90 min';
-    if(p.cat==='Casino')return 'open-ended';
-    if(['Dessert','Coffee'].indexOf(p.cat)>=0)return '~30 min';
-    if(p.cat==='Landmark')return '~15 min';
-    if(p.cat==='Park')return '~30 min';
-    if(p.cat==='Florist')return '~10 min';
-    if(p.cat==='Hotels')return 'overnight';
-    return '~45 min';
-  }
-  // Rough minutes a stop takes, for scheduling the day around the event.
-  function durMins(p){
-    if(!p) return 60;
-    if(p.tags.indexOf('Food')>=0 && p.price!=='$') return 90;
-    if(p.tags.indexOf('Food')>=0) return 60;
-    if(p.tags.indexOf('Lounge')>=0) return 90;
-    if(p.cat==='Casino') return 120;
-    if(['Dessert','Coffee'].indexOf(p.cat)>=0) return 40;
-    if(p.cat==='Landmark') return 20;
-    if(p.cat==='Park') return 40;
-    if(p.cat==='Florist') return 15;
-    if(p.cat==='Hotels') return 0;
-    return 60;
-  }
-  function evDurMins(e){
-    var k = e ? evKind(e) : '';
-    if(k==='football') return 200;   // ~3h20
-    if(k==='basketball') return 150; // ~2h30
-    if(k==='concert') return 150;
-    if(k==='comedy') return 105;
-    return 165;
-  }
-  // Timed itinerary: back-time the "before" stops to tip-off, forward-time the "after" stops.
-  if(hasAnchor && ev && anchorTime){
-    var TRAVEL=15, PREBUF=20;
-    var evStart=timeVal(anchorTime), evEnd=evStart+evDurMins(ev);
-    var endBy=evStart-PREBUF;   // be seated 20 min before start
-    for(var bi=groups.before.length-1; bi>=0; bi--){
-      var bp=PB[groups.before[bi].k]; var bd=durMins(bp)||60;
-      var bStart=endBy-bd; groups.before[bi]._time=fmtMins(bStart); endBy=bStart-TRAVEL;
-    }
-    var cur=evEnd+TRAVEL;
-    groups.after.forEach(function(st){ var ap=PB[st.k]; st._time=fmtMins(cur); cur+=(durMins(ap)||60)+TRAVEL; });
-  }
-  function iconFor(p){
-    return p.showtimes?'&#127902;':p.cat==='Casino'?'&#127920;':p.cat==='Stadium'?'&#127967;':p.cat==='Landmark'?'&#128247;':p.cat==='Park'?'&#127795;':p.cat==='Florist'?'&#128144;':(p.cat==='Dessert'||p.cat==='Coffee')?'&#127846;':p.tags.indexOf('Lounge')>=0?'&#127864;':'&#127869;';
-  }
-
-  var html='';
-  var num=0;
-  function section(title,arr){
-    if(!arr.length)return '';
-    var h='<div class="phasehdr">'+title+'</div>';
-    arr.forEach(function(st,idx){
-      var p=PB[st.k]; if(!p)return; num++;
-      var tPrefix = st._time ? '<b style="color:var(--gold)">'+st._time+'</b> \u00b7 ' : '';
-      var sub=tPrefix+p.cat+' \u00b7 '+p.price+(p.cpp?' \u00b7 '+money(p.cpp*pl.ppl)+' est.':'')+' \u00b7 '+dur(p);
-      if(p.showtimes)sub='<b style="color:var(--gold)">'+anchorTime+'</b> \u00b7 Movie showtime \u00b7 '+p.price+' \u00b7 '+money(p.cpp*pl.ppl)+' est.';
-      if(p.special)sub+=' \u00b7 \u2728 '+p.special;
-      var last=(arr===groups.after && idx===arr.length-1);
-      h+=stopHTML(iconFor(p),num,p.n,sub,!last,st.k,true);
-    });
-    return h;
-  }
-  if(hasAnchor){
-    html+=section(ev?'Before the show':'Before',groups.before);
-    if(ev){
-      var showInner=''; num++; showInner+=eventStopHTML(ev,num);
-      groups.show.forEach(function(st){var p=PB[st.k]; if(!p)return; num++;
-        var sub=p.cat+' · '+p.price+(p.cpp?' · '+money(p.cpp*pl.ppl)+' est.':'')+' · '+dur(p);
-        if(p.showtimes)sub='Movie · '+anchorTime+' showtime · '+p.price+' · '+money(p.cpp*pl.ppl)+' est.';
-        showInner+=stopHTML(iconFor(p),num,p.n,sub,false,st.k,true);
-      });
-      html+='<div class="phasehdr">The Show</div>'+showInner;
-    } else {
-      html+=section('The Show',groups.show);
-    }
-    html+=section(ev?'After the show':'After',groups.after);
-  } else {
-    // no event anchor: schedule from the chosen start time
-    var base=timeVal(sel.startTime||'6:00 PM');
-    html+='<div class="phasehdr">Your Plan \u00b7 starts '+(sel.startTime||'6:00 PM')+'</div>';
-    pl.stops.forEach(function(st,idx){
-      var p=PB[st.k]; if(!p)return; num++;
-      var sub='&#9201; '+fmtMins(base+idx*105)+' \u00b7 '+p.cat+' \u00b7 '+p.price+(p.cpp?' \u00b7 '+money(p.cpp*pl.ppl)+' est.':'')+' \u00b7 '+dur(p);
-      if(p.special)sub+=' \u00b7 \u2728 '+p.special;
-      html+=stopHTML(iconFor(p),num,p.n,sub,idx<pl.stops.length-1,st.k,true);
-    });
-  }
-  // buffer note
-  html+='<div class="buffernote">&#9201; ~15 min between stops \u00b7 '+sel.move+' from '+startLabel+'</div>';
-  document.getElementById('timeline').innerHTML=html;
-  go('detail');
-}
-function stopHTML(icon,num,name,sub,connector,key,swappable){
-  var badge=key&&PB[key]?(PB[key].tier>=2?'<span class="chip chip-verified" style="vertical-align:middle">Verified</span>':'<span class="chip chip-import" style="vertical-align:middle">Imported</span>'):'';
-  var rObj = (key&&MY_RESV[key])?MY_RESV[key]:null;
-  var rstat = rObj?rObj.status:null;
-  var cancelBtn = rObj ? '<span class="tbtn" onclick="event.stopPropagation();cancelResv(\''+rObj.id+'\')">Cancel</span>' : '';
-  var resv;
-  if(rstat==='confirmed') resv='<span class="tbtn" style="color:var(--green);border-color:var(--green)">Confirmed &#10003;</span>'+'<a href="'+resvCalUrl(rObj)+'" target="_blank" rel="noopener" class="tbtn" style="text-decoration:none" onclick="event.stopPropagation()">&#128197; Calendar</a>'+cancelBtn;
-  else if(rstat==='requested') resv='<span class="tbtn" style="color:var(--gold)">Requested&#8230;</span>'+cancelBtn;
-  else if(rstat==='declined') resv='<span class="tbtn pink" onclick="event.stopPropagation();reserveStop(\''+key+'\')">Try another time</span>';
-  else if(rstat==='cancelled') resv='<span class="tbtn pink" onclick="event.stopPropagation();reserveStop(\''+key+'\')">Reserve again</span>';
-  else resv = (key&&PB[key]&&canReserveNow(PB[key])) ? '<span class="tbtn pink" onclick="event.stopPropagation();reserveStop(\''+key+'\')">Reserve</span>' : '';
-  var swap = swappable&&key ? '<span class="tbtn" onclick="event.stopPropagation();swapStop(\''+key+'\')">Replace</span>' : '';
-  var dirbtn=key?'<span class="tbtn" onclick="event.stopPropagation();openDirections(\''+key+'\')">Directions</span>':'';
-  var click=key?'onclick="openListing(\''+key+'\',\'detail\')" style="cursor:pointer"':'';
-  return '<div class="tstop"><div class="tline"><div class="tdot tnum">'+num+'</div>'+(connector?'<div class="tconnector"></div>':'')+'</div>'+
-    '<div class="tbody" '+click+'><div class="tname">'+name+' '+badge+'</div><div class="tsub">'+sub+'</div><div class="tactions">'+resv+swap+dirbtn+'</div></div></div>';
-}
-function eventStopHTML(ev,num){
-  var venue=ev.venue?(' · 📍 '+evEsc(ev.venue)):'';
-  var tm=ev.time?('<b style="color:var(--gold)">'+evEsc(ev.time)+'</b> · '):'';
-  var sub=tm+evLabel(ev)+venue;
-  var tickets=ev.url?'<span class="tbtn" onclick="event.stopPropagation();window.open(\''+ev.url+'\',\'_blank\')">Tickets</span>':'';
-  return '<div class="tstop"><div class="tline"><div class="tdot tnum" style="background:var(--gold);color:#1a1400">'+num+'</div><div class="tconnector"></div></div>'+
-    '<div class="tbody" style="border:1px solid var(--gold);border-radius:12px;padding:8px 10px;background:rgba(245,197,66,.08)">'+
-    '<div class="tname"><span style="vertical-align:-3px">'+evIcon(ev)+'</span> '+evEsc(ev.title)+' <span class="chip chip-special" style="vertical-align:middle">Event</span></div>'+
-    '<div class="tsub">'+sub+'</div><div class="tactions">'+tickets+'</div></div></div>';
-}
-function swapStop(key){
-  var pl=currentPlans[window._lastPlanIdx||0];
-  var cur=PB[key]; if(!cur){toast('Cannot swap');return;}
-  // find same-category alternatives not already in plan
-  var alts=P.filter(function(p){return p.cat===cur.cat && p.k!==key && !pl.stops.some(function(st){return st.k===p.k;});});
-  if(!alts.length){ // widen to shared tag
-    alts=P.filter(function(p){return p.k!==key && p.tags.some(function(t){return cur.tags.indexOf(t)>=0;}) && !pl.stops.some(function(st){return st.k===p.k;});});
-  }
-  if(!alts.length){toast('No other '+cur.cat+' option nearby');return;}
-  var next=alts[Math.floor(Math.random()*alts.length)];
-  pl.stops.forEach(function(st){if(st.k===key)st.k=next.k;});
-  var f=0; pl.stops.forEach(function(st){if(PB[st.k])f+=PB[st.k].cpp;});
-  pl.total=f*pl.ppl+pl.moveCost;
-  pl.label=pl.stops.map(function(st){return PB[st.k]?PB[st.k].cat:'';}).filter(Boolean).join(' + ');
-  toast('Swapped to '+next.n);
-  openDetail(window._lastPlanIdx||0);
-}
-
 /* NAV */
-const views=['home','explore','events','build','loading','results','detail','listing','claim','claimform','add','saved','owner','specials'];
+const views=['home','explore','events','listing','claim','claimform','add','saved','owner','specials'];
 function openAddForm(){
   if(!CURRENT_USER){ toast('Sign in first to add your business'); acctPrompt('signin'); return; }
   var w=document.getElementById('ab_cat_wrap');
@@ -2406,7 +1902,6 @@ function renderEvents(){
         '<div class="evbody"><div class="evname">'+evEsc(e.title)+'</div>'+
         '<div class="evmeta"><span class="evtag '+evKindClass(e)+'">'+evEsc(evLabel(e).toUpperCase())+'</span>'+
         '📍 '+evEsc(e.venue||'')+(e.price?' · '+evEsc(e.price):'')+'</div></div>'+
-        '<button class="evplan" onclick="planAround(\''+e.id+'\')">Plan my day</button>'+
       '</div>';
     }).join('');
   }
@@ -2423,21 +1918,6 @@ function renderEvents(){
 }
 function calShift(delta){ var d=new Date(calY,calM+delta,1); calY=d.getFullYear(); calM=d.getMonth(); renderEvents(); }
 function selectDay(iso){ selDate=iso; var d=parseD(iso); calY=d.getFullYear(); calM=d.getMonth(); renderEvents(); document.getElementById('screen').scrollTop=0; }
-function planAround(id){
-  var e=EV.find(x=>x.id===id);if(!e)return;
-  go('build');resetBuild();
-  window.__anchorEvent=e;                       // set AFTER reset so it persists through the build
-  if(e.date){ sel.date=e.date; var _d=document.getElementById('bDate'); if(_d)_d.value=e.date; }
-  if(e.time){ sel.startTime=e.time; }
-  // Event-anchored Step 1: ask before / after / both instead of the generic plan grid.
-  var pg=document.getElementById('planGrid'), eb=document.getElementById('evAnchorBlock'),
-      en=document.getElementById('evAnchorName'), q=document.getElementById('s1q');
-  if(pg)pg.style.display='none'; if(eb)eb.style.display='';
-  if(q)q.textContent='When do you want to go out?';
-  if(en){ en.style.display='block';
-    en.innerHTML='Around <b>'+evEsc(String(e.title).split('—')[0].trim())+'</b>'+(e.venue?' at '+evEsc(e.venue):'')+(e.time?' &middot; '+evEsc(e.time):''); }
-  toast('Planning around '+(String(e.title).split('—')[0].trim())+' 🎟️');
-}
 function renderHomeEvents(){
   var today=new Date();today.setHours(0,0,0,0);
   var up=EV.filter(e=>parseD(e.date)>=today).sort((a,b)=>a.date.localeCompare(b.date)||timeVal(a.time)-timeVal(b.time)).slice(0,8);
@@ -2462,7 +1942,7 @@ function go(v){
   if(v==='home')document.getElementById('tab-home').classList.add('on');
   else if(v==='explore'||v==='listing')document.getElementById('tab-explore').classList.add('on');
   else if(v==='events')document.getElementById('tab-events').classList.add('on');
-  else if(v==='build'||v==='results'||v==='detail'||v==='loading'||v==='specials')document.getElementById('tab-build').classList.add('on');
+  else if(v==='specials')document.getElementById('tab-build').classList.add('on');
   else if(v==='saved')document.getElementById('tab-plans').classList.add('on');
   if(v==='explore')renderExplore();
   if(v==='events')renderEvents();
@@ -2472,37 +1952,6 @@ function go(v){
 let toastT;
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1700);}
 
-/* ============ SAVE (on-device) + SHARE (social) FOR ITINERARIES ============ */
-function diSaved(){ try{return JSON.parse(localStorage.getItem('di_saved_plans')||'[]');}catch(e){return [];} }
-function diSavePlans(a){ try{localStorage.setItem('di_saved_plans',JSON.stringify(a));}catch(e){} }
-function planTextSummary(pl){
-  var ev=window.__anchorEvent;
-  var stops=pl.stops.map(function(st){var p=PB[st.k]; if(!p)return ''; var c=(MY_RESV[st.k]&&MY_RESV[st.k].status==='confirmed')?' ✓':''; return p.n+c;}).filter(Boolean);
-  var when=(sel.date?fmtDate(sel.date):'')+(sel.startTime?' at '+sel.startTime:'');
-  var body=(when?when+' — ':'')+stops.join(' → ')+' · Est. '+money(pl.total)+' for '+pl.ppl+(pl.ppl>1?' people':' person');
-  return ev&&ev.name ? ('Around '+ev.name+' — '+body) : body;
-}
-function savePlanLocal(){
-  var pl=currentPlans[window._lastPlanIdx||0]; if(!pl){toast('Open an itinerary first');return;}
-  var arr=diSaved();
-  arr.unshift({plan:pl, sel:{plan:sel.plan,people:sel.people,budget:sel.budget,food:sel.food,start:sel.start,move:sel.move,exp:sel.exp,extras:sel.extras,date:sel.date,startTime:sel.startTime,when:sel.when}, anchor:window.__anchorEvent||null, title:pl.label, summary:planTextSummary(pl)});
-  diSavePlans(arr);
-  toast('Saved to your Plans ⭐');
-}
-function openSavedPlan(i){
-  var arr=diSaved(); var s=arr[i]; if(!s)return;
-  currentPlans=[s.plan];
-  // Restore the event anchor + timing so an event-built plan reopens with its Before/Show/After structure.
-  window.__anchorEvent = s.anchor||null;
-  sel.when=null;
-  if(s.sel)Object.assign(sel,s.sel);
-  go('detail'); openDetail(0);
-}
-function deleteSavedPlan(i,ev){
-  if(ev)ev.stopPropagation();
-  var arr=diSaved(); arr.splice(i,1); diSavePlans(arr); renderSaved();
-  toast('Removed');
-}
 // Favorited spots — the output surface for the heart (❤) on listings.
 function renderFavs(){
   var sect=document.getElementById('fav-sect'), list=document.getElementById('fav-list'); if(!list)return;
@@ -2513,25 +1962,9 @@ function renderFavs(){
 }
 function renderSaved(){
   renderFavs();
-  var arr=diSaved(); var el=document.getElementById('saved-list'); if(!el)return;
-  if(!arr.length){ el.innerHTML='<div style="padding:44px 20px;text-align:center;color:var(--muted);font-size:14px">No saved itineraries yet.<br><br>Build a plan and tap <b style="color:var(--txt)">⭐ Save Plan</b> — it lives here on your device.</div>'; return; }
-  el.innerHTML=arr.map(function(s,i){
-    return '<div class="plan" style="cursor:pointer" onclick="openSavedPlan('+i+')">'
-      +'<div class="ptop"><span class="ptag">'+((s.sel&&s.sel.plan)||'Do Inglewood')+'</span>'
-      +'<h4>'+(s.title||'Itinerary')+'</h4>'
-      +'<div class="pmeta">'+(s.summary||'')+'</div></div>'
-      +'<div class="pbot"><span style="font-size:12px;color:var(--muted)">Tap to open</span>'
-      +'<span class="move" onclick="deleteSavedPlan('+i+',event)" style="cursor:pointer">Remove</span></div></div>';
-  }).join('');
+  var favs=diFavs(); var empty=document.getElementById('saved-empty');
+  if(empty) empty.style.display=favs.length?'none':'block';
 }
-function sharePlan(){
-  var pl=currentPlans[window._lastPlanIdx||0]; if(!pl){toast('Open an itinerary first');return;}
-  var text='My Do Inglewood itinerary 🎟️\n'+planTextSummary(pl)+'\n\nEat. Play. Stay. — California’s Entertainment City';
-  if(navigator.share){ navigator.share({title:'Do Inglewood Itinerary',text:text}).catch(function(){}); }
-  else if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(function(){toast('Itinerary copied — paste it anywhere');}); }
-  else { toast('Sharing not supported on this device'); }
-}
-
 /* ONBOARDING */
 let ob=0;
 function obNext(){
@@ -2632,7 +2065,7 @@ async function initApp(){
   loadBrandArt();
   await loadBusinesses();
   await loadEvents();
-  buildHome();buildFilters();showStep();buildHero();renderHomeEvents();
+  buildHome();buildFilters();buildHero();renderHomeEvents();
   var ev=document.getElementById('view-explore');
   if(ev && ev.classList.contains('active')) renderExplore();
 }
