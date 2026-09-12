@@ -259,6 +259,12 @@
   .claimbox span{font-size:12px;color:var(--muted);display:block;margin:4px 0 11px;}
   .claimbtn{background:linear-gradient(180deg,#ffe08a 0%,#f5c542 45%,#e0a81f 100%);color:#1a1400;border:none;border-radius:11px;padding:11px 20px;font-weight:700;font-size:14px;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -2px 6px rgba(120,80,0,.28),0 5px 14px rgba(245,197,66,.3);text-shadow:0 1px 0 rgba(255,255,255,.35);}
   .claimbtn:active{transform:translateY(1px) scale(.99);}
+  .pendbadge{display:inline-block;background:var(--pink);color:#fff;font-size:11px;font-weight:800;letter-spacing:.3px;padding:2px 8px;border-radius:999px;vertical-align:middle;margin-left:4px;}
+  .pendbanner{background:linear-gradient(95deg,rgba(255,46,126,.16),rgba(245,197,66,.1));border:1px solid var(--pink);border-radius:12px;padding:12px 14px;margin:0 0 14px;display:flex;align-items:center;gap:10px;cursor:pointer;}
+  .pendbanner .pb-n{background:var(--pink);color:#fff;font-weight:800;border-radius:999px;min-width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:13px;flex:0 0 auto;}
+  .pendbanner .pb-t{font-size:13px;font-weight:700;}
+  .pendbanner .pb-t .pb-label{display:block;}
+  .pendbanner .pb-t .pb-sub{display:block;font-size:11px;color:var(--muted);font-weight:500;}
 
   /* CLAIM / TIERS */
   .tier{margin:0 20px 14px;border:1px solid var(--line);border-radius:16px;padding:18px;background:var(--panel);}
@@ -910,7 +916,7 @@ const SUPABASE_KEY = "sb_publishable_WeSqJHxHWza5rgyq8XcF0g_bYF7VE7R"; // publis
 const SB = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 /* ============ AUTH + OWNER DASHBOARD ============ */
-var CURRENT_USER=null, MY_BIZ=null, MY_RESV={};
+var CURRENT_USER=null, MY_BIZ=null, MY_RESV={}, MY_PENDING=0;
 function gv(id){var e=document.getElementById(id);return e?(e.value||'').trim():'';}
 SB.auth.getSession().then(function(r){ CURRENT_USER=(r.data&&r.data.session&&r.data.session.user)||null; onAuthChange(); });
 SB.auth.onAuthStateChange(function(_e,session){ CURRENT_USER=(session&&session.user)||null; onAuthChange(); });
@@ -919,12 +925,19 @@ async function onAuthChange(){
     try{ var ex=await SB.from('di_users').select('id').eq('auth_id',CURRENT_USER.id).limit(1); if(!ex.data||!ex.data.length){ await SB.from('di_users').insert({auth_id:CURRENT_USER.id,email:CURRENT_USER.email}); } }catch(e){}
     await loadMyBusiness();
     await loadMyReservations();
-  } else { MY_BIZ=null; MY_RESV={}; }
+    await loadOwnerPending();
+  } else { MY_BIZ=null; MY_RESV={}; MY_PENDING=0; }
   updateAccountUI();
 }
 async function loadMyBusiness(){
   if(!CURRENT_USER){ MY_BIZ=null; return; }
   try{ var r=await SB.from('di_businesses').select('*').eq('claimed_by',CURRENT_USER.id); MY_BIZ=(r.data&&r.data[0])||null; }catch(e){ MY_BIZ=null; }
+}
+// Count still-open table requests for the owner's business (the "you have new requests" signal).
+async function loadOwnerPending(){
+  MY_PENDING=0;
+  if(!MY_BIZ){ return; }
+  try{ var r=await SB.from('di_reservations').select('id,status').eq('business_id',MY_BIZ.id).eq('status','requested'); MY_PENDING=(r.data||[]).length; }catch(e){ MY_PENDING=0; }
 }
 // True once they've paid (Verified+) — unlocks gallery, menu, reservations, specials.
 function ownerIsPaid(){ return !!(MY_BIZ && (MY_BIZ.tier||1)>=2); }
@@ -944,7 +957,8 @@ async function doSignOut(){ try{ await SB.auth.signOut(); }catch(e){} CURRENT_US
 function updateAccountUI(){
   var box=document.getElementById('menu-auth'); if(!box)return;
   if(CURRENT_USER){
-    var mine = MY_BIZ ? '<button class="ab" style="margin-bottom:10px" onclick="closeMenu();renderOwner();go(\'owner\')">&#127978; My Business</button>' : '';
+    var pend = MY_PENDING>0 ? ' <span class="pendbadge">'+MY_PENDING+' new</span>' : '';
+    var mine = MY_BIZ ? '<button class="ab" style="margin-bottom:10px" onclick="closeMenu();renderOwner();go(\'owner\')">&#127978; My Business'+pend+'</button>' : '';
     box.innerHTML = mine + '<button class="ab" style="background:var(--panel-2);color:var(--txt);border:1px solid var(--line)" onclick="closeMenu();doSignOut()">Sign Out</button>';
   } else {
     box.innerHTML = '<button class="ab" style="background:var(--panel-2);color:var(--txt);border:1px solid var(--line)" onclick="closeMenu();acctPrompt(\'signin\')">&#128100; Sign In</button>';
@@ -998,7 +1012,11 @@ function renderOwner(){
       '<div style="font-size:12px;color:var(--muted);margin-bottom:10px">Top of your category, Sponsored badge, event-weekend promotion.</div>'+
       '<button class="btn btn-ghost" style="width:100%" onclick="startUpgrade(3)">Go '+(large?'Enterprise Premium':'Premium')+' &#183; $'+pp+'/mo</button>'+
     '</div>' : '';
+  var pendBanner = MY_PENDING>0
+    ? '<div class="pendbanner" onclick="scrollToRequests()"><span class="pb-n">'+MY_PENDING+'</span><span class="pb-t"><span class="pb-label">'+(MY_PENDING===1?'New table request':'New table requests')+'</span><span class="pb-sub">Tap to review &amp; accept or decline &darr;</span></span></div>'
+    : '';
   host.innerHTML =
+    pendBanner+
     '<div style="font-weight:800;font-size:20px;font-family:\'Barlow Condensed\'">'+(b.name||'')+' '+badge+'</div>'+
     '<div style="font-size:12px;color:var(--muted);margin:4px 0 14px">'+(paid?'Edit your listing — changes go live instantly.':'Your free listing is live. Edit your info &amp; photo below; upgrade to add more.')+'</div>'+
     '<div style="height:150px;border-radius:12px;background:#0f0f15 center/cover no-repeat;background-image:url(\''+(b.photo_url||'')+'\');border:1px solid var(--line);margin-bottom:8px"></div>'+
@@ -1351,9 +1369,28 @@ async function renderOwnerResv(){
   try{
     var r=await SB.from('di_reservations').select('*').eq('business_id',MY_BIZ.id).order('created_at',{ascending:false});
     var rows=r.data||[];
+    MY_PENDING=rows.filter(function(x){return x.status==='requested';}).length;
+    refreshPendingUI();
     if(!rows.length){ host.innerHTML=''; return; }
-    host.innerHTML='<div style="font-weight:800;font-size:16px;font-family:\'Barlow Condensed\';margin:22px 0 8px;padding-top:16px;border-top:1px solid var(--line)">Reservation requests</div>'+rows.map(resvRowHTML).join('');
+    var head='Reservation requests'+(MY_PENDING>0?' <span class="pendbadge">'+MY_PENDING+' new</span>':'');
+    host.innerHTML='<div style="font-weight:800;font-size:16px;font-family:\'Barlow Condensed\';margin:22px 0 8px;padding-top:16px;border-top:1px solid var(--line)">'+head+'</div>'+rows.map(resvRowHTML).join('');
   }catch(e){ host.innerHTML=''; }
+}
+// Jump the dashboard to the reservation-requests list.
+function scrollToRequests(){
+  var el=document.getElementById('owner-resv');
+  if(el&&el.scrollIntoView) el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+// Keep the menu badge + dashboard banner in sync with MY_PENDING.
+function refreshPendingUI(){
+  updateAccountUI();
+  var ban=document.querySelector('.pendbanner');
+  if(!ban) return;
+  if(MY_PENDING>0){
+    var n=ban.querySelector('.pb-n'), lbl=ban.querySelector('.pb-label');
+    if(n) n.textContent=MY_PENDING;
+    if(lbl) lbl.textContent=(MY_PENDING===1?'New table request':'New table requests');
+  } else { ban.remove(); }
 }
 function resvRowHTML(x){
   var badge = x.status==='confirmed' ? '<span class="chip chip-verified">Confirmed &#10003;</span>'
