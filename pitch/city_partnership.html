@@ -144,6 +144,24 @@
   .proof .v{font-size:15px;color:var(--ink-soft);margin-top:8px;}
   .proof .v b{color:var(--ink);}
 
+  /* comparison matrix */
+  .compare{overflow-x:auto;border:1px solid var(--line);border-radius:18px;background:var(--surface);box-shadow:var(--shadow);}
+  .compare table{width:100%;border-collapse:collapse;min-width:560px;}
+  .compare th,.compare td{padding:12px 16px;text-align:center;font-size:14px;border-top:1px solid var(--line);vertical-align:middle;}
+  .compare thead th{border-top:0;vertical-align:bottom;padding-top:22px;padding-bottom:16px;}
+  .compare th:first-child,.compare td:first-child{text-align:left;color:var(--ink);font-weight:700;}
+  .compare tbody td{color:var(--ink-soft);}
+  .compare th:last-child,.compare td:last-child{background:color-mix(in srgb,var(--gold) 8%,transparent);}
+  .compare .tierhead{font-weight:900;font-size:15.5px;letter-spacing:-.01em;line-height:1.12;color:var(--ink);}
+  .compare .rec{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#fff;background:var(--grad);border-radius:999px;padding:3px 9px;margin-bottom:9px;}
+  .compare .price{display:block;font-size:19px;font-weight:900;letter-spacing:-.02em;color:var(--ink);}
+  .compare .priceyr{display:block;font-size:11.5px;color:var(--muted);font-weight:700;margin-top:2px;}
+  .compare tr.group td{background:var(--surface-2);font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);text-align:left;}
+  .compare tr.pricing td{padding-top:14px;padding-bottom:14px;}
+  .compare .yes{color:var(--green);font-weight:900;font-size:15px;}
+  .compare .yesnum{color:var(--green);font-weight:850;font-size:13px;}
+  .compare .no{color:var(--muted);opacity:.55;font-weight:700;}
+
   .rise{opacity:0;transform:translateY(14px);animation:rise .7s cubic-bezier(.2,.7,.2,1) forwards;}
   @keyframes rise{to{opacity:1;transform:none;}}
   @media (prefers-reduced-motion:reduce){.rise{animation:none;opacity:1;transform:none;}}
@@ -161,13 +179,27 @@
   <section class="hero rise" style="animation-delay:.05s">
     <span class="kicker">California's Entertainment City</span>
     <h1>A city sponsorship that <span class="grad">pays itself back.</span></h1>
-    <p class="lead" style="margin-top:18px">The world is heading to Inglewood — the <strong>2026 World Cup</strong>, the <strong>2028 Olympics</strong>, and a sold-out calendar at SoFi, the Intuit Dome, and the Kia Forum in between. Do Inglewood puts every local business in front of those visitors — and turns their spending into local taxes, local jobs, and dollars that stay in the city.</p>
+    <p class="lead" style="margin-top:18px">The world is heading to Inglewood — the <strong>2026 World Cup</strong>, the <strong>2028 Olympics</strong>, and a sold-out calendar at SoFi, the Intuit Dome, and the Kia Forum in between. But the bigger year-round prize is closer to home: the millions of <strong>LA County neighbors</strong> — Hawthorne, Culver City, South LA, Gardena — who could choose Inglewood for dinner tonight. Do Inglewood puts every local business in front of <strong>both</strong>, and turns their spending into local taxes, local jobs, and dollars that stay in the city.</p>
     <div class="venues" aria-label="Nearby venues">
       <span class="venue">🏟️ SoFi Stadium</span>
       <span class="venue">🏀 Intuit Dome</span>
       <span class="venue">🎶 Kia Forum</span>
       <span class="venue">🎭 YouTube Theater</span>
       <span class="venue">🎰 Hollywood Park</span>
+    </div>
+  </section>
+
+  <section class="rise" style="animation-delay:.05s">
+    <p class="eyebrow">The positioning</p>
+    <div class="thesis">
+      <div class="big">Not just tourism. <span class="grad">Local economic traffic.</span></div>
+      <p style="margin-top:14px"><strong>Major events bring visitors. Regional marketing brings neighbors. Do Inglewood connects both to local businesses.</strong></p>
+      <p>Stadium traffic is episodic — it spikes on game day and leaves. Regional residents are potential customers <strong>365 days a year</strong>. This program captures the fan flying in for a Chargers game <em>and</em> the family in Gardena deciding &ldquo;let&rsquo;s go eat in Inglewood tonight&rdquo; — positioning the city itself as somewhere LA County <strong>intentionally chooses</strong> for restaurants, nightlife, shopping and experiences.</p>
+    </div>
+    <div class="returns" style="margin-top:16px">
+      <div class="ret"><div class="ic">🎟️</div><div class="t">Events bring visitors</div><div class="d">Millions flow through five world-class venues — episodic, high-spend, in-market for a night.</div></div>
+      <div class="ret"><div class="ic">🏘️</div><div class="t">Regional marketing brings neighbors</div><div class="d">Surrounding LA County communities, marketed to all year — customers 365 days, not 8 game days.</div></div>
+      <div class="ret"><div class="ic">🔗</div><div class="t">Do Inglewood connects both</div><div class="d">One front door that routes every visitor and every neighbor straight to a local business.</div></div>
     </div>
   </section>
 
@@ -208,22 +240,22 @@
   <section class="rise" style="animation-delay:.05s">
     <p class="eyebrow">The bundle</p>
     <div class="offer">
-      <div class="unit num">$60 <small>/ business / month</small></div>
+      <div class="unit num">$56 <small>/ business / month</small></div>
       <div class="min num">City-sponsored · minimum 500 businesses</div>
       <div class="bigfig">
-        <div class="n grad num">$30,000<span style="font-size:.34em;color:var(--muted);font-weight:800">/mo</span></div>
-        <div class="cap">500 local businesses — online, verified, certified, and built into every visitor's night out. About <strong>$2 a day</strong> to put a business on the map.</div>
-        <span class="perday num">≈ $2 a day per business</span>
+        <div class="n grad num">$28,000<span style="font-size:.34em;color:var(--muted);font-weight:800">/mo</span></div>
+        <div class="cap">500 local businesses — online, verified, certified, and put in front of every visitor and every LA County neighbor. Under <strong>$2 a day</strong> to keep a business on the map.</div>
+        <span class="perday num">≈ $1.87 a day per business</span>
       </div>
     </div>
   </section>
 
   <section class="rise" style="animation-delay:.05s">
-    <h2>How the $60 flips.</h2>
+    <h2>How the $56 flips.</h2>
     <p>The city's investment doesn't sit still — it turns into local economic activity within days.</p>
     <div class="flow" style="margin-top:20px">
-      <div class="stepc"><div class="no">1</div><div class="tx">The City sponsors a business onto Do Inglewood for <b>$60/mo</b> — bundled with its city certification.</div></div>
-      <div class="stepc"><div class="no">2</div><div class="tx">A group heading to a <b>SoFi concert</b> finds it in the app and books a table — say <b>$180</b> for dinner and drinks.</div></div>
+      <div class="stepc"><div class="no">1</div><div class="tx">The City sponsors a business onto Do Inglewood for <b>$56/mo</b> — bundled with its city certification.</div></div>
+      <div class="stepc"><div class="no">2</div><div class="tx">A group heading to a <b>SoFi concert</b> — or a family driving in from <b>Gardena</b> — finds it in the app and books a table, say <b>$180</b> for dinner and drinks.</div></div>
       <div class="stepc"><div class="no">3</div><div class="tx">That spend rings up <b>local tax</b>, the business <b>restocks from local suppliers</b>, and <b>keeps its staff on the clock</b>.</div></div>
     </div>
     <div class="payback">
@@ -244,19 +276,49 @@
   </section>
 
   <section class="rise" style="animation-delay:.05s">
-    <h2>Simple math, and it scales.</h2>
-    <p>Start at the 500-business minimum, or bring the whole city online. Every business is already mapped and ready.</p>
-    <div class="tablewrap">
+    <p class="eyebrow">Two ways to run it</p>
+    <h2>Choose the scope. <span class="grad">Same low rate per business.</span></h2>
+    <p>Run the local directory across 500 businesses — or double it and add full <strong>citywide + regional activation</strong>: marketing that pulls all of LA County toward Inglewood, 365 days a year.</p>
+    <div class="compare num" style="margin-top:22px">
       <table>
-        <thead><tr><th>Businesses</th><th>City / month</th><th>City / year</th></tr></thead>
-        <tbody class="num">
-          <tr><td>500 <span style="color:var(--muted);font-weight:600">· minimum</span></td><td class="money">$30,000</td><td>$360,000</td></tr>
-          <tr><td>1,000</td><td class="money">$60,000</td><td>$720,000</td></tr>
-          <tr class="hi"><td><strong>1,383 · all of Inglewood</strong></td><td class="money">$82,980</td><td>$995,760</td></tr>
+        <thead>
+          <tr>
+            <th></th>
+            <th><span class="tierhead">500 Business<br>Program</span></th>
+            <th><span class="rec">Recommended</span><br><span class="tierhead">1,000 Business +<br>Citywide Activation</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="pricing"><td>Monthly Investment</td><td><span class="price">$28,000</span></td><td><span class="price">$56,000</span></td></tr>
+          <tr class="pricing"><td>Annual Investment</td><td><span class="price">$336,000</span><span class="priceyr">$56 / business / mo</span></td><td><span class="price">$672,000</span><span class="priceyr">$56 / business / mo</span></td></tr>
+
+          <tr class="group"><td colspan="3">Platform &amp; Local Directory · included in both</td></tr>
+          <tr><td>Local Business Profiles</td><td><span class="yesnum">✓ 500</span></td><td><span class="yesnum">✓ 1,000</span></td></tr>
+          <tr><td>Business-Controlled Profiles</td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>Business Recruitment &amp; Onboarding</td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>Visitor Discovery</td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>Build My Day / Itinerary Planning</td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>Restaurant Reservations</td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>Local Offers &amp; Promotions</td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>Major Event Integration</td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>Parking &amp; Transportation Suggestions</td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>Business Analytics</td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>Program Management</td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+
+          <tr class="group"><td colspan="3">Citywide Activation &amp; Regional Marketing · 1,000 tier only</td></tr>
+          <tr><td>Citywide Marketing Campaigns</td><td><span class="no">—</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>Major Venue Visitor Campaigns</td><td><span class="no">—</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>LA County Tourism Coordination</td><td><span class="no">—</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>Marketing Outside the City</td><td><span class="no">—</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>Surrounding Community Campaigns</td><td><span class="no">—</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>Regional &ldquo;Visit Inglewood&rdquo; Campaigns</td><td><span class="no">—</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>Visitor-to-Business Campaigns</td><td><span class="no">—</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>Campaign Creative &amp; Promotion</td><td><span class="no">—</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>Expanded Economic Impact Reporting</td><td><span class="no">—</span></td><td><span class="yes">✓</span></td></tr>
         </tbody>
       </table>
     </div>
-    <p class="footnote">1,383 = every Inglewood business already loaded into the app today. For scale: a custom civic or tourism app of this scope typically runs <strong>$75,000–300,000</strong> just to build — Do Inglewood is already built and live.</p>
+    <p class="footnote">Both tiers run at <strong>$56 per business / month</strong> — the 1,000 tier adds full citywide and regional activation at the same per-business rate. For scale: a custom civic or visitor app of this scope typically runs <strong>$75,000–300,000</strong> just to build — Do Inglewood is already built and live.</p>
   </section>
 
   <section class="rise" style="animation-delay:.05s">
