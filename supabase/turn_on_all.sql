@@ -180,3 +180,10 @@ create policy di_businesses_self_add on di_businesses for insert to authenticate
 -- ===== 16_member_deals.sql =====
 -- Members-only deals (the customer download magnet).
 alter table di_businesses add column if not exists member_deal text;
+
+-- ===== 17_stripe.sql =====
+-- Stripe subscription linkage so the stripe-webhook function can auto-activate
+-- paid tiers (and drop back to Free on cancellation).
+alter table di_businesses add column if not exists stripe_customer     text;
+alter table di_businesses add column if not exists stripe_subscription text;
+alter table di_businesses add column if not exists paid_since          timestamptz;

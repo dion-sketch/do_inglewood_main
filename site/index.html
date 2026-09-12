@@ -2139,7 +2139,8 @@ function startUpgrade(tier){
   if(MY_BIZ.is_large){ toast('Enterprise plan — we’ll email you an invoice to activate.'); return; }
   var link=STRIPE_LINKS[tier]; if(!link){ toast('Upgrade unavailable'); return; }
   var email=(CURRENT_USER&&CURRENT_USER.email)||'';
-  var url=link+'?client_reference_id='+encodeURIComponent(MY_BIZ.id)+'&prefilled_email='+encodeURIComponent(email);
+  // Encode the target tier so the Stripe webhook can auto-activate the right plan.
+  var url=link+'?client_reference_id='+encodeURIComponent(MY_BIZ.id+'|'+tier)+'&prefilled_email='+encodeURIComponent(email);
   toast('Opening secure checkout…');
   setTimeout(function(){ window.location.href=url; }, 500);
 }
