@@ -135,6 +135,10 @@
   .fchip{flex:0 0 auto;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:8px 14px;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;transition:color .12s,border-color .12s,transform .12s;}
   .fchip:active{color:var(--pink);border-color:var(--pink);transform:scale(.96);}
   .fchip.on{background:var(--grad);color:#1a0010;border-color:transparent;}
+  .popchips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 6px;}
+  .popchip{flex:1 1 44%;background:var(--panel-2);border:1px solid var(--line);color:var(--txt);border-radius:13px;padding:14px 10px;font-family:'Barlow Condensed';font-weight:600;font-size:15.5px;letter-spacing:.3px;cursor:pointer;text-align:center;transition:transform .12s,border-color .12s;}
+  .popchip:active{transform:scale(.97);border-color:var(--pink);}
+  #specials-notify{cursor:pointer;font-size:12.5px;color:var(--muted);white-space:nowrap;}
 
   .listcard{display:flex;gap:12px;margin:0 20px 12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:11px;cursor:pointer;transition:transform .15s;animation:slideup .4s ease backwards;}
   .listcard:active{transform:scale(.99);}
@@ -723,7 +727,11 @@
         <p>One tap picks a spot for you — somewhere great, right now.</p>
         <div class="pa-go">&#8594;</div>
       </div>
-      <div style="padding:16px 16px 4px"><div class="sect-head" style="margin:0"><h3>&#127863; Specials &amp; Member Deals</h3></div></div>
+      <div class="filterbar" id="specials-filters" style="padding-top:12px"></div>
+      <div style="padding:8px 16px 4px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <div class="sect-head" style="margin:0"><h3>&#127863; Live Specials</h3></div>
+        <span id="specials-notify" onclick="cycleSpecialsNotify()"></span>
+      </div>
       <div id="specials-list" style="padding:4px 16px 24px"></div>
     </div>
   </div>
@@ -755,6 +763,15 @@
       <input id="authEmail" type="email" placeholder="you@email.com">
       <button class="ab" onclick="sendMagicLink()">Send sign-in link</button>
       <div class="skip" onclick="closeAcct()">Maybe later</div>
+    </div>
+  </div>
+  <!-- DAILY SPECIALS GREETER — the Groupon-style hook after onboarding -->
+  <div class="acct-overlay" id="specialsPop">
+    <div class="acct-sheet">
+      <h3>&#127942; Tonight in Inglewood</h3>
+      <p>Today&rsquo;s specials, happy hours &amp; members&rsquo; deals happening right now. Pick what you&rsquo;re feeling &mdash; we&rsquo;ll show only the spots with a live offer.</p>
+      <div class="popchips" id="popCatChips"></div>
+      <div class="skip" onclick="closeSpecialsPop()">Maybe later</div>
     </div>
   </div>
   <div class="acct-overlay" id="resvOverlay">
@@ -1462,13 +1479,53 @@ function renderExplore(instant){
 }
 
 /* TODAY'S SPECIALS — the "Do" button collection: every deal in the city, right now */
+/* ===== DAILY SPECIALS: category filter + Groupon-style daily greeter ===== */
+var specialsCat='all';
+// [key, label] — the vibes a person can pick. "all" always shows.
+var SPECIAL_CATS=[['all','\u2728 Everything'],['Restaurants','\uD83C\uDF7D\uFE0F Restaurants'],['Lounges','\uD83C\uDF78 Lounges'],['Coffee & Dessert','\u2615 Coffee & Dessert'],['Casino','\uD83C\uDFB0 Casino'],['Hotels','\uD83C\uDFE8 Hotels']];
+function specialsCatMatch(p,cat){
+  if(cat==='all')return true;
+  if(cat==='Restaurants')return (p.tags||[]).indexOf('Food')>=0||['Restaurant','Mexican','Soul Food','Caribbean','American','Seafood','Brunch','Italian','Vegan'].indexOf(p.cat)>=0;
+  if(cat==='Lounges')return p.cat==='Lounge'||p.cat==='Bar'||(p.tags||[]).indexOf('Lounge')>=0;
+  if(cat==='Coffee & Dessert')return p.cat==='Coffee'||p.cat==='Dessert';
+  if(cat==='Casino')return p.cat==='Casino';
+  if(cat==='Hotels')return p.cat==='Hotels';
+  return true;
+}
+// A spot counts for the specials page if it has a live special or member deal + a photo.
+function hasLiveSpecial(p){ return !!((p.special||p.mdeal)&&hasPhoto(p)); }
+// Only show category chips that actually have specials today (never a dead filter).
+function specialsCatsAvailable(){
+  var avail={all:1};
+  P.forEach(function(p){ if(hasLiveSpecial(p)) SPECIAL_CATS.forEach(function(c){ if(c[0]!=='all'&&specialsCatMatch(p,c[0])) avail[c[0]]=1; }); });
+  return SPECIAL_CATS.filter(function(c){ return avail[c[0]]; });
+}
+function buildSpecialsFilters(){
+  var bar=document.getElementById('specials-filters'); if(!bar)return;
+  var cats=specialsCatsAvailable();
+  if(cats.indexOf(SPECIAL_CATS.find(function(c){return c[0]===specialsCat;}))<0) specialsCat='all'; // reset a now-empty filter
+  bar.innerHTML=cats.map(function(c){ return '<div class="fchip '+(specialsCat===c[0]?'on':'')+'" onclick="setSpecialsCat(\''+c[0].replace(/'/g,"\\'")+'\')">'+c[1]+'</div>'; }).join('');
+}
+function setSpecialsCat(cat){ specialsCat=cat; buildSpecialsFilters(); renderSpecials(); document.getElementById('screen').scrollTop=0; }
+
+// How often the daily greeter says hello (also the plumbing for phone push later).
+function specialsNotify(){ try{ return localStorage.getItem('di_specials_notify')||'daily'; }catch(e){ return 'daily'; } }
+function updateNotifyLabel(){ var el=document.getElementById('specials-notify'); if(!el)return; var c=specialsNotify(); el.innerHTML='\uD83D\uDD14 '+(c==='off'?'Reminders off':(c==='daily'?'Daily':'Weekly')); }
+function cycleSpecialsNotify(){
+  var order=['daily','weekly','off'], nx=order[(order.indexOf(specialsNotify())+1)%3];
+  try{ localStorage.setItem('di_specials_notify',nx); }catch(e){}
+  updateNotifyLabel();
+  toast(nx==='off'?'Specials reminders off':(nx==='daily'?'Daily specials on \uD83D\uDD14':'Weekly specials on \uD83D\uDD14'));
+}
+
 function renderSpecials(){
+  buildSpecialsFilters(); updateNotifyLabel();
   var el=document.getElementById('specials-list'); if(!el)return;
-  var list=P.filter(function(p){ return (p.special||p.mdeal)&&hasPhoto(p); });
+  var list=P.filter(function(p){ return hasLiveSpecial(p)&&specialsCatMatch(p,specialsCat); });
   // Sponsored/paid specials surface first, then the rest
   list=list.slice().sort(function(a,b){ return (isSponsored(b)?1:0)-(isSponsored(a)?1:0); });
   if(!list.length){
-    el.innerHTML='<div style="padding:40px 20px;text-align:center;color:var(--muted);font-size:14px">No specials posted yet today. Check back soon — new offers drop all the time.</div>';
+    el.innerHTML='<div style="padding:40px 20px;text-align:center;color:var(--muted);font-size:14px">No live specials in this category right now. Try another vibe — or check back soon, new offers drop all day.</div>';
     return;
   }
   el.innerHTML=list.map(function(p,i){
@@ -1493,6 +1550,28 @@ function surpriseMe(){
   toast('Tonight’s pick ✨');
   openListing(pick.k,'specials');
 }
+// ---- The daily greeter: after onboarding, a one-tap "see tonight's specials?" ----
+function _todayKey(){ var d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+function maybeShowSpecialsPop(){
+  var cad=specialsNotify(); if(cad==='off') return;
+  if(!P.some(hasLiveSpecial)) return;                       // nothing to show today
+  var last=''; try{ last=localStorage.getItem('di_specials_pop_date')||''; }catch(e){}
+  if(cad==='daily' && last===_todayKey()) return;           // already greeted today
+  if(cad==='weekly' && last){ var ms=Date.now()-new Date(last).getTime(); if(ms>=0 && ms<6.5*864e5) return; }
+  showSpecialsPop();
+}
+function showSpecialsPop(){
+  var chips=document.getElementById('popCatChips');
+  if(chips){
+    chips.innerHTML=specialsCatsAvailable().map(function(c){
+      return '<button class="popchip" onclick="openSpecialsFrom(\''+c[0].replace(/'/g,"\\'")+'\')">'+c[1]+'</button>';
+    }).join('');
+  }
+  try{ localStorage.setItem('di_specials_pop_date',_todayKey()); }catch(e){}
+  var o=document.getElementById('specialsPop'); if(o)o.classList.add('on');
+}
+function closeSpecialsPop(){ var o=document.getElementById('specialsPop'); if(o)o.classList.remove('on'); }
+function openSpecialsFrom(cat){ specialsCat=cat||'all'; closeSpecialsPop(); go('specials'); }
 
 /* LISTING DETAIL */
 let lastList='home';
@@ -1961,7 +2040,7 @@ function renderSaved(){
 let ob=0;
 function obNext(){
   ob++;
-  if(ob>2){document.getElementById('onboard').style.display='none';return;}
+  if(ob>2){document.getElementById('onboard').style.display='none'; setTimeout(function(){ try{ maybeShowSpecialsPop(); }catch(e){} }, 480); return;}
   document.querySelectorAll('.ob-slide').forEach(s=>s.classList.toggle('on',+s.dataset.ob===ob));
   document.querySelectorAll('.ob-dots span').forEach((d,i)=>d.classList.toggle('on',i===ob));
   var _l=document.getElementById('obNextLbl'), _s=document.getElementById('obNextSub');
