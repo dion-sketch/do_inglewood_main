@@ -29,9 +29,6 @@
   body{background:#000;font-family:'Inter',system-ui,sans-serif;color:var(--txt);display:flex;align-items:center;justify-content:center;min-height:100vh;}
   .phone{width:100%;max-width:420px;height:100vh;max-height:920px;background:var(--bg);position:relative;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 0 0 1px var(--line);}
   @media(min-width:440px){.phone{border-radius:30px;height:880px;box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 0 10px #0e0e10,0 0 0 11px #2a2a30;}}
-  .statusbar{display:flex;justify-content:space-between;align-items:center;padding:12px 22px 6px;font-size:13px;font-weight:600;flex:0 0 auto;}
-  .statusbar .dots{display:flex;gap:5px;align-items:center;}
-  .statusbar .dots span{font-size:11px;letter-spacing:1px;}
   .screen{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;padding-bottom:90px;}
   .screen::-webkit-scrollbar{display:none;}
   .view{display:none;}
@@ -312,8 +309,8 @@
 
 
 
-  .logo-home{height:46px;width:150px;background:var(--logo) left center/contain no-repeat;cursor:pointer;}
-  .logo-mini{height:28px;width:92px;background:var(--logo) left center/contain no-repeat;cursor:pointer;}
+  .logo-home{height:62px;width:200px;background:var(--logo) left center/contain no-repeat;cursor:pointer;}
+  .logo-mini{height:44px;width:140px;background:var(--logo) left center/contain no-repeat;cursor:pointer;}
   .logo-ob{height:140px;width:230px;background:var(--logo) center/contain no-repeat;margin-bottom:30px;}
   .ob-toplogo{flex:0 0 auto;height:66px;width:210px;margin:28px auto 0;background:var(--logo) center/contain no-repeat;}
   .miniwm{font-family:'Barlow Condensed';font-weight:800;line-height:.8;margin-left:2px;}
@@ -423,7 +420,6 @@
 </head>
 <body>
 <div class="phone">
-  <div class="statusbar"><span>9:41</span><div class="dots"><span>5G</span><span>&#9679;&#9679;&#9679;</span><span>&#128267;</span></div></div>
 
   <!-- ONBOARDING -->
   <div class="onboard" id="onboard">
@@ -464,16 +460,16 @@
         <div class="cap"><b>What's happening in the city</b><span>1,100+ Inglewood businesses near SoFi, Intuit Dome &amp; the Forum</span></div>
       </div>
 
-      <!-- PLAN YOUR ACTIVITY -->
-      <div class="planactivity" onclick="go('build');resetBuild();">
-        <div class="pa-k">The golden ticket</div>
-        <h2>Plan Your Activity</h2>
-        <p>Put in a budget. We build your whole night or day around the city.</p>
+      <!-- TODAY'S SPECIALS -->
+      <div class="planactivity" onclick="go('specials')">
+        <div class="pa-k">Do Inglewood</div>
+        <h2>Today's Specials</h2>
+        <p>Every deal, happy hour and members-only offer in the city — right now.</p>
         <div class="pa-go">&#8594;</div>
       </div>
       <div class="pa-sub">
-        <button onclick="go('explore')">See What's Popping</button>
-        <button onclick="go('claim')">&#127970; For Business</button>
+        <button onclick="go('explore')">&#128269; Explore Inglewood</button>
+        <button onclick="surpriseMe()">&#127922; Surprise Me</button>
       </div>
 
       <div class="sect" id="home-events-sect" style="display:none">
@@ -871,15 +867,27 @@
       <div class="head-bar"><div class="back" onclick="go('home')">&#8249;</div><div class="logo-mini" role="img" aria-label="Do Inglewood" title="Home" onclick="go('home')"></div><span class="htitle">My Business</span></div>
       <div id="owner-body" style="padding:16px 20px 60px;"></div>
     </div>
+    <!-- TODAY'S SPECIALS -->
+    <div class="view" id="view-specials">
+      <div class="head-bar"><div class="back" onclick="go('home')">&#8249;</div><div class="logo-mini" role="img" aria-label="Do Inglewood" title="Home" onclick="go('home')"></div><span class="htitle">Today's Specials</span></div>
+      <div class="planactivity" onclick="surpriseMe()" style="margin:14px 16px 4px">
+        <div class="pa-k">Feeling lucky?</div>
+        <h2>Surprise Me &#127922;</h2>
+        <p>One tap picks a spot for you — somewhere great, right now.</p>
+        <div class="pa-go">&#8594;</div>
+      </div>
+      <div style="padding:16px 16px 4px"><div class="sect-head" style="margin:0"><h3>&#127863; Specials &amp; Member Deals</h3></div></div>
+      <div id="specials-list" style="padding:4px 16px 24px"></div>
+    </div>
   </div>
 
   <div id="reserveBar"></div>
   <div class="tabbar">
     <div class="tab on" id="tab-home" onclick="go('home')"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5"/><path d="M9.5 21v-6h5v6"/></svg></div>Home</div>
     <div class="tab" id="tab-explore" onclick="go('explore')"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>Explore</div>
-    <div class="tab build-tab" id="tab-build" onclick="go('build');resetBuild();"><div class="ic"><span class="do">Do</span></div></div>
+    <div class="tab build-tab" id="tab-build" onclick="go('specials')"><div class="ic"><span class="do">Do</span></div></div>
     <div class="tab" id="tab-events" onclick="go('events')"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2 2 2 0 0 0 0 4 2 2 0 0 1-2 2H6a2 2 0 0 1-2-2 2 2 0 0 0 0-4z"/><line x1="13" y1="6" x2="13" y2="18" stroke-dasharray="2 2"/></svg></div>Events</div>
-    <div class="tab" id="tab-plans" onclick="go('saved')"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z"/></svg></div>Plans</div>
+    <div class="tab" id="tab-plans" onclick="go('saved')"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z"/></svg></div>Saved</div>
   </div>
 
   <div class="acct-overlay" id="menuOverlay">
@@ -1617,6 +1625,39 @@ function renderExplore(instant){
   setTimeout(function(){ paintExplore(exploreMatches()); },280);
 }
 
+/* TODAY'S SPECIALS — the "Do" button collection: every deal in the city, right now */
+function renderSpecials(){
+  var el=document.getElementById('specials-list'); if(!el)return;
+  var list=P.filter(function(p){ return (p.special||p.mdeal)&&hasPhoto(p); });
+  // Sponsored/paid specials surface first, then the rest
+  list=list.slice().sort(function(a,b){ return (isSponsored(b)?1:0)-(isSponsored(a)?1:0); });
+  if(!list.length){
+    el.innerHTML='<div style="padding:40px 20px;text-align:center;color:var(--muted);font-size:14px">No specials posted yet today. Check back soon — new offers drop all the time.</div>';
+    return;
+  }
+  el.innerHTML=list.map(function(p,i){
+    var offer = p.special ? xmlEsc(p.special)
+              : (CURRENT_USER ? ('&#11088; '+xmlEsc(p.mdeal)) : '&#11088; Join free to unlock &rarr;');
+    return `<div class="listcard" style="animation-delay:${i*0.02}s" onclick="openListing('${p.k}','specials')">
+        <div class="img" style="background-image:${bgLayers(p)}"></div>
+        <div class="info">
+          <div class="name">${xmlEsc(p.n)}</div>
+          <div class="sub">${xmlEsc(p.cat)}${p.addr?' · '+xmlEsc(p.addr):''}</div>
+          <div style="font-size:12.5px;color:var(--gold);font-weight:700;margin-top:3px;line-height:1.35">${offer}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+function surpriseMe(){
+  // Pick a random worthwhile spot — photographed, and either verified/paid or well-rated.
+  var good=P.filter(function(p){ return hasPhoto(p)&&((p.tier||1)>=2||(p.r||0)>=4.3); });
+  if(!good.length) good=P.filter(hasPhoto);
+  if(!good.length){ toast('Nothing to pick yet'); return; }
+  var pick=good[Math.floor(Math.random()*good.length)];
+  toast('Tonight’s pick ✨');
+  openListing(pick.k,'specials');
+}
+
 /* LISTING DETAIL */
 let lastList='home';
 function webUrl(w){ if(!w) return '#'; w=String(w).trim().replace(/[\s"'<>`]/g,''); if(/^(javascript|data|vbscript):/i.test(w)) return '#'; return /^https?:\/\//i.test(w)?w:'https://'+w; }
@@ -2093,7 +2134,7 @@ function swapStop(key){
 }
 
 /* NAV */
-const views=['home','explore','events','build','loading','results','detail','listing','claim','claimform','add','saved','owner'];
+const views=['home','explore','events','build','loading','results','detail','listing','claim','claimform','add','saved','owner','specials'];
 function openAddForm(){
   if(!CURRENT_USER){ toast('Sign in first to add your business'); acctPrompt('signin'); return; }
   var w=document.getElementById('ab_cat_wrap');
@@ -2421,11 +2462,12 @@ function go(v){
   if(v==='home')document.getElementById('tab-home').classList.add('on');
   else if(v==='explore'||v==='listing')document.getElementById('tab-explore').classList.add('on');
   else if(v==='events')document.getElementById('tab-events').classList.add('on');
-  else if(v==='build'||v==='results'||v==='detail'||v==='loading')document.getElementById('tab-build').classList.add('on');
+  else if(v==='build'||v==='results'||v==='detail'||v==='loading'||v==='specials')document.getElementById('tab-build').classList.add('on');
   else if(v==='saved')document.getElementById('tab-plans').classList.add('on');
   if(v==='explore')renderExplore();
   if(v==='events')renderEvents();
   if(v==='saved')renderSaved();
+  if(v==='specials')renderSpecials();
 }
 let toastT;
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1700);}
@@ -2580,9 +2622,9 @@ function setObArt(slide){
 function loadBrandArt(){
   function tryArt(el,base,alt){ if(!el) return; var src=artSrc(base); var p=new Image(); p.onload=function(){ if(p.naturalWidth>1){ el.classList.add('art'); el.innerHTML='<img src="'+src+'" alt="'+alt+'">'; } }; p.src=src; }
   tryArt(document.querySelector('.tab.build-tab .ic'),'do-badge','Do');
-  var sub=document.querySelectorAll('.pa-sub button');
-  tryArt(sub[0],'btn-popping','See What\'s Popping');
-  tryArt(sub[1],'btn-forbusiness','For Business');
+  // Home sub-buttons ("Explore Inglewood" / "Surprise Me") stay clean matching text
+  // buttons — balanced and their labels match their actions. The brand art still
+  // headlines the onboarding splash and the nav Do badge.
   setObArt(typeof ob!=='undefined'?ob:0);
 }
 async function initApp(){
