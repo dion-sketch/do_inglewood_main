@@ -1259,7 +1259,7 @@ function tileImg(name,seed,sub){
     +'<text x="300" y="238" font-family="Arial,Helvetica,sans-serif" font-size="150" font-weight="bold" fill="#ffffff" text-anchor="middle">'+ini+'</text>'
     +(s?'<text x="300" y="348" font-family="Arial,Helvetica,sans-serif" font-size="30" letter-spacing="3" font-weight="bold" fill="#ffffff" fill-opacity="0.85" text-anchor="middle">'+s+'</text>':'')
     +'</svg>';
-  return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg);
+  return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg).replace(/'/g,'%27').replace(/\(/g,'%28').replace(/\)/g,'%29');
 }
 function venueTile(title,seed){
   var g=TILE_COLORS[hashStr(seed)%TILE_COLORS.length];
@@ -1271,7 +1271,7 @@ function venueTile(title,seed){
     +'<text x="46" y="150" font-family="Arial,Helvetica,sans-serif" font-size="26" letter-spacing="5" font-weight="bold" fill="#ffffff" fill-opacity="0.82">EVENT SPACE</text>'
     +'<text x="44" y="224" font-family="Arial,Helvetica,sans-serif" font-size="60" font-weight="bold" fill="#ffffff">'+t+'</text>'
     +'</svg>';
-  return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg);
+  return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg).replace(/'/g,'%27').replace(/\(/g,'%28').replace(/\)/g,'%29');
 }
 function pickImg(r){
   if(r.photo_url) return r.photo_url;                 // real per-venue photo wins
@@ -1279,10 +1279,11 @@ function pickImg(r){
 }
 // Layered background: the real photo (if any) OVER a colored tile, so a blocked/
 // failed/missing photo never leaves a blank box — the tile shows through.
+// NOTE: single quotes only — the result sits inside a style="..." (double-quoted) attribute.
 function bgLayers(p){
   var tile=tileImg(p.n||p.name||'', p.k||p.id||p.n||p.name, p.cat||p.category);
-  var photo=(p.img && String(p.img).indexOf('http')===0) ? p.img : null;
-  return (photo ? "url('"+photo+"'), " : "") + "url(\""+tile+"\")";
+  var photo=(p.img && String(p.img).indexOf('http')===0) ? p.img.replace(/'/g,'%27') : null;
+  return (photo ? "url('"+photo+"'), " : "") + "url('"+tile+"')";
 }
 function dbToApp(r){
   return {
