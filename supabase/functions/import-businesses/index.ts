@@ -1,29 +1,39 @@
-// Do Inglewood — bulk import Inglewood-area businesses from Google Places.
+// Do Inglewood — import & enrich Inglewood-area businesses from Google Places.
 //
-// Sweeps several place types around Inglewood and inserts NEW businesses into
-// di_businesses. It is ADDITIVE and SAFE: existing rows (including claimed /
-// paid / edited ones) are never touched — new places are skipped if their
-// google place_id is already present.
+// Two modes (choose with ?mode=):
+//   • mode=import   (default) — sweep place types around Inglewood and INSERT new
+//                    businesses (name, category, address, rating, price) + pull each
+//                    one's details & photos.
+//   • mode=backfill — go through businesses you ALREADY have that are missing photos
+//                    and fill in photos + website + hours + phone. Runs in batches;
+//                    call it repeatedly until it reports remaining:0 (the Admin
+//                    button loops this for you).
+//
+// SAFE: it never touches a claimed/paid business (tier >= 2), and it only fills a
+// field that is currently empty — it never overwrites an owner's edits. New places
+// are matched by Google place_id so nothing is ever duplicated.
+//
+// Photos are downloaded on the SERVER and stored in your own Supabase Storage
+// ("business-photos" bucket). The public site serves YOUR copies — your Google API
+// key never appears on the public site.
 //
 // Deploy: Supabase Dashboard → Edge Functions → "import-businesses" → paste → Deploy.
 // Secret: GOOGLE_PLACES_API_KEY = your key with "Places API" enabled.
-// Run it on demand:  POST .../functions/v1/import-businesses  (Bearer = your
-//   service_role key)  — or from the Admin page with a button (ask me to add one).
-//
-// Notes: photos are left blank on import (the app shows a branded category tile);
-// owners add real photos when they claim. Phone/website need Place Details calls,
-// which this keeps optional to stay within quota — flip DETAILS=true to fetch them.
+//   (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are provided automatically.)
+// Bucket: make sure a PUBLIC Storage bucket named "business-photos" exists.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const KEY   = Deno.env.get("GOOGLE_PLACES_API_KEY") || "";
+const KEY    = Deno.env.get("GOOGLE_PLACES_API_KEY") || "";
 const SB_URL = Deno.env.get("SUPABASE_URL")!;
 const SB_SVC = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const admin = createClient(SB_URL, SB_SVC);
+const admin  = createClient(SB_URL, SB_SVC);
 
-// Inglewood center + ~4km radius covers SoFi / Intuit Dome / Kia Forum & the city.
+// Inglewood center + ~4.5km radius covers SoFi / Intuit Dome / Kia Forum & the city.
 const LAT = 33.9617, LNG = -118.3531, RADIUS = 4500;
-const DETAILS = false; // set true to also pull phone + website (uses extra quota)
+const BUCKET = "business-photos";     // must be a PUBLIC storage bucket
+const MAX_PHOTOS = 3;                 // photos to store per business (cost control)
+const BACKFILL_BATCH = 25;            // businesses enriched per backfill call (time budget)
 
 // Google place type -> our category.
 const SWEEPS: [string, string][] = [
@@ -41,8 +51,7 @@ async function nearby(type: string): Promise<any[]> {
   for (let page = 0; page < 3; page++) { // up to 60 results per type
     let url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${LAT},${LNG}&radius=${RADIUS}&type=${type}&key=${KEY}`;
     if (token) url += `&pagetoken=${token}`;
-    const r = await fetch(url);
-    const j = await r.json();
+    const j = await (await fetch(url)).json();
     if (j.results) out = out.concat(j.results);
     if (!j.next_page_token) break;
     token = j.next_page_token;
@@ -51,58 +60,132 @@ async function nearby(type: string): Promise<any[]> {
   return out;
 }
 
-async function details(placeId: string): Promise<{ phone?: string; website?: string }> {
+// Pull the rich details we show on a business page.
+async function details(placeId: string): Promise<{
+  phone?: string; website?: string; hours?: string; photoRefs: string[];
+}> {
   try {
-    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=formatted_phone_number,website&key=${KEY}`;
-    const j = await (await fetch(url)).json();
-    return { phone: j.result?.formatted_phone_number, website: j.result?.website };
-  } catch { return {}; }
+    const fields = "formatted_phone_number,website,opening_hours,photos";
+    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=${fields}&key=${KEY}`;
+    const j = (await (await fetch(url)).json()).result || {};
+    const hours = j.opening_hours?.weekday_text?.join(" · ");
+    const photoRefs = (j.photos || []).slice(0, MAX_PHOTOS).map((p: any) => p.photo_reference).filter(Boolean);
+    return { phone: j.formatted_phone_number, website: j.website, hours, photoRefs };
+  } catch { return { photoRefs: [] }; }
 }
 
-Deno.serve(async () => {
+// Download one Google photo (server-side) and store it in our own bucket. Returns
+// the PUBLIC URL of our copy, or null on failure.
+async function storePhoto(placeId: string, ref: string, idx: number): Promise<string | null> {
+  try {
+    const gUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=1000&photo_reference=${ref}&key=${KEY}`;
+    const resp = await fetch(gUrl); // follows the redirect to the actual image
+    if (!resp.ok) return null;
+    const ct = resp.headers.get("content-type") || "image/jpeg";
+    const ext = ct.includes("png") ? "png" : "jpg";
+    const bytes = new Uint8Array(await resp.arrayBuffer());
+    const path = `imported/${placeId}/${idx}.${ext}`;
+    const up = await admin.storage.from(BUCKET).upload(path, bytes, { contentType: ct, upsert: true });
+    if (up.error) return null;
+    return admin.storage.from(BUCKET).getPublicUrl(path).data.publicUrl || null;
+  } catch { return null; }
+}
+
+async function fetchPhotos(placeId: string, refs: string[]): Promise<string[]> {
+  const urls: string[] = [];
+  for (let i = 0; i < refs.length; i++) {
+    const u = await storePhoto(placeId, refs[i], i);
+    if (u) urls.push(u);
+  }
+  return urls;
+}
+
+// Build a patch that ONLY fills fields the row is currently missing (never clobbers
+// an owner's edits). Returns null if there is nothing to add.
+function fillPatch(row: any, d: { phone?: string; website?: string; hours?: string }, photos: string[]) {
+  const patch: any = {};
+  if (photos.length) {
+    if (!row.photo_url) patch.photo_url = photos[0];        // hero image
+    if (!row.photos || !row.photos.length) patch.photos = photos; // gallery
+  }
+  if (d.website && !row.website) patch.website = d.website;
+  if (d.phone && !row.phone) patch.phone = d.phone;
+  if (d.hours && !row.hours) patch.hours = d.hours;
+  return Object.keys(patch).length ? patch : null;
+}
+
+// ---- mode=backfill : enrich existing unclaimed rows that have no photo yet ----
+async function backfill(limit: number) {
+  // How many still need enriching (unclaimed + no hero photo + has a google id)?
+  const { count } = await admin.from("di_businesses")
+    .select("id", { count: "exact", head: true })
+    .lt("tier", 2).is("photo_url", null).not("google_place_id", "is", null);
+
+  const { data: rows } = await admin.from("di_businesses")
+    .select("id, google_place_id, tier, photo_url, photos, website, phone, hours")
+    .lt("tier", 2).is("photo_url", null).not("google_place_id", "is", null)
+    .limit(limit);
+
+  let enriched = 0;
+  for (const row of (rows || [])) {
+    const d = await details(row.google_place_id);
+    const photos = d.photoRefs.length ? await fetchPhotos(row.google_place_id, d.photoRefs) : [];
+    const patch = fillPatch(row, d, photos) || {};
+    // If Google had no photo for this place, stamp photo_url = "" so the row is
+    // marked as "tried" and won't be picked up again (the app shows its tile).
+    if (!photos.length && !patch.photo_url) patch.photo_url = "";
+    const { error } = await admin.from("di_businesses").update(patch).eq("id", row.id);
+    if (!error) enriched++;
+  }
+  const remaining = Math.max(0, (count || 0) - enriched);
+  return { mode: "backfill", enriched, remaining };
+}
+
+// ---- mode=import : find NEW places around Inglewood and insert them enriched ----
+async function importNew() {
+  const have = new Set<string>();
+  const { data: existing } = await admin.from("di_businesses").select("google_place_id");
+  (existing || []).forEach((r: any) => r.google_place_id && have.add(r.google_place_id));
+
+  const byId = new Map<string, any>();
+  for (const [type, category] of SWEEPS) {
+    for (const p of await nearby(type)) {
+      const pid = p.place_id;
+      if (!pid || have.has(pid) || byId.has(pid)) continue;
+      if (p.business_status && p.business_status !== "OPERATIONAL") continue;
+      byId.set(pid, { p, category });
+    }
+  }
+
+  const places = Array.from(byId.values());
+  let added = 0;
+  for (const { p, category } of places) {
+    const pid = p.place_id;
+    const d = await details(pid);
+    const photos = d.photoRefs.length ? await fetchPhotos(pid, d.photoRefs) : [];
+    const row: any = {
+      id: pid, google_place_id: pid, name: p.name, category, tags: [category],
+      address: p.vicinity || p.formatted_address || "",
+      rating: p.rating ?? null, rating_count: p.user_ratings_total ?? null,
+      price_level: priceStr(p.price_level),
+      phone: d.phone || "", website: d.website || null, hours: d.hours || null,
+      photo_url: photos[0] || null, photos: photos.length ? photos : null,
+      tier: 1, approved: true, is_active: true, is_large: false,
+    };
+    const { error } = await admin.from("di_businesses").upsert(row, { onConflict: "id", ignoreDuplicates: true });
+    if (!error) added++;
+  }
+  return { mode: "import", added, scanned: places.length, alreadyHad: have.size };
+}
+
+Deno.serve(async (req) => {
   if (!KEY) return new Response("GOOGLE_PLACES_API_KEY not set", { status: 200 });
   try {
-    // Which place_ids do we already have? (so we never overwrite existing rows)
-    const have = new Set<string>();
-    const { data: existing } = await admin.from("di_businesses").select("google_place_id");
-    (existing || []).forEach((r: any) => r.google_place_id && have.add(r.google_place_id));
-
-    const byId = new Map<string, any>();
-    for (const [type, category] of SWEEPS) {
-      const results = await nearby(type);
-      for (const p of results) {
-        const pid = p.place_id;
-        if (!pid || have.has(pid) || byId.has(pid)) continue;
-        if (p.business_status && p.business_status !== "OPERATIONAL") continue;
-        let phone = "", website = "";
-        if (DETAILS) { const d = await details(pid); phone = d.phone || ""; website = d.website || ""; }
-        byId.set(pid, {
-          id: pid,                     // dedupe key = the Google place id
-          google_place_id: pid,
-          name: p.name,
-          category,
-          tags: [category],
-          address: p.vicinity || p.formatted_address || "",
-          rating: p.rating ?? null,
-          rating_count: p.user_ratings_total ?? null,
-          price_level: priceStr(p.price_level),
-          phone, website,
-          tier: 1, approved: true, is_active: true, is_large: false,
-        });
-      }
-    }
-
-    const rows = Array.from(byId.values());
-    if (!rows.length) return new Response("no new businesses found", { status: 200 });
-
-    // ignoreDuplicates: never clobber an existing row (claimed / paid / edited).
-    let added = 0;
-    for (let i = 0; i < rows.length; i += 200) {
-      const chunk = rows.slice(i, i + 200);
-      const { error } = await admin.from("di_businesses").upsert(chunk, { onConflict: "id", ignoreDuplicates: true });
-      if (!error) added += chunk.length;
-    }
-    return new Response(`imported ${added} new Inglewood-area businesses (${have.size} already present)`, { status: 200 });
+    const url = new URL(req.url);
+    const mode = url.searchParams.get("mode") || "import";
+    const limit = Math.min(+(url.searchParams.get("limit") || BACKFILL_BATCH) || BACKFILL_BATCH, 60);
+    const result = mode === "backfill" ? await backfill(limit) : await importNew();
+    return new Response(JSON.stringify(result), { status: 200, headers: { "content-type": "application/json" } });
   } catch (e) {
     return new Response("error: " + (e as Error).message, { status: 500 });
   }

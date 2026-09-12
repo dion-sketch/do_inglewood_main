@@ -998,18 +998,10 @@ function menuRow(name,price){
 function menuRowsHTML(items){ return (items||[]).map(function(it){return menuRow(it.name||it.n||'', it.price||it.p||'');}).join(''); }
 function addMenuRow(){ var h=document.getElementById('ob_menu'); if(h) h.insertAdjacentHTML('beforeend', menuRow('','')); }
 
-/* ============ GOOGLE PLACES PHOTO INTEGRATION ============
-   To pull REAL business photos automatically, set your key below.
-   1. Google Cloud Console -> enable "Places API"
-   2. Create an API key, paste it here.
-   When set, each card/listing fetches its real Google photo by place_id.
-   Levae blank to use the curated fallback images. */
-const GOOGLE_API_KEY = ""; // <-- paste your key here to auto-pull real photos
-function googlePhoto(place_id, w){
-  if(!GOOGLE_API_KEY || !place_id) return null;
-  // Uses Places Photo endpoint via place details (handled server-side in production)
-  return `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${w||600}&photo_reference=PLACE_REF&key=${GOOGLE_API_KEY}`;
-}
+/* Real business photos are pulled SERVER-SIDE by the import-businesses edge
+   function (Google Places → stored in Supabase Storage). The Google API key
+   never lives in this public file. The app just reads the stored photo_url /
+   photos columns; if a spot has none, the branded category tile shows. */
 
 /* fallback curated imagery by category */
 const FB = {

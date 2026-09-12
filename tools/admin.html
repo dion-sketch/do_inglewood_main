@@ -62,8 +62,9 @@
 
     <div class="card tabpane hidden" id="pane-biz">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;padding-bottom:10px;border-bottom:1px solid #262a33">
-        <button class="g" onclick="importBusinesses()">↻ Import Inglewood businesses</button>
-        <span class="mut" id="import-msg">Pulls new local spots from Google Places. Safe — never overwrites existing ones.</span>
+        <button class="g" onclick="importBusinesses()">↻ Import new businesses</button>
+        <button class="g" onclick="backfillPhotos()">📷 Add photos &amp; details</button>
+        <span class="mut" id="import-msg">Import pulls new local spots from Google. “Add photos &amp; details” fills real photos, website &amp; hours on the ones you already have. Both are safe — they never overwrite a claimed business or an owner’s edits.</span>
       </div>
       <input type="text" id="bizsearch" placeholder="Search a business by name…" oninput="searchBiz()">
       <div id="biz-list" style="margin-top:10px"><div class="mut">Type a name to find a business.</div></div>
@@ -180,10 +181,30 @@ async function delBiz(id,name){
 async function importBusinesses(){
   var el=$('import-msg'); if(el) el.textContent='Importing from Google Places… (this can take ~30s)';
   try{
-    const r=await fetch(SUPABASE_URL+'/functions/v1/import-businesses',{method:'POST',headers:{Authorization:'Bearer '+KEY}});
+    const r=await fetch(SUPABASE_URL+'/functions/v1/import-businesses?mode=import',{method:'POST',headers:{Authorization:'Bearer '+KEY}});
     const t=await r.text();
     if(!r.ok){ if(el) el.textContent='Error: '+(t||('HTTP '+r.status)); return; }
     if(el) el.textContent='✓ '+t;
+  }catch(e){ if(el) el.textContent='Error: '+e.message+' — is the import-businesses function deployed?'; }
+}
+// Fills photos + website + hours on businesses that are missing them. The function
+// works in small batches (time limits), so we call it in a loop until nothing is left.
+async function backfillPhotos(){
+  var el=$('import-msg');
+  var total=0, rounds=0;
+  try{
+    while(true){
+      rounds++;
+      const r=await fetch(SUPABASE_URL+'/functions/v1/import-businesses?mode=backfill&limit=25',{method:'POST',headers:{Authorization:'Bearer '+KEY}});
+      const t=await r.text();
+      if(!r.ok){ if(el) el.textContent='Error: '+(t||('HTTP '+r.status)); return; }
+      let j; try{ j=JSON.parse(t); }catch(_){ if(el) el.textContent='✓ '+t; return; }
+      total+=(j.enriched||0);
+      if(el) el.textContent='Adding photos & details… '+total+' done, ~'+(j.remaining||0)+' to go (keep this tab open)';
+      if(!j.remaining || (!j.enriched && j.remaining)){ break; } // done, or nothing more it can enrich
+      if(rounds>500) break; // safety
+    }
+    if(el) el.textContent='✓ Finished — added photos & details to '+total+' businesses. Refresh the app to see them.';
   }catch(e){ if(el) el.textContent='Error: '+e.message+' — is the import-businesses function deployed?'; }
 }
 async function refreshEvents(){
