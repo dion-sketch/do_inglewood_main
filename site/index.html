@@ -431,20 +431,21 @@
     <div class="ob-slide on" data-ob="0">
       <div class="ob-ic">&#10024;</div>
       <h2>Welcome to <span class="g">Inglewood</span></h2>
-      <p>Eat. Play. Stay. The whole city's entertainment, in one place.</p>
+      <p>Eat. Play. Stay. Every restaurant, lounge, hotel and hot spot in California's Entertainment City — in one place.</p>
     </div>
     <div class="ob-slide" data-ob="1">
-      <div class="ob-ic">&#9889;</div>
-      <h2>Tell us your <span class="g">budget</span></h2>
-      <p>Pick your budget, your people, your vibe, and how you move. We build the whole night around it.</p>
+      <div class="ob-ic">&#127863;</div>
+      <h2>See what's <span class="g">popping tonight</span></h2>
+      <p>Live specials, happy hours and members' deals across the city — and reserve a table in a tap.</p>
     </div>
-    <div class="ob-slide" data-ob="2">
-      <div class="ob-ic">&#128205;</div>
-      <h2>We build your <span class="g">Do Plan</span></h2>
-      <p>Real spots, real prices, real timing — food, activity, parking and all. Then go.</p>
+    <div class="ob-dots"><span class="on"></span><span></span></div>
+    <div class="ob-foot">
+      <button class="dopill" id="obNext" onclick="obNext()"><span class="dobadge"><span class="do">Do</span></span><span class="lbl"><b id="obNextLbl">Next</b><span id="obNextSub">Let's Explore</span></span><span class="arw">&#8594;</span></button>
+      <div id="obFinal" style="display:none">
+        <button class="btn btn-primary" style="width:100%;font-size:16px;padding:15px" onclick="finishOnboard('specials')">&#127942; See Today's Specials</button>
+        <div class="skip" style="margin-top:14px" onclick="finishOnboard('home')">Just explore the city &rarr;</div>
+      </div>
     </div>
-    <div class="ob-dots"><span class="on"></span><span></span><span></span></div>
-    <div class="ob-foot"><button class="dopill" id="obNext" onclick="obNext()"><span class="dobadge"><span class="do">Do</span></span><span class="lbl"><b id="obNextLbl">Next</b><span id="obNextSub">Let's Explore</span></span><span class="arw">&#8594;</span></button></div>
   </div>
 
   <div class="screen" id="screen">
@@ -763,15 +764,6 @@
       <input id="authEmail" type="email" placeholder="you@email.com">
       <button class="ab" onclick="sendMagicLink()">Send sign-in link</button>
       <div class="skip" onclick="closeAcct()">Maybe later</div>
-    </div>
-  </div>
-  <!-- DAILY SPECIALS GREETER — the Groupon-style hook after onboarding -->
-  <div class="acct-overlay" id="specialsPop">
-    <div class="acct-sheet">
-      <h3>&#127942; Tonight in Inglewood</h3>
-      <p>Today&rsquo;s specials, happy hours &amp; members&rsquo; deals happening right now. Pick what you&rsquo;re feeling &mdash; we&rsquo;ll show only the spots with a live offer.</p>
-      <div class="popchips" id="popCatChips"></div>
-      <div class="skip" onclick="closeSpecialsPop()">Maybe later</div>
     </div>
   </div>
   <div class="acct-overlay" id="resvOverlay">
@@ -1550,28 +1542,6 @@ function surpriseMe(){
   toast('Tonight’s pick ✨');
   openListing(pick.k,'specials');
 }
-// ---- The daily greeter: after onboarding, a one-tap "see tonight's specials?" ----
-function _todayKey(){ var d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
-function maybeShowSpecialsPop(){
-  var cad=specialsNotify(); if(cad==='off') return;
-  if(!P.some(hasLiveSpecial)) return;                       // nothing to show today
-  var last=''; try{ last=localStorage.getItem('di_specials_pop_date')||''; }catch(e){}
-  if(cad==='daily' && last===_todayKey()) return;           // already greeted today
-  if(cad==='weekly' && last){ var ms=Date.now()-new Date(last).getTime(); if(ms>=0 && ms<6.5*864e5) return; }
-  showSpecialsPop();
-}
-function showSpecialsPop(){
-  var chips=document.getElementById('popCatChips');
-  if(chips){
-    chips.innerHTML=specialsCatsAvailable().map(function(c){
-      return '<button class="popchip" onclick="openSpecialsFrom(\''+c[0].replace(/'/g,"\\'")+'\')">'+c[1]+'</button>';
-    }).join('');
-  }
-  try{ localStorage.setItem('di_specials_pop_date',_todayKey()); }catch(e){}
-  var o=document.getElementById('specialsPop'); if(o)o.classList.add('on');
-}
-function closeSpecialsPop(){ var o=document.getElementById('specialsPop'); if(o)o.classList.remove('on'); }
-function openSpecialsFrom(cat){ specialsCat=cat||'all'; closeSpecialsPop(); go('specials'); }
 
 /* LISTING DETAIL */
 let lastList='home';
@@ -2039,14 +2009,23 @@ function renderSaved(){
 /* ONBOARDING */
 let ob=0;
 function obNext(){
-  ob++;
-  if(ob>2){document.getElementById('onboard').style.display='none'; setTimeout(function(){ try{ maybeShowSpecialsPop(); }catch(e){} }, 480); return;}
-  document.querySelectorAll('.ob-slide').forEach(s=>s.classList.toggle('on',+s.dataset.ob===ob));
-  document.querySelectorAll('.ob-dots span').forEach((d,i)=>d.classList.toggle('on',i===ob));
-  var _l=document.getElementById('obNextLbl'), _s=document.getElementById('obNextSub');
-  if(_l) _l.textContent=ob===2?'Get Started':'Next';
-  if(_s) _s.textContent=ob===2?'Explore · Plan · Experience':(ob===1?'Build My Day':"Let's Explore");
-  setObArt(ob);
+  if(ob<1) ob++;
+  showObSlide();
+}
+function showObSlide(){
+  document.querySelectorAll('.ob-slide').forEach(function(s){ s.classList.toggle('on',+s.dataset.ob===ob); });
+  document.querySelectorAll('.ob-dots span').forEach(function(d,i){ d.classList.toggle('on',i===ob); });
+  var last=ob>=1;  // slide 1 is the final one
+  var nb=document.getElementById('obNext'), fin=document.getElementById('obFinal');
+  if(nb) nb.style.display=last?'none':'';
+  if(fin) fin.style.display=last?'':'none';
+  if(!last) setObArt(ob);
+}
+// End of onboarding: go straight to Today's Specials, or just explore the city.
+function finishOnboard(dest){
+  var o=document.getElementById('onboard'); if(o)o.style.display='none';
+  if(dest==='specials'){ specialsCat='all'; go('specials'); }
+  else { go('home'); }
 }
 
 /* HERO ROTATOR */
