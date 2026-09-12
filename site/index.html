@@ -1710,7 +1710,7 @@ function openListing(k,from){
     ${menuHTML(p)}
     ${reserveCTA(p)}
     <div style="display:flex;gap:9px;margin-top:${isReservable(p)?'9':'16'}px">
-      <button class="btn ${isReservable(p)?'btn-ghost':'btn-primary'}" style="font-size:15px;padding:13px" onclick="go('build');resetBuild();">Build a Plan Around This</button>
+      <button class="btn ${isReservable(p)?'btn-ghost':'btn-primary'}" style="font-size:15px;padding:13px" onclick="planAroundBiz('${p.k}')">Build a Plan Around This</button>
       <button class="tbtn pink" style="padding:0 16px" onclick="openDirections('${p.k}')">Directions</button>
     </div>
     ${similarSpots(p)}
@@ -1732,7 +1732,7 @@ function openListing(k,from){
 
 /* BUILD FLOW */
 let step=1;const sel={plan:null,budget:null,people:null,food:null,extras:[],exp:[],start:null,move:null,parking:false,date:null,startTime:null};
-function resetBuild(){step=1;sel.plan=sel.budget=sel.people=sel.food=sel.move=sel.start=null;sel.extras=[];sel.exp=[];sel.parking=false;sel.date=null;sel.startTime=null;sel.when=null;window.__anchorEvent=null;
+function resetBuild(){step=1;sel.plan=sel.budget=sel.people=sel.food=sel.move=sel.start=null;sel.extras=[];sel.exp=[];sel.parking=false;sel.date=null;sel.startTime=null;sel.when=null;window.__anchorEvent=null;window.__anchorBiz=null;
   document.querySelectorAll('.opt,.pill,.toggle').forEach(e=>e.classList.remove('sel'));
   // Normal mode: show the plan-type grid, hide the event before/after choice.
   var pg=document.getElementById('planGrid'), eb=document.getElementById('evAnchorBlock'), en=document.getElementById('evAnchorName'), q=document.getElementById('s1q');
@@ -1742,6 +1742,14 @@ function resetBuild(){step=1;sel.plan=sel.budget=sel.people=sel.food=sel.move=se
   var d=document.getElementById('bDate'); if(d){ if(!d.value) d.value=isoOf(new Date()); sel.date=d.value; }
   var t=document.getElementById('bTime'); if(t){ sel.startTime=t.value; }
   showStep();}
+// Start the builder anchored to a specific business — every generated plan includes it.
+function planAroundBiz(key){
+  go('build'); resetBuild();
+  if(!PB[key]) return;
+  window.__anchorBiz=key;
+  var q=document.getElementById('s1q');
+  if(q) q.innerHTML='Building around <span style="color:var(--gold)">'+xmlEsc(PB[key].n)+'</span> &mdash; set the vibe.';
+}
 function showStep(){
   document.querySelectorAll('.build-step').forEach(s=>s.style.display=(+s.dataset.step===step)?'block':'none');
   document.getElementById('pfill').style.width=(step/4*100)+'%';
@@ -1816,16 +1824,22 @@ function buildResults(){
   const foods=pickFood();
 
   // Build a shared stop list each plan varies slightly
+  // "Build a Plan Around This": force the viewed business into every plan.
+  var anchorK=(window.__anchorBiz&&PB[window.__anchorBiz])?window.__anchorBiz:null;
+  var anchorIsFood=anchorK&&(PB[anchorK].tags||[]).indexOf('Food')>=0;
   function compose(primaryFood){
     var stops=[]; var used=[];
     // experience BEFORE dinner (photo/flowers/coffee) - keep it light
     sel.exp.forEach(function(tag){var k=expKeyFor(tag);if(k&&used.indexOf(k)<0){stops.push({k:k,phase:'pre'});used.push(k);}});
-    // dinner
-    stops.push({k:primaryFood,phase:'food'}); used.push(primaryFood);
+    // dinner — if anchored to a food spot, that IS the meal
+    var food = anchorIsFood ? anchorK : primaryFood;
+    stops.push({k:food,phase:'food'}); used.push(food);
+    // a non-food anchor (lounge, casino, venue, hotel) rides along as its own stop
+    if(anchorK && !anchorIsFood && used.indexOf(anchorK)<0){ stops.push({k:anchorK,phase:'anchor'}); used.push(anchorK); }
     // night extras (movie/lounge/casino/dessert/event/hotel) in sensible order
     var order=['Movie','Event','Lounge','Club','Casino','Dessert'];
     order.forEach(function(tag){ if(sel.extras.indexOf(tag)>=0){var k=extraKeyFor(tag,used);if(k&&used.indexOf(k)<0){stops.push({k:k,phase:tag.toLowerCase()});used.push(k);}}});
-    // PLANNING RULE: cap at 5 stops so a plan stays realistic
+    // PLANNING RULE: cap at 5 stops so a plan stays realistic (anchor is early, so it survives)
     if(stops.length>5){ stops=stops.slice(0,5); }
     return stops;
   }
