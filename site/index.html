@@ -107,6 +107,10 @@
   .cat .ic{color:var(--muted);transition:color .12s,transform .12s;}
   .cat .ic svg{width:23px;height:23px;display:block;margin:0 auto;}
   .cat .lb{font-family:'Barlow Condensed';font-weight:600;font-size:11px;margin-top:5px;letter-spacing:.3px;}
+  /* When a designed category thumbnail loads, the image IS the tile (keeps its own glow/border/label). */
+  .cat.has-art{background:none;border:none;padding:0;overflow:visible;}
+  .cat.has-art img{width:100%;aspect-ratio:1/1;object-fit:contain;display:block;}
+  .cat.has-art:active{background:none;transform:scale(.94);}
 
   /* EXPLORE */
   .head-bar{padding:14px 20px 10px;display:flex;align-items:center;gap:12px;position:sticky;top:0;background:var(--bg);z-index:5;border-bottom:1px solid var(--line);}
@@ -2513,7 +2517,21 @@ function closeAcct(){document.getElementById('acctOverlay').classList.remove('on
 function acctDone(){closeAcct();toast('Account created \u00b7 plan saved');}
 document.getElementById('acctOverlay').addEventListener('click',function(e){if(e.target===this)closeAcct();});
 
+// Upgrade the Explore category tiles to the designed neon thumbnails when present.
+// Drop these files next to index.html; if a file is missing, the built-in tile stays.
+function loadCatArt(){
+  var map={Food:'cat-food',Lounges:'cat-lounges',Casino:'cat-casino',Hotels:'cat-hotels',Dessert:'cat-coffee',Seafood:'cat-seafood',Brunch:'cat-brunch',All:'cat-all'};
+  document.querySelectorAll('.cat').forEach(function(tile){
+    var oc=tile.getAttribute('onclick')||''; var m=oc.match(/filterTo\('([^']+)'\)/); if(!m) return;
+    var base=map[m[1]]; if(!base) return;
+    var src=base+'.png';
+    var probe=new Image();
+    probe.onload=function(){ if(probe.naturalWidth>1){ tile.classList.add('has-art'); tile.innerHTML='<img src="'+src+'" alt="'+m[1]+'">'; } };
+    probe.src=src;
+  });
+}
 async function initApp(){
+  loadCatArt();
   await loadBusinesses();
   await loadEvents();
   buildHome();buildFilters();showStep();buildHero();renderHomeEvents();
