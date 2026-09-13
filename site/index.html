@@ -441,10 +441,6 @@
     <div class="ob-dots"><span class="on"></span><span></span></div>
     <div class="ob-foot">
       <button class="dopill" id="obNext" onclick="obNext()"><span class="dobadge"><span class="do">Do</span></span><span class="lbl"><b id="obNextLbl">Next</b><span id="obNextSub">Keep going</span></span><span class="arw">&#8594;</span></button>
-      <div id="obFinal" style="display:none">
-        <button class="btn btn-primary" style="width:100%;font-size:16px;padding:15px" onclick="finishOnboard('specials')">&#127942; See Today's Specials</button>
-        <div class="skip" style="margin-top:14px" onclick="finishOnboard('home')">Just explore the city &rarr;</div>
-      </div>
     </div>
   </div>
 
@@ -741,7 +737,7 @@
   <div class="tabbar">
     <div class="tab on" id="tab-home" onclick="go('home')"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5"/><path d="M9.5 21v-6h5v6"/></svg></div>Home</div>
     <div class="tab" id="tab-explore" onclick="go('explore')"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>Explore</div>
-    <div class="tab build-tab" id="tab-build" onclick="go('specials')"><div class="ic"><span class="do">Do</span></div></div>
+    <div class="tab build-tab" id="tab-build" onclick="go('specials')"><div class="ic"><span class="do">Do</span></div>Specials</div>
     <div class="tab" id="tab-events" onclick="go('events')"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2 2 2 0 0 0 0 4 2 2 0 0 1-2 2H6a2 2 0 0 1-2-2 2 2 0 0 0 0-4z"/><line x1="13" y1="6" x2="13" y2="18" stroke-dasharray="2 2"/></svg></div>Events</div>
     <div class="tab" id="tab-plans" onclick="go('saved')"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z"/></svg></div>Saved</div>
   </div>
@@ -809,7 +805,7 @@ const SUPABASE_KEY = "sb_publishable_WeSqJHxHWza5rgyq8XcF0g_bYF7VE7R"; // publis
 const SB = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Build stamp — bump on every release so the deployed version is verifiable at a glance
 // (☰ menu → bottom). If the number here doesn't match what's live, an old file was deployed.
-const DI_BUILD = "2026.09.13-1";
+const DI_BUILD = "2026.09.13-2";
 try{ console.log("Do Inglewood — build "+DI_BUILD); }catch(e){}
 
 /* ============ AUTH + OWNER DASHBOARD ============ */
@@ -2063,23 +2059,23 @@ function renderSaved(){
 }
 /* ONBOARDING */
 let ob=0;
+// Same button on every screen: NEXT advances, and on the last screen it goes
+// straight into the app (Home). Simple, consistent, never a dead end.
 function obNext(){
-  if(ob<1) ob++;
-  showObSlide();
+  if(ob<1){ ob++; showObSlide(); }
+  else { finishOnboard(); }
 }
 function showObSlide(){
   document.querySelectorAll('.ob-slide').forEach(function(s){ s.classList.toggle('on',+s.dataset.ob===ob); });
   document.querySelectorAll('.ob-dots span').forEach(function(d,i){ d.classList.toggle('on',i===ob); });
   var last=ob>=1;  // slide 1 is the final one
-  var nb=document.getElementById('obNext'), fin=document.getElementById('obFinal');
-  if(nb) nb.style.display=last?'none':'';
-  if(fin) fin.style.display=last?'':'none';
+  var lbl=document.getElementById('obNextLbl'), sub=document.getElementById('obNextSub');
+  if(lbl) lbl.textContent=last?'Let’s Go':'Next';
+  if(sub) sub.textContent=last?'Enter Inglewood':'Keep going';
 }
-// End of onboarding: go straight to Today's Specials, or just explore the city.
-function finishOnboard(dest){
+function finishOnboard(){
   var o=document.getElementById('onboard'); if(o)o.style.display='none';
-  if(dest==='specials'){ specialsCat='all'; go('specials'); }
-  else { go('home'); }
+  go('home');
 }
 
 /* HERO ROTATOR */
