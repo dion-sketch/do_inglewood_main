@@ -1,48 +1,63 @@
-# Do Inglewood — Go‑Live Checklist (do once, in order)
+# Do Inglewood — Go‑Live Checklist
 
-Everything below is safe to run even if you already did some of it — the SQL uses
-"if not exists" / "drop … if exists", so re‑running never breaks anything.
-
-## A) Database — Supabase → SQL Editor → New query → paste → Run
-Run these **in order** (one at a time; each should say "Success"):
-1. `supabase/05_owner_login.sql`
-2. `supabase/06_fix_claims_owner_link.sql`
-3. `supabase/07_reservations.sql`
-4. `supabase/08_reservations_native.sql`
-5. `supabase/09_notify.sql`
-6. `supabase/10_resv_cancel.sql`
-7. `supabase/11_pause_photos.sql`
-
-## B) Storage & Auth (one‑time — you likely did these already)
-- **Storage → New bucket** named `business-photos`, **Public** ON. (Then the storage
-  policies from 05 apply.)
-- **Authentication → URL Configuration:** Site URL = your Netlify URL; add
-  `https://YOUR-SITE.netlify.app/**` to Redirect URLs.
-
-## C) Deploy
-- **Netlify:** deploy the latest `site/index.html` (drag‑drop the newest file).
-- **Your computer:** open the latest `tools/admin.html` (keep it on your computer —
-  never upload it; it holds your admin key).
-
-## D) Smoke test (5 minutes — do before launch)
-1. Open the site in a **private/incognito** window.
-2. Menu → **Sign In** → get the email link → sign in.
-3. **Build** a plan (pick date + time) → open the itinerary.
-4. Tap **Reserve** on a stop → send a request.
-5. Claim that business (or use one you own) → **My Business** → **Accept** the request.
-6. Back on the itinerary → it should read **Confirmed ✓**. Tap **Share**.
-✅ If that works, the whole product works.
-
-## E) Owner email alerts (optional — can do after launch)
-Follow `supabase/functions/README_notify.md`: Resend key → deploy the
-`notify-reservation` function → add secrets → Database Webhook on `di_reservations`.
-The reservation loop works without this; email is the upgrade.
-
-## F) Money — Stripe (only when you want to charge for real)
-- Create the **$69** and **$169** payment links in Stripe.
-- Send me the two links → I paste them in.
-- Flip Stripe to **Live** mode.
-(Until then it stays in test mode — no real charges.)
+**The short version:** you are LIVE after Steps 1–2. Everything after that is polish
+you can add the same day or later. All SQL is safe to re‑run ("if not exists").
 
 ---
-**Order that matters:** A → C → D. Everything else (E, F) can come later.
+
+## 🟢 REQUIRED to be live today (~15 min)
+
+### 1. Deploy the app
+- **Netlify** → drag‑drop the latest `site/index.html`.
+- Hard‑refresh your site. That's the app — browse, search, business pages,
+  favorites, events, Today's Specials, the daily greeter, and booking all work.
+
+### 2. Set up the database (one paste)
+- **Supabase → SQL Editor → New query** → paste **all of `supabase/turn_on_all.sql`**
+  → Run. (Covers everything: schema, RLS, events, reservations, menus, member
+  deals, Stripe columns, and the booking `note`.)
+- **Storage:** confirm a **Public** bucket named `business-photos` exists.
+- **Authentication → URL Configuration:** Site URL = your Netlify URL; add
+  `https://YOUR-SITE.netlify.app/**` to Redirect URLs (so magic‑link sign‑in works).
+
+**✅ You're live.** The app is public and functional.
+
+---
+
+## ⭐ Strongly recommended today (~15 min) — makes it look real
+
+### 3. Load real photos
+- Supabase → Edge Functions → deploy `import-businesses` (paste
+  `supabase/functions/import-businesses/index.ts`). Secret `GOOGLE_PLACES_API_KEY`.
+- Open `tools/admin.html` (on your computer — never upload it) → **📷 Add photos &
+  details**. Keep the tab open till it says Finished.
+- Result: real photos, websites and hours instead of letter tiles.
+
+### 4. Smoke test (5 min, in a private/incognito window)
+1. Menu → **Sign In** → open the magic link → signed in.
+2. Open a business → if it's yours, **Claim it** → **My Business**.
+3. On that claimed business, tap **Book a Table** → send a request.
+4. **My Business** → **Accept** the request → the customer page reads **Confirmed ✓**.
+✅ If that works, the whole product works.
+
+---
+
+## 🔵 This week (not needed to launch)
+
+### 5. Reservation emails (Resend)
+Follow `supabase/functions/README_email.md`: Resend key → deploy the
+`reservation-email` function (Verify JWT OFF) → add `RESEND_API_KEY` + `RESEND_FROM`.
+Booking works without this; email is the upgrade that reaches people who left the app.
+
+### 6. Money — Stripe (only when you want to charge businesses)
+Create the **$69** and **$169** Stripe payment links → send them to me → I paste them
+in → flip Stripe to **Live**. Until then it stays in test mode (no real charges).
+
+---
+
+## ⚪ Later (roadmap)
+Game‑day push notifications, the Morning/Midday/Evening + day picker (the preference
+model is already built for it), and deep Square booking integration.
+
+---
+**Order that matters: 1 → 2 (live) → 3 → 4. Everything else is optional.**

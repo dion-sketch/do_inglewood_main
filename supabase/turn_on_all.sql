@@ -187,3 +187,10 @@ alter table di_businesses add column if not exists member_deal text;
 alter table di_businesses add column if not exists stripe_customer     text;
 alter table di_businesses add column if not exists stripe_subscription text;
 alter table di_businesses add column if not exists paid_since          timestamptz;
+
+-- ===== 18_booking.sql =====
+-- Booking: customer note on a request (e.g. "fade with Mike, ~2pm"); booking
+-- link columns for the link-out lane (OpenTable/Resy/Booksy/Square/...).
+alter table di_reservations add column if not exists note text;
+alter table di_businesses  add column if not exists booking_url          text;
+alter table di_businesses  add column if not exists reservation_provider text;
