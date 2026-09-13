@@ -51,6 +51,15 @@ Google bills per Place **Details** call (~$0.017) and per **Photo** fetched
 `MAX_PHOTOS = 1` to roughly halve the photo cost. Re-running the backfill later only
 touches spots still missing photos, so it won't re-bill ones already done.
 
+## Categories swept
+Food & nightlife (restaurants, bars, lounges, cafés, bakeries, hotels, casinos)
+**plus the appointment economy**: barbershops, salons, nails, spas, fitness,
+tattoo and photography — so booking-ready businesses land in the directory. Edit
+`SWEEPS` at the top of `index.ts` to add/remove. Medical, dental and auto-repair
+are included but **commented out** (uncomment if you want them — they can dilute
+the entertainment/lifestyle feel). Types Google doesn't have (tattoo, photography,
+barbershop, nails) are pulled by keyword instead.
+
 ## Notes
 - **Menus** are not pulled — Google doesn't reliably have them. Owners add their menu
   when they claim (that's the norm, even on Yelp).

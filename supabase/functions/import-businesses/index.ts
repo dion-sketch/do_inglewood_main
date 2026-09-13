@@ -36,11 +36,23 @@ const MAX_PHOTOS = 3;                 // photos to store per business (cost cont
 const BACKFILL_BATCH = 25;            // businesses enriched per backfill call (time budget)
 
 // Google place type -> our category.
-const SWEEPS: [string, string][] = [
+// [google place type, our category, optional keyword]. Use a keyword when Google
+// has no dedicated place type (tattoo, photography). All of these are bookable
+// categories in the app, so imported spots land ready for the appointment flow.
+const SWEEPS: [string, string, string?][] = [
+  // Food & nightlife
   ["restaurant", "Restaurant"], ["meal_takeaway", "Restaurant"],
   ["bar", "Lounge"], ["night_club", "Lounge"],
   ["cafe", "Coffee"], ["bakery", "Dessert"],
   ["lodging", "Hotels"], ["casino", "Casino"],
+  // Self-care & appointment economy (barbers, salons, nails, spas, fitness)
+  ["hair_care", "Salon"], ["beauty_salon", "Beauty"], ["spa", "Spa"], ["gym", "Fitness"],
+  // No Google place type — search by keyword
+  ["", "Barbershop", "barbershop"], ["", "Nails", "nail salon"],
+  ["", "Tattoo", "tattoo"], ["", "Photography", "photography studio"],
+  // Optional utility appointments — uncomment to include (may dilute the
+  // entertainment/lifestyle feel of the directory):
+  // ["dentist", "Dental"], ["doctor", "Medical"], ["car_repair", "Auto"],
 ];
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -62,10 +74,12 @@ function detectBooking(website?: string): { booking_url?: string; reservation_pr
   return {};
 }
 
-async function nearby(type: string): Promise<any[]> {
+async function nearby(type: string, keyword?: string): Promise<any[]> {
   let out: any[] = [], token = "";
   for (let page = 0; page < 3; page++) { // up to 60 results per type
-    let url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${LAT},${LNG}&radius=${RADIUS}&type=${type}&key=${KEY}`;
+    let url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${LAT},${LNG}&radius=${RADIUS}&key=${KEY}`;
+    if (type) url += `&type=${type}`;
+    if (keyword) url += `&keyword=${encodeURIComponent(keyword)}`;
     if (token) url += `&pagetoken=${token}`;
     const j = await (await fetch(url)).json();
     if (j.results) out = out.concat(j.results);
@@ -170,8 +184,8 @@ async function importNew() {
   (existing || []).forEach((r: any) => r.google_place_id && have.add(r.google_place_id));
 
   const byId = new Map<string, any>();
-  for (const [type, category] of SWEEPS) {
-    for (const p of await nearby(type)) {
+  for (const [type, category, keyword] of SWEEPS) {
+    for (const p of await nearby(type, keyword)) {
       const pid = p.place_id;
       if (!pid || have.has(pid) || byId.has(pid)) continue;
       if (p.business_status && p.business_status !== "OPERATIONAL") continue;
