@@ -1281,6 +1281,8 @@ async function submitResv(){
   var rec={ business_id:biz, customer_name:name, customer_phone:phone, customer_email:email||(CURRENT_USER&&CURRENT_USER.email)||null, party_size:party, resv_date:date||null, resv_time:time||null, note:note||null, status:'requested' };
   if(CURRENT_USER) rec.user_id=CURRENT_USER.id;
   var r=await SB.from('di_reservations').insert(rec);
+  // Graceful: if the optional 'note' column isn't in the DB yet, resend without it.
+  if(r&&r.error&&rec.note&&/note/i.test(r.error.message||'')){ delete rec.note; r=await SB.from('di_reservations').insert(rec); }
   if(r&&r.error){ toast('Could not send: '+r.error.message); return; }
   closeResv();
   toast('Request sent ✓ '+(PB[biz]?PB[biz].n:'The business')+' will confirm');
