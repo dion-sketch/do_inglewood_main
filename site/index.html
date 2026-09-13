@@ -805,7 +805,7 @@ const SUPABASE_KEY = "sb_publishable_WeSqJHxHWza5rgyq8XcF0g_bYF7VE7R"; // publis
 const SB = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Build stamp — bump on every release so the deployed version is verifiable at a glance
 // (☰ menu → bottom). If the number here doesn't match what's live, an old file was deployed.
-const DI_BUILD = "2026.09.13-2";
+const DI_BUILD = "2026.09.13-3";
 try{ console.log("Do Inglewood — build "+DI_BUILD); }catch(e){}
 
 /* ============ AUTH + OWNER DASHBOARD ============ */
@@ -2143,12 +2143,13 @@ function loadCatArt(){
   });
 }
 // Swap the onboarding button to the designed art for the given slide (0,1,2).
-var OB_ART=['btn-explore','btn-buildmyday','btn-getstarted'];
-function setObArt(slide){
+// The onboarding button uses the designed "Explore Inglewood" art (the high-end
+// Vegas pill) on every screen — same premium button start to finish.
+function paintObButton(){
   var btn=document.getElementById('obNext'); if(!btn) return;
-  var src=artSrc(OB_ART[slide]||OB_ART[0]);
+  var src=artSrc('btn-explore');
   var p=new Image();
-  p.onload=function(){ if(p.naturalWidth>1){ btn.classList.add('art'); btn.innerHTML='<img src="'+src+'" alt="Continue">'; } };
+  p.onload=function(){ if(p.naturalWidth>1){ btn.classList.add('art'); btn.innerHTML='<img src="'+src+'" alt="Explore Inglewood">'; } };
   p.src=src;
 }
 // Upgrade the Do badge + brand buttons to designed art.
@@ -2162,6 +2163,7 @@ function loadBrandArt(){
 async function initApp(){
   loadCatArt();
   loadBrandArt();
+  paintObButton();
   await loadBusinesses();
   await loadEvents();
   var _bl=document.getElementById('di-build'); if(_bl)_bl.textContent=DI_BUILD;
