@@ -1280,12 +1280,14 @@ async function submitResv(){
   if(!phone){ toast('Enter a phone so they can confirm'); return; }
   var rec={ business_id:biz, customer_name:name, customer_phone:phone, customer_email:email||(CURRENT_USER&&CURRENT_USER.email)||null, party_size:party, resv_date:date||null, resv_time:time||null, note:note||null, status:'requested' };
   if(CURRENT_USER) rec.user_id=CURRENT_USER.id;
-  var r=await SB.from('di_reservations').insert(rec);
+  var r=await SB.from('di_reservations').insert(rec).select('id');
   // Graceful: if the optional 'note' column isn't in the DB yet, resend without it.
-  if(r&&r.error&&rec.note&&/note/i.test(r.error.message||'')){ delete rec.note; r=await SB.from('di_reservations').insert(rec); }
+  if(r&&r.error&&rec.note&&/note/i.test(r.error.message||'')){ delete rec.note; r=await SB.from('di_reservations').insert(rec).select('id'); }
   if(r&&r.error){ toast('Could not send: '+r.error.message); return; }
+  var newId=(r.data&&r.data[0]&&r.data[0].id)||null;
   closeResv();
   toast('Request sent ✓ '+(PB[biz]?PB[biz].n:'The business')+' will confirm');
+  if(newId) notifyResv(newId,'requested');            // email the guest + owner (best-effort)
   await loadMyReservations();
   if(document.getElementById('view-listing').classList.contains('active') && window._curListing){ openListing(window._curListing, lastList); }
 }
@@ -1348,7 +1350,13 @@ function resvRowHTML(x){
 async function setResv(id,status){
   var r=await SB.from('di_reservations').update({status:status}).eq('id',id);
   if(r&&r.error){ toast('Failed: '+r.error.message); return; }
-  toast(status==='confirmed'?'Confirmed ✓':'Declined'); renderOwnerResv();
+  toast(status==='confirmed'?'Confirmed ✓':'Declined');
+  notifyResv(id,status);                               // email the guest (best-effort)
+  renderOwnerResv();
+}
+// Fire a reservation email via the edge function. Best-effort — never blocks booking.
+function notifyResv(id,event){
+  try{ fetch(SUPABASE_URL+'/functions/v1/reservation-email',{method:'POST',headers:{Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify({reservation_id:id,event:event})}).catch(function(){}); }catch(e){}
 }
 async function loadBusinesses(){
   try{
@@ -1525,12 +1533,26 @@ function buildSpecialsFilters(){
 }
 function setSpecialsCat(cat){ specialsCat=cat; buildSpecialsFilters(); renderSpecials(); document.getElementById('screen').scrollTop=0; }
 
-// How often the daily greeter says hello (also the plumbing for phone push later).
-function specialsNotify(){ try{ return localStorage.getItem('di_specials_notify')||'daily'; }catch(e){ return 'daily'; } }
+/* Notification preferences \u2014 one model for every channel. Future-proofed with
+   time-of-day (times) and day-of-week (days) so the granular picker slots in later
+   without a rebuild; today only `specials`, `events` and `saved` are surfaced. */
+function notifPrefs(){
+  var d={ booking:true, specials:'daily', events:true, saved:true,
+          times:['morning','midday','evening'], days:[0,1,2,3,4,5,6] };
+  try{
+    var raw=localStorage.getItem('di_notif');
+    if(raw){ d=Object.assign(d,JSON.parse(raw)); }
+    else{ var legacy=localStorage.getItem('di_specials_notify'); if(legacy) d.specials=legacy; }  // migrate old key
+  }catch(e){}
+  return d;
+}
+function setNotifPrefs(patch){ var d=Object.assign(notifPrefs(),patch||{}); try{ localStorage.setItem('di_notif',JSON.stringify(d)); }catch(e){} return d; }
+// How often the daily greeter says hello (reads the shared prefs; drives push later).
+function specialsNotify(){ return notifPrefs().specials || 'daily'; }
 function updateNotifyLabel(){ var el=document.getElementById('specials-notify'); if(!el)return; var c=specialsNotify(); el.innerHTML='\uD83D\uDD14 '+(c==='off'?'Reminders off':(c==='daily'?'Daily':'Weekly')); }
 function cycleSpecialsNotify(){
   var order=['daily','weekly','off'], nx=order[(order.indexOf(specialsNotify())+1)%3];
-  try{ localStorage.setItem('di_specials_notify',nx); }catch(e){}
+  setNotifPrefs({specials:nx});
   updateNotifyLabel();
   toast(nx==='off'?'Specials reminders off':(nx==='daily'?'Daily specials on \uD83D\uDD14':'Weekly specials on \uD83D\uDD14'));
 }
