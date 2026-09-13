@@ -46,6 +46,22 @@ const SWEEPS: [string, string][] = [
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const priceStr = (n: number | undefined) => (n && n > 0 ? "$".repeat(Math.min(n, 4)) : "$$");
 
+// If a business's website IS a known booking system, treat it as a booking link
+// so the app shows "Book on X" (the reliable link-out lane) automatically.
+const BOOKING_HOSTS: [string, string][] = [
+  ["booksy.", "Booksy"], ["opentable.", "OpenTable"], ["resy.", "Resy"],
+  ["squareup.com/appointments", "Square"], ["square.site", "Square"], ["book.squareup", "Square"],
+  ["vagaro.", "Vagaro"], ["calendly.", "Calendly"], ["getsquire.", "Squire"],
+  ["acuityscheduling.", "Acuity"], ["schedulicity.", "Schedulicity"], ["setmore.", "Setmore"],
+  ["fresha.", "Fresha"], ["mindbodyonline.", "Mindbody"], ["yelp.com/reservations", "Yelp Reservations"],
+];
+function detectBooking(website?: string): { booking_url?: string; reservation_provider?: string } {
+  if (!website) return {};
+  const w = website.toLowerCase();
+  for (const [host, name] of BOOKING_HOSTS) if (w.includes(host)) return { booking_url: website, reservation_provider: name };
+  return {};
+}
+
 async function nearby(type: string): Promise<any[]> {
   let out: any[] = [], token = "";
   for (let page = 0; page < 3; page++) { // up to 60 results per type
@@ -111,6 +127,12 @@ function fillPatch(row: any, d: { phone?: string; website?: string; hours?: stri
   if (d.website && !row.website) patch.website = d.website;
   if (d.phone && !row.phone) patch.phone = d.phone;
   if (d.hours && !row.hours) patch.hours = d.hours;
+  // Auto-plug an existing booking system (Booksy/OpenTable/Square/etc.) if the
+  // website is one — only when the business has no booking link yet.
+  if (!row.booking_url) {
+    const b = detectBooking(d.website);
+    if (b.booking_url) { patch.booking_url = b.booking_url; patch.reservation_provider = b.reservation_provider; }
+  }
   return Object.keys(patch).length ? patch : null;
 }
 
@@ -122,7 +144,7 @@ async function backfill(limit: number) {
     .lt("tier", 2).is("photo_url", null).not("google_place_id", "is", null);
 
   const { data: rows } = await admin.from("di_businesses")
-    .select("id, google_place_id, tier, photo_url, photos, website, phone, hours")
+    .select("id, google_place_id, tier, photo_url, photos, website, phone, hours, booking_url")
     .lt("tier", 2).is("photo_url", null).not("google_place_id", "is", null)
     .limit(limit);
 
@@ -170,6 +192,7 @@ async function importNew() {
       price_level: priceStr(p.price_level),
       phone: d.phone || "", website: d.website || null, hours: d.hours || null,
       photo_url: photos[0] || null, photos: photos.length ? photos : null,
+      ...detectBooking(d.website),   // auto-plug an existing booking system if found
       tier: 1, approved: true, is_active: true, is_large: false,
     };
     const { error } = await admin.from("di_businesses").upsert(row, { onConflict: "id", ignoreDuplicates: true });

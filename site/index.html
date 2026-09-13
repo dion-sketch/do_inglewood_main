@@ -776,10 +776,11 @@
           <option>10:00 AM</option><option>11:00 AM</option><option>12:00 PM</option><option>1:00 PM</option><option>2:00 PM</option><option>3:00 PM</option><option>4:00 PM</option><option>5:00 PM</option><option selected>6:00 PM</option><option>7:00 PM</option><option>8:00 PM</option><option>9:00 PM</option>
         </select>
       </div>
-      <input id="rv_party" type="number" min="1" placeholder="Party size (e.g. 2)">
+      <input id="rv_party" type="number" min="1" placeholder="How many people (e.g. 2)">
       <input id="rv_name" placeholder="Your name">
       <input id="rv_phone" type="tel" placeholder="Phone (so they can confirm)">
       <input id="rv_email" type="email" placeholder="Email (we'll send your confirmation)">
+      <input id="rv_note" placeholder="Anything they should know? (optional)">
       <button class="ab" onclick="submitResv()">Send request</button>
       <div class="skip" onclick="closeResv()">Cancel</div>
     </div>
@@ -1149,6 +1150,7 @@ function dbToApp(r){
     price:r.price_level, cpp:r.avg_per_person||0, hrs:r.hours,
     q:r.review_quote, tier:r.tier||1, special:r.special||null, mdeal:r.member_deal||null,
     book:r.booking_url||null, prov:r.reservation_provider||null,
+    claimed:!!r.claimed_by,
     photos:r.photos||[], menu:r.menu||[],
     img: pickImg(r)
   };
@@ -1157,38 +1159,55 @@ function dbToApp(r){
    else their website, else a search. No booking engine — that comes later. ---- */
 // ---- Canonical business categories. `resv` = a sit-down venue that can take table reservations.
 // A business PICKS one of these at setup; that choice decides whether Reservations apply.
+// `resv` = a venue that naturally takes a table reservation OR an appointment.
 var CATS=[
   {n:'Restaurant',resv:1},{n:'Mexican',resv:1},{n:'Soul Food',resv:1},{n:'Caribbean',resv:1},
   {n:'American',resv:1},{n:'Seafood',resv:1},{n:'Brunch',resv:1},{n:'Lounge',resv:1},{n:'Bar',resv:1},
+  {n:'Barbershop',resv:1},{n:'Salon',resv:1},{n:'Nails',resv:1},{n:'Spa',resv:1},{n:'Massage',resv:1},
+  {n:'Tattoo',resv:1},{n:'Beauty',resv:1},{n:'Fitness',resv:1},{n:'Photography',resv:1},
+  {n:'Auto',resv:1},{n:'Medical',resv:1},{n:'Dental',resv:1},{n:'Event Space',resv:1},
   {n:'Coffee',resv:0},{n:'Dessert',resv:0},{n:'Hotels',resv:0},{n:'Casino',resv:0},
-  {n:'Event Space',resv:0},{n:'Stadium',resv:0},{n:'Retail',resv:0},{n:'Beauty',resv:0},
-  {n:'Florist',resv:0},{n:'Landmark',resv:0},{n:'Park',resv:0},{n:'Movie',resv:0},{n:'Other',resv:0}
+  {n:'Stadium',resv:0},{n:'Retail',resv:0},{n:'Florist',resv:0},{n:'Landmark',resv:0},
+  {n:'Park',resv:0},{n:'Movie',resv:0},{n:'Other',resv:0}
 ];
 var _RESVCAT={}; CATS.forEach(function(c){ _RESVCAT[c.n.toLowerCase()]=!!c.resv; });
 function catTakesReservations(cat){
   if(!cat) return false;
   var k=String(cat).toLowerCase();
   if(k in _RESVCAT) return _RESVCAT[k];
-  // Unknown/legacy free-text: fall back to food-venue keywords so a new cuisine still works.
-  return /food|restaurant|grill|kitchen|\bbar\b|lounge|bistro|eatery|dining|cantina|cocina|taqueria|cafe|café/.test(k);
+  // Unknown/legacy free-text: dining OR appointment keywords so a new type still works.
+  return /food|restaurant|grill|kitchen|\bbar\b|lounge|bistro|eatery|dining|cantina|cocina|taqueria|cafe|café|barber|salon|nail|\bspa\b|massage|tattoo|beauty|braid|\bhair\b|lash|brow|\bwax\b|studio|fitness|\bgym\b|yoga|pilates|dental|dentist|clinic|medical|\bauto\b|detail/.test(k);
 }
-// A business is reservable if its category is a dining venue OR it has an explicit booking link.
+// Dining venue → "Table"; everything else reservable → "Appointment".
+function bookNoun(p){
+  var k=String((p&&p.cat)||'').toLowerCase();
+  return /food|restaurant|grill|kitchen|\bbar\b|lounge|bistro|dining|cantina|cocina|taqueria|seafood|brunch|mexican|caribbean|soul|american|italian|vegan|eatery/.test(k) ? 'Table' : 'Appointment';
+}
+// Grammatically-correct button label: "Book a Table" / "Book an Appointment".
+function bookLabel(p){ return bookNoun(p)==='Table' ? 'Book a Table' : 'Book an Appointment'; }
+// A business is reservable if its category naturally books OR it has an explicit booking link.
 function isReservable(p){ return !!(p && (catTakesReservations(p.cat) || p.book)); }
-// Reservations are ACTUALLY bookable only when the spot links out to a provider
-// OR is Verified+ (tier>=2) — a Free listing can't receive requests it can't manage.
-function canReserveNow(p){ return !!(p && isReservable(p) && (p.book || (p.tier||1)>=2)); }
+function bizClaimed(p){ return !!(p && p.claimed); }
+// Our NATIVE request board is available only when a CLAIMED owner runs it — i.e. the
+// spot is reservable, has no external booking link, and hasn't opted for phone-only.
+// (Never send requests to an unclaimed business nobody is monitoring.)
+function canReserveNow(p){ return !!(p && isReservable(p) && bizClaimed(p) && !p.book && p.prov!=='Phone only'); }
 // The guest's open reservation status for a spot ('requested'|'confirmed'), else null.
 function activeResvStatus(k){ var s=(MY_RESV[k]||{}).status; return (s==='requested'||s==='confirmed')?s:null; }
 // The reservation call-to-action on a listing: reflects an existing request so a
 // guest can't fire a duplicate; only offers "Reserve" when none is open.
 function reserveCTA(p){
-  if(p.book && !activeResvStatus(p.k)) return '<button class="btn btn-primary" style="width:100%;margin-top:16px;padding:14px;font-size:15px" onclick="reserveStop(\''+p.k+'\')">'+ICON.cal+' Book on '+xmlEsc(p.prov||'their site')+'</button>';
+  // Lane 1 — their own booking system (OpenTable/Resy/Booksy/Square/site). Works even unclaimed.
+  if(p.book) return '<button class="btn btn-primary" style="width:100%;margin-top:16px;padding:14px;font-size:15px" onclick="reserveStop(\''+p.k+'\')">'+ICON.cal+' Book on '+xmlEsc(p.prov||'their site')+'</button>';
+  // Native request status (only claimed spots reach this).
   var st=activeResvStatus(p.k);
   if(st==='requested') return '<div class="btn" style="width:100%;margin-top:16px;padding:14px;font-size:15px;background:var(--panel-2);color:var(--gold);border:1px solid var(--gold)">'+ICON.cal+' Request sent — awaiting confirmation</div>';
-  if(st==='confirmed'){ var r=MY_RESV[p.k]; return '<div style="margin-top:16px;display:flex;gap:9px"><div class="btn" style="flex:1;padding:14px;font-size:15px;background:rgba(54,211,154,.14);color:var(--green);border:1px solid var(--green)">'+ICON.cal+' Table confirmed &#10003;</div><a href="'+resvCalUrl(r)+'" target="_blank" rel="noopener" class="btn btn-ghost" style="flex:0 0 auto;padding:14px 15px;text-decoration:none" title="Add to calendar">&#128197;</a></div>'; }
-  if(!isReservable(p)) return '';
-  if(canReserveNow(p)) return '<button class="btn btn-primary" style="width:100%;margin-top:16px;padding:14px;font-size:15px" onclick="reserveStop(\''+p.k+'\')">'+ICON.cal+' Reserve a Table</button>';
-  return '<button class="btn" style="width:100%;margin-top:16px;padding:14px;font-size:14px;opacity:.5;background:var(--panel-2);color:var(--muted);border:1px solid var(--line);cursor:not-allowed" onclick="toast(\'Reservations are not on for this spot yet\')">'+ICON.cal+' Reservations — coming soon</button>';
+  if(st==='confirmed'){ var r=MY_RESV[p.k]; return '<div style="margin-top:16px;display:flex;gap:9px"><div class="btn" style="flex:1;padding:14px;font-size:15px;background:rgba(54,211,154,.14);color:var(--green);border:1px solid var(--green)">'+ICON.cal+' '+bookNoun(p)+' confirmed &#10003;</div><a href="'+resvCalUrl(r)+'" target="_blank" rel="noopener" class="btn btn-ghost" style="flex:0 0 auto;padding:14px 15px;text-decoration:none" title="Add to calendar">&#128197;</a></div>'; }
+  // Lane 2 — claimed owner runs our board → request a table / appointment.
+  if(canReserveNow(p)) return '<button class="btn btn-primary" style="width:100%;margin-top:16px;padding:14px;font-size:15px" onclick="reserveStop(\''+p.k+'\')">'+ICON.cal+' '+bookLabel(p)+'</button>';
+  // Lane 3 — reservable but no online booking yet → tap to call (never a dead button).
+  if(isReservable(p) && p.ph) return '<a class="btn btn-ghost" href="'+telHref(p.ph)+'" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:16px;padding:14px;font-size:15px;text-decoration:none">'+ICON.phone+' Call to book</a>';
+  return '';
 }
 // A grouped <select> that teaches which categories enable reservations.
 function catSelect(id,cur,onchange){
@@ -1246,19 +1265,20 @@ async function loadMyReservations(){
 function openResv(bizKey){
   var p=PB[bizKey]; if(!p) return;
   window._resvBiz=bizKey;
-  document.getElementById('resvTitle').textContent='Request a table · '+p.n;
+  var noun=bookNoun(p)==='Table'?'table':'time';
+  document.getElementById('resvTitle').textContent='Request a '+noun+' · '+p.n;
   var _rs=document.getElementById('resvSub'); if(_rs) _rs.textContent=(p.hrs?('Open '+p.hrs+' · '):'')+'pick a time — the business confirms.';
   var d=document.getElementById('rv_date'); if(d&&!d.value) d.value=isoOf(new Date());
-  var party=document.getElementById('rv_party'); if(party&&!party.value){ party.value=2; }
+  var party=document.getElementById('rv_party'); if(party&&!party.value){ party.value=bookNoun(p)==='Table'?2:1; }
   document.getElementById('resvOverlay').classList.add('on');
 }
 function closeResv(){ document.getElementById('resvOverlay').classList.remove('on'); }
 async function submitResv(){
   var biz=window._resvBiz; if(!biz){ closeResv(); return; }
-  var name=gv('rv_name'), phone=gv('rv_phone'), email=gv('rv_email'), date=gv('rv_date'), time=gv('rv_time'), party=+gv('rv_party')||2;
+  var name=gv('rv_name'), phone=gv('rv_phone'), email=gv('rv_email'), date=gv('rv_date'), time=gv('rv_time'), party=+gv('rv_party')||2, note=gv('rv_note');
   if(!name){ toast('Enter your name'); return; }
   if(!phone){ toast('Enter a phone so they can confirm'); return; }
-  var rec={ business_id:biz, customer_name:name, customer_phone:phone, customer_email:email||(CURRENT_USER&&CURRENT_USER.email)||null, party_size:party, resv_date:date||null, resv_time:time||null, status:'requested' };
+  var rec={ business_id:biz, customer_name:name, customer_phone:phone, customer_email:email||(CURRENT_USER&&CURRENT_USER.email)||null, party_size:party, resv_date:date||null, resv_time:time||null, note:note||null, status:'requested' };
   if(CURRENT_USER) rec.user_id=CURRENT_USER.id;
   var r=await SB.from('di_reservations').insert(rec);
   if(r&&r.error){ toast('Could not send: '+r.error.message); return; }
@@ -1320,6 +1340,7 @@ function resvRowHTML(x){
   return '<div style="border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px">'+
     '<div style="font-weight:700">'+xmlEsc(x.customer_name||'Guest')+' &#183; '+(x.party_size||'?')+' ppl</div>'+
     '<div style="font-size:12px;color:var(--muted);margin:2px 0 8px">'+xmlEsc(String(x.resv_date||''))+(x.resv_time?' &#183; '+xmlEsc(x.resv_time):'')+' &#183; '+xmlEsc(x.customer_phone||'')+'</div>'+
+    (x.note?'<div style="font-size:12.5px;color:var(--txt);background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:7px 10px;margin-bottom:8px">&#128172; '+xmlEsc(x.note)+'</div>':'')+
     '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+badge+actions+'</div></div>';
 }
 async function setResv(id,status){
@@ -1621,7 +1642,8 @@ function openListing(k,from){
   var _o=openNow(p.hrs);
   var _statusParts=[];
   if(_o) _statusParts.push('<span style="color:'+(_o.open?'var(--green)':'#ff7a7a')+';font-weight:700">&#9679; '+_o.label+'</span>');
-  if(isReservable(p)&&(p.book||p.tier>=2)) _statusParts.push('<span style="color:var(--gold);font-weight:700">'+ICON.cal+' Takes reservations</span>');
+  if(p.book||canReserveNow(p)) _statusParts.push('<span style="color:var(--gold);font-weight:700">'+ICON.cal+' '+(bookNoun(p)==='Table'?'Reservations':'Appointments')+' available</span>');
+  else if(isReservable(p)&&p.ph) _statusParts.push('<span style="color:var(--muted);font-weight:700">'+ICON.phone+' Call to book</span>');
   var statusLine=_statusParts.length?'<div style="font-size:12.5px;margin-top:8px;display:flex;gap:14px;flex-wrap:wrap">'+_statusParts.join('')+'</div>':'';
   var tagsRow=(p.tags&&p.tags.length)?'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">'+p.tags.slice(0,4).map(function(t){return '<span style="font-size:11px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:3px 9px">'+xmlEsc(t)+'</span>';}).join('')+'</div>':'';
   document.getElementById('ldbody').innerHTML=`
@@ -1664,9 +1686,11 @@ function openListing(k,from){
   go('listing');
   var rb=document.getElementById('reserveBar');
   if(rb){
-    // Sticky Reserve only when a fresh request is possible — hidden once one is open (no duplicates).
-    if(canReserveNow(p) && !activeResvStatus(p.k)){
-      rb.innerHTML='<button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px" onclick="reserveStop(\''+p.k+'\')">'+ICON.cal+' Reserve a Table</button>';
+    // Sticky Book bar: their own system (link-out) OR a claimed spot's native board.
+    // Hidden once a native request is already open (no duplicates).
+    if((p.book || canReserveNow(p)) && !activeResvStatus(p.k)){
+      var _lbl = p.book ? ('Book on '+xmlEsc(p.prov||'their site')) : bookLabel(p);
+      rb.innerHTML='<button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px" onclick="reserveStop(\''+p.k+'\')">'+ICON.cal+' '+_lbl+'</button>';
       rb.style.display='block';
     } else { rb.style.display='none'; }
   }
