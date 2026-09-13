@@ -440,7 +440,7 @@
     </div>
     <div class="ob-dots"><span class="on"></span><span></span></div>
     <div class="ob-foot">
-      <button class="dopill" id="obNext" onclick="obNext()"><span class="dobadge"><span class="do">Do</span></span><span class="lbl"><b id="obNextLbl">Next</b><span id="obNextSub">Let's Explore</span></span><span class="arw">&#8594;</span></button>
+      <button class="dopill" id="obNext" onclick="obNext()"><span class="dobadge"><span class="do">Do</span></span><span class="lbl"><b id="obNextLbl">Next</b><span id="obNextSub">Keep going</span></span><span class="arw">&#8594;</span></button>
       <div id="obFinal" style="display:none">
         <button class="btn btn-primary" style="width:100%;font-size:16px;padding:15px" onclick="finishOnboard('specials')">&#127942; See Today's Specials</button>
         <div class="skip" style="margin-top:14px" onclick="finishOnboard('home')">Just explore the city &rarr;</div>
@@ -2021,7 +2021,6 @@ function showObSlide(){
   var nb=document.getElementById('obNext'), fin=document.getElementById('obFinal');
   if(nb) nb.style.display=last?'none':'';
   if(fin) fin.style.display=last?'':'none';
-  if(!last) setObArt(ob);
 }
 // End of onboarding: go straight to Today's Specials, or just explore the city.
 function finishOnboard(dest){
@@ -2107,10 +2106,9 @@ function setObArt(slide){
 function loadBrandArt(){
   function tryArt(el,base,alt){ if(!el) return; var src=artSrc(base); var p=new Image(); p.onload=function(){ if(p.naturalWidth>1){ el.classList.add('art'); el.innerHTML='<img src="'+src+'" alt="'+alt+'">'; } }; p.src=src; }
   tryArt(document.querySelector('.tab.build-tab .ic'),'do-badge','Do');
-  // Home sub-buttons ("Explore Inglewood" / "Surprise Me") stay clean matching text
-  // buttons — balanced and their labels match their actions. The brand art still
-  // headlines the onboarding splash and the nav Do badge.
-  setObArt(typeof ob!=='undefined'?ob:0);
+  // Home sub-buttons ("Explore Inglewood" / "Surprise Me") and the onboarding
+  // button stay clean, consistent text — labels match their actions. The brand
+  // art still headlines the onboarding splash logo and the nav Do badge.
 }
 async function initApp(){
   loadCatArt();
