@@ -280,3 +280,16 @@ page (see growth notes).
 ### Add COSM
 COSM (immersive dome at Hollywood Park, next to SoFi) is a missing marquee anchor — add
 it with a real photo and the anchor treatment.
+
+### Landmarks / iconic anchors to add (curate; mark as Experience; give real photos)
+Beyond COSM, curate Inglewood's iconic spots as landmarks/anchors:
+- **Randy's Donuts** ("the Big Donut", Manchester & La Cienega) — one of LA's most iconic
+  landmarks; must-have.
+- **In-N-Out on Century Blvd** — popular destination near the venues/LAX (anchor-adjacent
+  stop more than a historic landmark, but include it).
+- **Centinela Adobe** — Inglewood's oldest historic building (1834).
+- **Historic Downtown Inglewood / Market Street** — the old-town core.
+- Already present: Welcome to LA mural, Grevillea Art Park, Edward Vincent Jr. Park.
+NOTE: many of these are likely ALREADY in the DB (imported from Google) — check first.
+The work is marking them as Experience/landmark, giving real photos, and the anchor
+treatment — not adding from scratch. (Post-v1.)
