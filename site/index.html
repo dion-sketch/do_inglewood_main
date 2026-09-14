@@ -1644,7 +1644,7 @@ function buildHome(){
   const deals=P.filter(p=>p.mdeal&&hasPhoto(p)&&!used[p.k]).slice(0,6);
   deals.forEach(function(p){used[p.k]=1;});
   var mc=document.getElementById('member-cards'), msect=document.getElementById('member-sect');
-  if(deals.length){ mc.innerHTML=allocateHomeCards(deals,usedImages).map(dealCardHTML).join(''); if(msect)msect.style.display=''; }
+  if(deals.length && mc){ mc.innerHTML=allocateHomeCards(deals,usedImages).map(dealCardHTML).join(''); if(msect)msect.style.display=''; }
   else if(msect){ msect.style.display='none'; }
 }
 // A card that shows the deal (members) or a teaser (non-members).
@@ -2410,6 +2410,8 @@ async function initApp(){
   loadBrandArt();
   paintObButton();
   normalizeFallbackImages();
+  // Paint the local release immediately; Supabase can refresh it after the network responds.
+  buildHome();buildFilters();buildHero();renderHomeEvents();
   await loadBusinesses();
   normalizeVenuePhotos();
   await loadEvents();
