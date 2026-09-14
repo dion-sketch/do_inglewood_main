@@ -806,7 +806,7 @@ const SUPABASE_KEY = "sb_publishable_WeSqJHxHWza5rgyq8XcF0g_bYF7VE7R"; // publis
 const SB = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Build stamp — bump on every release so the deployed version is verifiable at a glance
 // (☰ menu → bottom). If the number here doesn't match what's live, an old file was deployed.
-const DI_BUILD = "2026.09.13-4";
+const DI_BUILD = "2026.09.14-photos";
 try{ console.log("Do Inglewood — build "+DI_BUILD); }catch(e){}
 
 /* ============ AUTH + OWNER DASHBOARD ============ */
@@ -1030,7 +1030,18 @@ const FB = {
   casino:"https://images.unsplash.com/photo-1596838132731-3301c3fd4317?w=600&q=70",
   caribbean:"https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=70",
   brunch:"https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?w=600&q=70",
-  event:"https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&q=70"
+  event:"https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&q=70",
+  food:"https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=70",
+  barber:"https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=600&q=70",
+  salon:"https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600&q=70",
+  spa:"https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600&q=70",
+  nails:"https://images.unsplash.com/photo-1604654894610-df63bc536371?w=600&q=70",
+  tattoo:"https://images.unsplash.com/photo-1611501275019-9b5cda994e8d?w=600&q=70",
+  fitness:"https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&q=70",
+  beauty:"https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=600&q=70",
+  florist:"https://images.unsplash.com/photo-1563241527-3004b7be0ffd?w=600&q=70",
+  park:"https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600&q=70",
+  retail:"https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600&q=70"
 };
 
 /* ============ 50 REAL INGLEWOOD BUSINESSES ============ */
@@ -1095,7 +1106,44 @@ const P = [
 const PB = {}; P.forEach(p=>PB[p.k]=p);
 
 /* ============ LOAD BUSINESSES FROM SUPABASE (falls back to built-in list) ============ */
-const CATIMG = {"Mexican":FB.mexican,"Soul Food":FB.soul,"Seafood":FB.seafood,"American":FB.american,"Caribbean":FB.caribbean,"Lounge":FB.lounge,"Casino":FB.casino,"Brunch":FB.brunch,"Dessert":FB.dessert,"Coffee":FB.coffee,"Hotels":FB.hotel,"Event Space":FB.event,"Movie":FB.event,"Stadium":FB.event,"Landmark":FB.event,"Park":FB.event,"Florist":FB.dessert};
+const CATIMG = {"Mexican":FB.mexican,"Soul Food":FB.soul,"Seafood":FB.seafood,"American":FB.american,"Restaurant":FB.food,"Food":FB.food,"Caribbean":FB.caribbean,"Lounge":FB.lounge,"Bar":FB.bar,"Casino":FB.casino,"Brunch":FB.brunch,"Dessert":FB.dessert,"Coffee":FB.coffee,"Hotels":FB.hotel,"Event Space":FB.event,"Movie":FB.event,"Stadium":FB.event,"Landmark":FB.event,"Park":FB.park,"Florist":FB.florist,"Barbershop":FB.barber,"Salon":FB.salon,"Nails":FB.nails,"Spa":FB.spa,"Massage":FB.spa,"Tattoo":FB.tattoo,"Beauty":FB.beauty,"Fitness":FB.fitness,"Photography":FB.event,"Auto":FB.retail,"Medical":FB.spa,"Dental":FB.spa,"Retail":FB.retail};
+/* Any category → an attractive stock photo. Exact match first, then loose keyword
+   match, then a safe generic — so a business ALWAYS gets a real image, never a letter. */
+function catImg(cat){
+  if(!cat) return FB.food;
+  if(CATIMG[cat]) return CATIMG[cat];
+  var k=String(cat).toLowerCase();
+  if(/coffee|cafe|café|tea|espresso/.test(k)) return FB.coffee;
+  if(/dessert|bakery|boba|ice ?cream|donut|sweet|cake/.test(k)) return FB.dessert;
+  if(/night ?club|club/.test(k)) return FB.bar;
+  if(/bar|pub|brew|tavern/.test(k)) return FB.bar;
+  if(/lounge/.test(k)) return FB.lounge;
+  if(/seafood|fish|oyster|crab/.test(k)) return FB.seafood;
+  if(/mexican|taco|taqueria|birria|cantina/.test(k)) return FB.mexican;
+  if(/soul|southern|bbq|barbe/.test(k)) return FB.soul;
+  if(/caribbean|jerk|jamaic/.test(k)) return FB.caribbean;
+  if(/brunch|breakfast/.test(k)) return FB.brunch;
+  if(/hotel|inn|motel|suites|stay|lodg/.test(k)) return FB.hotel;
+  if(/sport/.test(k)) return FB.sports;
+  if(/casino|gaming|poker/.test(k)) return FB.casino;
+  if(/barber/.test(k)) return FB.barber;
+  if(/salon|hair/.test(k)) return FB.salon;
+  if(/nail|manicure/.test(k)) return FB.nails;
+  if(/spa|massage|wax|facial/.test(k)) return FB.spa;
+  if(/tattoo|ink|piercing/.test(k)) return FB.tattoo;
+  if(/beauty|lash|brow|makeup|cosmet/.test(k)) return FB.beauty;
+  if(/fitness|gym|yoga|pilates|crossfit|train/.test(k)) return FB.fitness;
+  if(/florist|flower|floral/.test(k)) return FB.florist;
+  if(/park|garden|trail|rec/.test(k)) return FB.park;
+  if(/photo/.test(k)) return FB.event;
+  if(/event|venue|hall|banquet/.test(k)) return FB.event;
+  if(/stadium|arena|dome|forum/.test(k)) return FB.event;
+  if(/landmark|mural|museum|art/.test(k)) return FB.event;
+  if(/auto|repair|tire|mechanic|car ?wash/.test(k)) return FB.retail;
+  if(/shop|store|market|boutique|retail/.test(k)) return FB.retail;
+  if(/medical|dental|clinic|health|doctor|dentist/.test(k)) return FB.spa;
+  return FB.food; // safe, appetizing generic
+}
 /* Branded placeholder tiles — each business gets a unique, clean gradient
    thumbnail with its own initials (no stock photos, no repeats, never breaks).
    As soon as a real photo_url is added to a business, that photo shows instead. */
@@ -1133,16 +1181,20 @@ function venueTile(title,seed){
   return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg).replace(/'/g,'%27').replace(/\(/g,'%28').replace(/\)/g,'%29');
 }
 function pickImg(r){
-  if(r.photo_url) return r.photo_url;                 // real per-venue photo wins
-  return tileImg(r.name, r.id||r.name, r.category);
+  // 1) the business's own real photo (from Google backfill) always wins
+  if(r.photo_url && String(r.photo_url).indexOf('http')===0) return r.photo_url;
+  // 2) otherwise an attractive category photo — so EVERY business shows a real image
+  return catImg(r.category);
 }
 // Layered background: the real photo (if any) OVER a colored tile, so a blocked/
 // failed/missing photo never leaves a blank box — the tile shows through.
 // NOTE: single quotes only — the result sits inside a style="..." (double-quoted) attribute.
 function bgLayers(p){
-  var tile=tileImg(p.n||p.name||'', p.k||p.id||p.n||p.name, p.cat||p.category);
-  var photo=(p.img && String(p.img).indexOf('http')===0) ? p.img.replace(/'/g,'%27') : null;
-  return (photo ? "url('"+photo+"'), " : "") + "url('"+tile+"')";
+  // Guaranteed under-layer = an attractive category photo (never a letter tile),
+  // so a blocked/failed/missing photo still shows a real, relevant image.
+  var cat=catImg(p.cat||p.category).replace(/'/g,'%27');
+  var photo=(p.img && String(p.img).indexOf('http')===0) ? p.img.replace(/'/g,'%27') : cat;
+  return "url('"+photo+"'), url('"+cat+"')";
 }
 function dbToApp(r){
   return {
@@ -1413,15 +1465,26 @@ function cardHTML(p){
     <div class="body"><div class="name">${xmlEsc(p.n)}</div><div class="meta">${starline(p)} · ${xmlEsc(p.price)}</div></div>
   </div>`;
 }
+// Resolve a curated business by its slug (built-in mode) OR by name (after the DB
+// load re-keys everything by UUID) — so marquee spots never vanish from the home page.
+var _CURATED_NAME={twohommes:'two homm',sixseven:'six seven',dulans:'dulan',nile:'nile restaurant',
+  meeting:'meeting spot',conis:'coni',sofi:'sofi',forum:'kia forum',intuit:'intuit dome',
+  anthem:'anthem',casino:'hollywood park casino',crestridge:'crestridge'};
+function findBiz(id){
+  if(PB[id]) return PB[id];                                   // slug hit (built-in / offline mode)
+  var hint=(_CURATED_NAME[id]||String(id)).toLowerCase();
+  for(var i=0;i<P.length;i++){ if(String(P[i].n||'').toLowerCase().indexOf(hint)>=0) return P[i]; }
+  return null;
+}
 function buildHome(){
   const popIds=['twohommes','sixseven','dulans','nile','meeting','conis'];
   const nearIds=['sofi','forum','intuit','anthem','casino','crestridge'];
   // Popping: PAID sponsored spots first, then curated favourites, topped up with high-rated photo'd spots
   var sponsored=P.filter(p=>isSponsored(p)&&hasPhoto(p));
-  var pop=sponsored.concat(popIds.filter(k=>PB[k]&&hasPhoto(PB[k])).map(k=>PB[k]).filter(p=>sponsored.indexOf(p)<0));
+  var pop=sponsored.concat(popIds.map(findBiz).filter(p=>p&&hasPhoto(p)&&sponsored.indexOf(p)<0));
   if(pop.length<6){ for(var k in PB){ if(pop.length>=10)break; var b=PB[k]; if(hasPhoto(b)&&pop.indexOf(b)<0&&(b.tier>=2||(b.r||0)>=4.4)) pop.push(b); } }
   document.getElementById('popping-cards').innerHTML=pop.map(cardHTML).join('');
-  document.getElementById('near-cards').innerHTML=nearIds.filter(k=>PB[k]&&hasPhoto(PB[k])).map(k=>cardHTML(PB[k])).join('');
+  document.getElementById('near-cards').innerHTML=nearIds.map(findBiz).filter(p=>p&&hasPhoto(p)).map(cardHTML).join('');
   const spec=P.filter(p=>p.special&&hasPhoto(p));
   var sc=document.getElementById('special-cards'); var offersSect=sc.closest('.sect');
   if(spec.length){ sc.innerHTML=spec.map(p=>cardHTML(p)).join(''); if(offersSect)offersSect.style.display=''; }
@@ -2087,7 +2150,7 @@ function buildHero(){
   if(heroTimer){clearInterval(heroTimer);heroTimer=null;}
   // Prefer REAL photos of the marquee venues; branded tiles only as a last resort.
   var slides=[];
-  ['sofi','intuit','forum'].forEach(function(id){ var p=PB[id]; if(p&&p.img&&p.img.indexOf('http')===0) slides.push({img:p.img,name:p.n}); });
+  ['sofi','intuit','forum'].forEach(function(id){ var p=findBiz(id); if(p&&p.img&&p.img.indexOf('http')===0) slides.push({img:p.img,name:p.n}); });
   for(var k in PB){ if(slides.length>=6)break; var b=PB[k]; if(!b||!b.img||b.img.indexOf('http')!==0)continue; var t=b.tags||[];
     if(b.exp||b.cat==='Stadium'||b.cat==='Event Space'||t.indexOf('Stadium')>=0||t.indexOf('Event')>=0||t.indexOf('Experience')>=0){
       if(!slides.some(function(s){return s.name===b.n;})) slides.push({img:b.img,name:b.n}); } }
