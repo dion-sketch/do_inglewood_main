@@ -506,11 +506,6 @@
         <div class="hscroll" id="special-cards"></div>
       </div>
 
-      <div class="sect" id="member-sect" style="display:none">
-        <div class="sect-head"><h3>&#11088; Member Deals</h3><a onclick="memberJoinOrExplore()">Join free</a></div>
-        <div class="hscroll" id="member-cards"></div>
-      </div>
-
       <div class="sect">
         <div class="sect-head"><h3>Explore Inglewood</h3></div>
         <div class="catgrid">
@@ -1742,10 +1737,11 @@ function specialsCatMatch(p,cat){
 }
 // A Today's Deal is live only for a paid business with its featured special set.
 function hasLiveSpecial(p){ return isDealLit(p)&&hasPhoto(p); }
+function hasLiveDeal(p){ return !!(p&&p.tier>=2&&(p.special||p.mdeal)&&hasPhoto(p)); }
 // Only show category chips that actually have specials today (never a dead filter).
 function specialsCatsAvailable(){
   var avail={all:1};
-  P.forEach(function(p){ if(hasLiveSpecial(p)) SPECIAL_CATS.forEach(function(c){ if(c[0]!=='all'&&specialsCatMatch(p,c[0])) avail[c[0]]=1; }); });
+  P.forEach(function(p){ if(hasLiveDeal(p)) SPECIAL_CATS.forEach(function(c){ if(c[0]!=='all'&&specialsCatMatch(p,c[0])) avail[c[0]]=1; }); });
   return SPECIAL_CATS.filter(function(c){ return avail[c[0]]; });
 }
 function buildSpecialsFilters(){
@@ -1783,7 +1779,7 @@ function cycleSpecialsNotify(){
 function renderSpecials(){
   buildSpecialsFilters(); updateNotifyLabel();
   var el=document.getElementById('specials-list'); if(!el)return;
-  var list=P.filter(function(p){ return hasLiveSpecial(p)&&specialsCatMatch(p,specialsCat); });
+  var list=P.filter(function(p){ return hasLiveDeal(p)&&specialsCatMatch(p,specialsCat); });
   // Sponsored/paid specials surface first, then the rest
   list=list.slice().sort(function(a,b){ return (isSponsored(b)?1:0)-(isSponsored(a)?1:0); });
   if(!list.length){
@@ -1791,7 +1787,7 @@ function renderSpecials(){
     return;
   }
   el.innerHTML=list.map(function(p,i){
-    var offer = xmlEsc(p.special);
+    var offer = p.special ? xmlEsc(p.special) : '<span style="color:var(--gold)">&#128274; Join free to unlock</span>';
     return `<div class="listcard" style="animation-delay:${i*0.02}s" onclick="openListing('${p.k}','specials')">
         <div class="img" style="background-image:${bgLayers(p)}"></div>
         <div class="info">
