@@ -235,3 +235,30 @@ drops the asset images and they break/vanish on the live site.
   into the actual CSS fix. Point-and-fix.
 - **Deploying:** fixes are local until deployed. Batch a few, then he deploys (drag
   `index.html` into Netlify, or set up Netlify auto-deploy from the branch — offer this).
+
+## 8. Going live with confidence — lock a known-good release
+
+Re-chasing stops when you VERIFY once and LOCK that exact version. The process:
+
+1. **VERIFY the whole app in a browser**, screenshotting each flow (checklist below).
+2. **Fix ONLY what's genuinely broken** — surgical, no regenerating working screens.
+   Commit + push.
+3. **TAG that commit as a known-good release** so it's a permanent snapshot:
+   `git tag -a v1.0-stable -m "First verified release" && git push origin v1.0-stable`
+   You can always redeploy or roll back to this exact version.
+4. **DEPLOY that version** (whole `site/` folder, or Netlify-from-GitHub).
+5. Future changes go on top and are re-verified the same way. If anything ever breaks,
+   roll back to the last good tag: `git checkout v1.0-stable`.
+
+### Release verification checklist (walk every flow; screenshot each; NO black boxes)
+- **Guest:** home hero + images load (reload twice to be sure), Explore/browse a few
+  categories, open a business page, Today's Deal LIT on a premium spot **and** DIM
+  "No deal today" on a plain one, Specials tab, Events, Saved.
+- **Auth:** magic-link sign-in works.
+- **Owner:** claim a business → My Business panel loads → "Add Today's Deal" turns the
+  button gold → add a dish / photo saves.
+- **Reservation:** send a booking request → owner Accepts → customer page shows Confirmed.
+- **Regression check:** nothing on the section 6.5 LOCKED list has come back.
+
+Once every box is a green screenshot, tag it and deploy. THAT is the version you go
+live on — and you can always return to it.
