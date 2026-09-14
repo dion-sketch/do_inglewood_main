@@ -49,7 +49,14 @@ async function ownerEmail(claimedBy?: string): Promise<string | null> {
   try { const { data } = await admin.auth.admin.getUserById(claimedBy); return data?.user?.email || null; } catch { return null; }
 }
 
+const CORS: Record<string, string> = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
 Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   try {
     const body = await req.json().catch(() => ({}));
     // Resolve the reservation + event from either call shape.

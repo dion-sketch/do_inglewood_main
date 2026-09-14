@@ -191,6 +191,7 @@ async function importBusinesses(){
 // works in small batches (time limits), so we call it in a loop until nothing is left.
 async function backfillPhotos(){
   var el=$('import-msg');
+  if(el) el.textContent='Starting… fetching the first batch of photos (this can take up to a minute — keep this tab open)…';
   var total=0, rounds=0;
   try{
     while(true){

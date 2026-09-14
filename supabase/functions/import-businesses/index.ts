@@ -215,15 +215,24 @@ async function importNew() {
   return { mode: "import", added, scanned: places.length, alreadyHad: have.size };
 }
 
+// CORS — so the Admin page (opened as a local file / on Netlify) can call this.
+const CORS: Record<string, string> = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+};
+
 Deno.serve(async (req) => {
-  if (!KEY) return new Response("GOOGLE_PLACES_API_KEY not set", { status: 200 });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+  const JH = { ...CORS, "content-type": "application/json" };
+  if (!KEY) return new Response("GOOGLE_PLACES_API_KEY not set", { status: 200, headers: CORS });
   try {
     const url = new URL(req.url);
     const mode = url.searchParams.get("mode") || "import";
     const limit = Math.min(+(url.searchParams.get("limit") || BACKFILL_BATCH) || BACKFILL_BATCH, 60);
     const result = mode === "backfill" ? await backfill(limit) : await importNew();
-    return new Response(JSON.stringify(result), { status: 200, headers: { "content-type": "application/json" } });
+    return new Response(JSON.stringify(result), { status: 200, headers: JH });
   } catch (e) {
-    return new Response("error: " + (e as Error).message, { status: 500 });
+    return new Response("error: " + (e as Error).message, { status: 500, headers: CORS });
   }
 });
