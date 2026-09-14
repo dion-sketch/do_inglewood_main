@@ -312,3 +312,17 @@ From research (Sept 2026). Group by why they come; mark as Experience/landmark:
   Each anchor page: the venue on top, then spots within ~10 minutes below.
 - **HOME PAGE BANNER** should rotate Inglewood's iconic/popular destinations — Randy's
   Donuts, City Hall, SoFi, Kia Forum, Intuit Dome, COSM, etc. (the "very popular" spots).
+
+## 10. Monetization & claiming (for the record — finalize details later)
+- **Claiming:** a business CLAIMS its listing (free to claim) → unlocks My Business (edit
+  info, add Today's Deal / turn the gold button on, manage reservations). Required to
+  manage the page. Every business is listed for free from the start (imported); claiming +
+  paying is the upgrade path.
+- **Paid tiers (Dion's initial thinking — TBD, confirm monthly vs annual):**
+  - Basic ≈ **$1,700**
+  - Premium ≈ **$3,500**
+  Premium (tier >= 2 = paid) unlocks the LIT "Today's Deal" gold button, featured
+  placement in Today's Deals, and later game-day targeting / push. Price + period to be
+  finalized.
+- **Launch sequence:** go live **FREE** (let businesses claim + list), prove value with
+  deals + traffic, THEN turn paid tiers on. Do NOT gate v1 behind payments.
