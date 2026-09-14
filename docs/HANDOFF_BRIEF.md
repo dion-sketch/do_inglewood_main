@@ -21,6 +21,22 @@
 - Core loop is reactive: *I'm here → what's good today → book it → get notified.*
   No itinerary builder, no budgeting (removed on purpose).
 
+## 0.5 TOP PRIORITIES Dion keeps asking for (do these — don't lose them)
+
+1. **REAL photos of the main locations.** Dion wants actual photographs of the real
+   venues/spots — SoFi Stadium, Kia Forum, Intuit Dome, Hollywood Park Casino, Dulan's,
+   Two Hommés, and the other headline spots. The designed "Vegas" cards are ONLY a
+   fallback for places without a real photo — they are **not** the goal. Get real,
+   freely-licensed images of the actual places, put them in the repo (e.g. `site/assets/`)
+   or Supabase Storage, wire them so the real photo wins, and **screenshot each one to
+   prove it shows.** Since you (local session) have internet, you can actually do this.
+2. **The per-business SPECIAL is the #1 differentiator vs Yelp.** Every business should
+   be able to add "something special" — a deal, an offer, a members-only perk — and it
+   must be **visible and prominent on the business page and in Today's Specials.** Make
+   the affordance obvious (how an owner adds one) and make a business with a special feel
+   clearly different from a plain listing. Data fields exist (`special`, `mdeal`); the
+   product emphasis and visibility are what Dion feels is missing.
+
 ## 1. Design north star (do not lose this)
 
 - **Premium, high-end, "Las Vegas" aesthetic.** Dion says this repeatedly. When in
