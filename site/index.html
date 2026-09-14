@@ -1268,6 +1268,14 @@ function venuePhoto(name){
   for(var key in VENUE_PHOTOS){ if(n.indexOf(key)>=0) return VENUE_PHOTOS[key]; }
   return null;
 }
+function trustedCuratedFallback(name){
+  var n=String(name||'').toLowerCase();
+  if(/the anthem/.test(n))return 'hotel';
+  if(/dulan/.test(n))return 'soul';
+  if(/nile restaurant|raise lounge/.test(n))return 'lounge';
+  if(/hollywood park casino/.test(n))return 'marquee';
+  return null;
+}
 function normalizeVenuePhotos(){
   P.forEach(function(p){ var vp=venuePhoto(p.n); if(vp) p.img=vp; });
 }
@@ -1296,11 +1304,15 @@ function marqueeCard(name){
 function pickImg(r){
   // 1) curated local venue photos beat every fallback, including marquee cards.
   var vp=venuePhoto(r.name); if(vp) return vp;
-  // 2) the business's own real photo (from Google backfill) wins every fallback
+  // 2) known curated records reject unverified live photos that are visually wrong.
+  var curated=trustedCuratedFallback(r.name);
+  if(curated==='marquee')return marqueeCard(r.name);
+  if(curated)return catImg(curated,r.name,r.tags);
+  // 3) the business's own real photo (from Google backfill) wins every fallback
   if(r.photo_url && String(r.photo_url).indexOf('http')===0 && !/places\.googleapis\.com|maps\.googleapis\.com/i.test(String(r.photo_url))) return r.photo_url;
-  // 3) marquee venues get the designed cinematic card (premium + always renders)
+  // 4) marquee venues get the designed cinematic card (premium + always renders)
   var mq=marqueeCard(r.name); if(mq) return mq;
-  // 4) otherwise an attractive, varied category/name-appropriate photo
+  // 5) otherwise an attractive, varied category/name-appropriate photo
   return catImg(r.category, r.name, r.tags);
 }
 // Layered background: the real photo (if any) OVER a colored tile, so a blocked/
