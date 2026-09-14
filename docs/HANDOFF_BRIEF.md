@@ -190,8 +190,15 @@ own — the confusion is about WHERE things are verified. Follow this every time
    category images, missing real photos), so it looks broken/repetitive even when the
    live site is fine. Always state which source a screenshot came from.
 4. **Never undo or re-open a fix listed as DONE below** unless the owner asks.
+5. **Make SURGICAL changes.** Do NOT regenerate, rewrite, or "improve" whole screens
+   that already work (onboarding, nav, home hero, the deal button) as a side effect of
+   an unrelated task. Touch only what was asked. Regenerating screens is what keeps
+   re-introducing old regressions (e.g. the onboarding "Next" button).
 
 ### Done — LOCKED (do not redo)
+- **Onboarding:** minimal and premium — a single "Explore Inglewood" style entry button
+  that goes STRAIGHT into the app. NO "Next" / "Keep Going" multi-step flow, no dead
+  extra screens. Do not regenerate onboarding. ✅
 - Circle nav badge (was a square). ✅
 - Real venue photos wired: SoFi, Kia Forum, Intuit Dome, YouTube Theater, Two Hommés. ✅
 - Neon Marquee "See Today's Deal" button + LIT / DIM(grey) states. ✅
