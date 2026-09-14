@@ -157,6 +157,15 @@ Done recently:
 
 ## 6. Open items / what Dion is still seeing (do a visual pass)
 
+- **Real venue photos — status + pending owner supply.** Real photos are wired for
+  SoFi Stadium, Kia Forum, Intuit Dome, YouTube Theater, and Two Hommés (in
+  `site/assets/venues/`). **Hollywood Park Casino** and **Dulan's Soul Food Kitchen**
+  have NO freely-licensed/official photo found, so they keep a safe fallback (designed
+  card / neutral image) — Dion will drag real photos into `site/assets/venues/` and
+  tell the session to use them. **RULE:** only use freely-licensed or official photos;
+  never pass off a generic stock image as a specific venue — keep the fallback and flag
+  it instead.
+
 - **Bottom-center nav badge (the "Do"/Specials button) renders as a SQUARE — it should
   be a CIRCLE.** Fix in `site/index.html` CSS and verify with a screenshot.
 - **Full visual QA sweep:** load the app, screenshot Home, Explore, a listing, Today's
