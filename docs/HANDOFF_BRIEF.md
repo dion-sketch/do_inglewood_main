@@ -175,6 +175,31 @@ Done recently:
 - Later (owner-managed): Stripe live links, Resend email, the morning/midday/evening +
   day-of-week notification preferences (the data model is already built for it).
 
+## 6.5 Locking fixes in — the anti-regression protocol (READ)
+
+Dion's #1 frustration is fixes that seem to "come back." They do NOT regress on their
+own — the confusion is about WHERE things are verified. Follow this every time:
+
+1. **Commit AND push after every change the owner approves.** Never leave approved work
+   uncommitted — that is the only way a fix is truly lost. Once pushed to
+   `claude/do-inglewood-backend-t5n03v`, the code is locked and cannot un-fix itself.
+2. **Deploy to make it live.** A committed fix is NOT on the live site until deployed
+   (drag `site/index.html` to Netlify, or the connected branch auto-deploys).
+3. **Verify on the DEPLOYED live site, not the local file:// preview.** The local file
+   often can't reach Supabase and falls back to built-in offline data (identical
+   category images, missing real photos), so it looks broken/repetitive even when the
+   live site is fine. Always state which source a screenshot came from.
+4. **Never undo or re-open a fix listed as DONE below** unless the owner asks.
+
+### Done — LOCKED (do not redo)
+- Circle nav badge (was a square). ✅
+- Real venue photos wired: SoFi, Kia Forum, Intuit Dome, YouTube Theater, Two Hommés. ✅
+- Neon Marquee "See Today's Deal" button + LIT / DIM(grey) states. ✅
+- Category-fallback variation committed (commit 8b785de) — **verify on the DEPLOYED
+  site**; Dion still saw seafood repeat in the local/offline preview, so confirm it's
+  actually varied live before calling it done.
+(Append approved fixes here so they are never redone.)
+
 ## 7. How to work with Dion (this is important to him)
 
 - **You can now SEE the site — use it.** Before saying anything is "done," open the site
