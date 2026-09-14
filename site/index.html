@@ -74,6 +74,9 @@
   .deals-banner{display:block;margin:16px 20px 4px;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:var(--panel);cursor:pointer;box-shadow:0 10px 26px rgba(255,46,126,.22);}
   .deals-banner img{display:block;width:100%;height:auto;aspect-ratio:2035/773;object-fit:cover;}
   .deals-banner:active{transform:scale(.99);}
+  .surprise-banner{display:block;margin:10px 20px 0;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--panel);cursor:pointer;box-shadow:0 8px 20px rgba(255,46,126,.16);}
+  .surprise-banner img{display:block;width:100%;height:auto;aspect-ratio:2172/724;object-fit:cover;}
+  .surprise-banner:active{transform:scale(.99);}
   .pa-sub{display:flex;gap:8px;margin:10px 20px 0;}
   .pa-sub button{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--txt);border-radius:11px;padding:11px;font-family:'Barlow Condensed';font-weight:600;font-size:14px;cursor:pointer;letter-spacing:.3px;}
 
@@ -485,8 +488,10 @@
       </a>
       <div class="pa-sub">
         <button onclick="go('explore')">&#128269; Explore Inglewood</button>
-        <button onclick="surpriseMe()">&#127922; Surprise Me</button>
       </div>
+      <a class="surprise-banner" href="#" onclick="surpriseMe();return false;" aria-label="Surprise Me">
+        <img src="assets/surprise-me-banner.png" alt="Surprise Me — one tap picks a spot for you">
+      </a>
 
       <div class="sect" id="home-events-sect" style="display:none">
         <div class="sect-head"><h3>Happening This Week</h3><a onclick="go('events')">See all</a></div>
