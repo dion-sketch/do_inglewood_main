@@ -2156,7 +2156,14 @@ function buildEvFilters(){
   if(chips.length<=1){ host.innerHTML=''; return; }   // nothing to filter
   host.innerHTML=chips.map(function(c){ return '<div class="fchip'+(evFilter===c[0]?' on':'')+'" onclick="setEvFilter(\''+c[0]+'\')">'+c[1]+'</div>'; }).join('');
 }
-function eventsOn(iso){return EV.filter(e=>e.date===iso&&evMatch(e)).sort((a,b)=>timeVal(a.time)-timeVal(b.time));}
+function eventsOn(iso){
+  var seen={};
+  return EV.filter(e=>e.date===iso&&evMatch(e)).sort((a,b)=>timeVal(a.time)-timeVal(b.time)).filter(function(e){
+    var title=String(e.title||'').toLowerCase().replace(/\bvs?\.?\b/g,'vs').replace(/\s+/g,' ').trim();
+    var key=title+'|'+String(e.venue||'').toLowerCase()+'|'+String(e.time||'').toLowerCase();
+    if(seen[key])return false; seen[key]=1; return true;
+  });
+}
 let selDate=null;
 function monthKey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
 function jumpMonth(y,m){
