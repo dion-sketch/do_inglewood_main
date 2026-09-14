@@ -1066,13 +1066,13 @@ const FB = {
 const FALLBACKS = {
   Mexican:[FB.mexican,"assets/cat/cat-26-ywz9j9.jpg","assets/cat/cat-27-iphbhj.jpg"],
   "Soul Food":[FB.soul,"assets/cat/cat-28-xa8d6f.jpg","assets/cat/cat-29-530mag.jpg"],
-  Seafood:[FB.seafood,"assets/cat/cat-03-nu6dv3.jpg","assets/cat/cat-03-nu6dv3.jpg"],
-  American:[FB.american,"assets/cat/cat-03-nu6dv3.jpg","assets/cat/cat-03-nu6dv3.jpg"],
+  Seafood:[FB.seafood,"assets/cat/cat-29-530mag.jpg","assets/cat/cat-28-xa8d6f.jpg"],
+  American:[FB.american,FB.food,FB.brunch],
   Caribbean:[FB.caribbean,"assets/cat/cat-29-530mag.jpg","assets/cat/cat-28-xa8d6f.jpg"],
-  Brunch:[FB.brunch,"assets/cat/cat-03-nu6dv3.jpg","assets/cat/cat-03-nu6dv3.jpg"],
-  Lounge:[FB.lounge,FB.sports,"assets/cat/cat-03-nu6dv3.jpg"],
-  Bar:[FB.bar,FB.lounge,"assets/cat/cat-03-nu6dv3.jpg"],
-  Sports:[FB.sports,FB.lounge,"assets/cat/cat-03-nu6dv3.jpg"]
+  Brunch:[FB.brunch,FB.food,FB.dessert],
+  Lounge:[FB.lounge,FB.bar,FB.sports],
+  Bar:[FB.bar,FB.lounge,FB.sports],
+  Sports:[FB.sports,FB.lounge,FB.bar]
 };
 function fallbackImg(category,name,tags){
   var key=category;
