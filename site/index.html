@@ -806,7 +806,7 @@ const SUPABASE_KEY = "sb_publishable_WeSqJHxHWza5rgyq8XcF0g_bYF7VE7R"; // publis
 const SB = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Build stamp — bump on every release so the deployed version is verifiable at a glance
 // (☰ menu → bottom). If the number here doesn't match what's live, an old file was deployed.
-const DI_BUILD = "2026.09.14-vegas";
+const DI_BUILD = "2026.09.14-vegas2";
 try{ console.log("Do Inglewood — build "+DI_BUILD); }catch(e){}
 
 /* ============ AUTH + OWNER DASHBOARD ============ */
@@ -1234,7 +1234,8 @@ function bgLayers(p){
   // Guaranteed under-layer = an attractive category photo (never a letter tile),
   // so a blocked/failed/missing photo still shows a real, relevant image.
   var cat=catImg(p.cat||p.category, p.n||p.name, p.tags).replace(/'/g,'%27');
-  var photo=(p.img && String(p.img).indexOf('http')===0) ? p.img.replace(/'/g,'%27') : cat;
+  // Accept a real photo URL OR a designed inline card (marquee venues) — not just http.
+  var photo=realImg(p.img) ? String(p.img).replace(/'/g,'%27') : cat;
   return "url('"+photo+"'), url('"+cat+"')";
 }
 function dbToApp(r){
