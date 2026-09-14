@@ -1599,6 +1599,23 @@ function cardHTML(p){
     <div class="body"><div class="name">${xmlEsc(p.n)}</div><div class="meta">${starline(p)} · ${xmlEsc(p.price)}</div>${dealFlag(p)}</div>
   </div>`;
 }
+function isFallbackPhoto(src){
+  var s=String(src||'');
+  return Object.keys(FB).some(function(k){return FB[k]===s;}) || Object.keys(FALLBACKS).some(function(k){return FALLBACKS[k].indexOf(s)>=0;});
+}
+function fallbackOptions(p){
+  var set=FALLBACKS[p.cat];
+  return set?Array.from(new Set(set)):(isFallbackPhoto(p.img)?[p.img]:[]);
+}
+function allocateHomeCards(list,usedImages){
+  return list.map(function(p){
+    if(!isFallbackPhoto(p.img))return p;
+    var options=fallbackOptions(p), start=hashStr(p.k||p.n)%Math.max(options.length,1), chosen=p.img;
+    for(var i=0;i<options.length;i++){var candidate=options[(start+i)%options.length];if(!usedImages[candidate]){chosen=candidate;break;}}
+    usedImages[chosen]=1;
+    return chosen===p.img?p:Object.assign({},p,{img:chosen});
+  });
+}
 // Resolve a curated business by its slug (built-in mode) OR by name (after the DB
 // load re-keys everything by UUID) — so marquee spots never vanish from the home page.
 var _CURATED_NAME={twohommes:'two homm',sixseven:'six seven',dulans:'dulan',nile:'nile restaurant',
@@ -1619,18 +1636,20 @@ function buildHome(){
   var pop=sponsored.concat(popIds.map(findBiz).filter(p=>p&&hasPhoto(p)&&!isDealLit(p)&&!p.mdeal&&sponsored.indexOf(p)<0));
   if(pop.length<6){ for(var k in PB){ if(pop.length>=10)break; var b=PB[k]; if(hasPhoto(b)&&pop.indexOf(b)<0&&(b.tier>=2||(b.r||0)>=4.4)) pop.push(b); } }
   pop.forEach(function(p){used[p.k]=1;});
-  document.getElementById('popping-cards').innerHTML=pop.map(cardHTML).join('');
-  document.getElementById('near-cards').innerHTML=nearIds.map(findBiz).filter(p=>p&&hasPhoto(p)&&!used[p.k]).map(function(p){used[p.k]=1;return p;}).map(cardHTML).join('');
+  var usedImages={};
+  document.getElementById('popping-cards').innerHTML=allocateHomeCards(pop,usedImages).map(cardHTML).join('');
+  var near=nearIds.map(findBiz).filter(p=>p&&hasPhoto(p)&&!used[p.k]).map(function(p){used[p.k]=1;return p;});
+  document.getElementById('near-cards').innerHTML=allocateHomeCards(near,usedImages).map(cardHTML).join('');
   const spec=P.filter(p=>isDealLit(p)&&hasPhoto(p)&&!used[p.k]).slice(0,6);
   spec.forEach(function(p){used[p.k]=1;});
   var sc=document.getElementById('special-cards'); var offersSect=sc.closest('.sect');
-  if(spec.length){ sc.innerHTML=spec.map(p=>cardHTML(p)).join(''); if(offersSect)offersSect.style.display=''; }
+  if(spec.length){ sc.innerHTML=allocateHomeCards(spec,usedImages).map(cardHTML).join(''); if(offersSect)offersSect.style.display=''; }
   else if(offersSect){ offersSect.style.display='none'; }   // hide "Today's Offers" until a paid business posts a real special
   // Member Deals — the download magnet
   const deals=P.filter(p=>p.mdeal&&hasPhoto(p)&&!used[p.k]).slice(0,6);
   deals.forEach(function(p){used[p.k]=1;});
   var mc=document.getElementById('member-cards'), msect=document.getElementById('member-sect');
-  if(deals.length){ mc.innerHTML=deals.map(dealCardHTML).join(''); if(msect)msect.style.display=''; }
+  if(deals.length){ mc.innerHTML=allocateHomeCards(deals,usedImages).map(dealCardHTML).join(''); if(msect)msect.style.display=''; }
   else if(msect){ msect.style.display='none'; }
 }
 // A card that shows the deal (members) or a teaser (non-members).
