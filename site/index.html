@@ -109,7 +109,7 @@
   .cat.has-art img{width:100%;aspect-ratio:1/1;object-fit:contain;display:block;}
   .cat.has-art:active{background:none;transform:scale(.94);}
   /* Designed art versions of the Do badge + brand buttons (load when the file is present). */
-  .tab.build-tab .ic.art{background:none;border:0;box-shadow:none;}
+  .tab.build-tab .ic.art{background:none;border:0;border-radius:50%;box-shadow:none;overflow:hidden;}
   .tab.build-tab .ic.art img{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none;}
   .pa-sub button.art{background:none;border:0;padding:0;overflow:visible;}
   .pa-sub button.art img{width:100%;display:block;pointer-events:none;}
@@ -122,7 +122,7 @@
   .head-bar{padding:14px 20px 10px;display:flex;align-items:center;gap:12px;position:sticky;top:0;background:var(--bg);z-index:5;border-bottom:1px solid var(--line);}
   .back{width:34px;height:34px;border-radius:50%;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;flex:0 0 auto;position:relative;z-index:30;}
   .actrow{display:flex;gap:8px;margin:14px 0 2px;}
-  .actpill{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px;border:1px solid var(--line);border-radius:12px;background:var(--panel);font-size:10.5px;color:var(--muted);cursor:pointer;text-decoration:none;font-weight:700;}
+  .actpill{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px;border:1px solid rgba(245,197,66,.5);border-radius:12px;background:rgba(255,255,255,.03);font-size:10.5px;color:var(--gold);cursor:pointer;text-decoration:none;font-weight:700;}
   .actpill .ai{font-size:18px;}
   .actpill:active{transform:scale(.96);color:var(--pink);border-color:var(--pink);}
   .head-bar h2{font-family:'Barlow Condensed';font-weight:700;font-size:22px;}
@@ -178,7 +178,7 @@
   .btn-primary{background:linear-gradient(180deg,#ff6aa6 0%,#ff2e7e 24%,#ff6a4d 58%,#f5b93c 100%);color:#2a0012;text-shadow:0 1px 0 rgba(255,255,255,.28);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.6),inset 0 -3px 8px rgba(120,0,40,.32),0 8px 22px rgba(255,46,126,.34),0 2px 5px rgba(0,0,0,.35);}
   .btn-primary::before{content:"";position:absolute;left:6%;right:6%;top:0;height:46%;background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,0));border-radius:0 0 60% 60%/0 0 100% 100%;pointer-events:none;}
   .btn-primary:active{transform:translateY(1px) scale(.99);box-shadow:inset 0 2px 7px rgba(120,0,40,.42),0 3px 12px rgba(255,46,126,.3);}
-  .btn-ghost{background:transparent;color:var(--gold);border:1.5px solid var(--gold);box-shadow:inset 0 1px 0 rgba(245,197,66,.25);}
+  .btn-ghost{background:rgba(255,255,255,.03);color:var(--gold);border:1px solid rgba(245,197,66,.5);border-radius:12px;box-shadow:none;}
   .btn:active{transform:scale(.98);}
   /* ===== Brand glossy pill (matches Do Inglewood button assets) ===== */
   .dorim{--rim:linear-gradient(180deg,#ffeeb0 0%,#f5c542 38%,#b9821a 74%,#ffeeb0 100%);}
@@ -265,6 +265,20 @@
   .specialbox{background:linear-gradient(95deg,rgba(255,46,126,.14),rgba(245,197,66,.1));border:1px solid var(--pink);border-radius:12px;padding:13px 15px;margin:14px 0;}
   .specialbox .st{font-family:'Barlow Condensed';font-weight:700;font-size:15px;color:var(--gold);}
   .specialbox .sd{font-size:12.5px;color:#e4e4ea;margin-top:3px;}
+  .deal-slot{margin:14px 0;border:1px solid rgba(245,197,66,.7);border-radius:13px;padding:13px 14px;background:linear-gradient(100deg,rgba(245,197,66,.16),rgba(255,46,126,.08));box-shadow:0 0 18px rgba(245,197,66,.12);}
+  .deal-slot.dim{border-color:var(--line);background:var(--panel);box-shadow:none;opacity:.62;}
+  @keyframes deal-neon-pulse{0%,100%{box-shadow:0 0 16px rgba(245,197,66,.42),inset 0 0 12px rgba(245,197,66,.18);}50%{box-shadow:0 0 30px rgba(245,197,66,.68),inset 0 0 18px rgba(245,197,66,.3);}}
+  .deal-slot .deal-btn{width:100%;border:2px solid #f5c542;border-radius:14px;padding:12px 14px;background:#160f1c;color:#ffd76a;font-family:'Barlow Condensed';font-size:17px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;text-shadow:0 0 9px rgba(245,197,66,.75);cursor:pointer;box-shadow:0 0 20px rgba(245,197,66,.5),inset 0 0 14px rgba(245,197,66,.22);animation:deal-neon-pulse 2.4s ease-in-out infinite;}
+  .deal-slot .deal-btn:active{transform:translateY(1px);}
+  .deal-slot .deal-btn.dim-btn{background:var(--panel-2);border:1px solid var(--line);color:var(--muted);cursor:default;box-shadow:none;animation:none;}
+  @media (prefers-reduced-motion: reduce){.deal-slot .deal-btn{animation:none;}}
+  .deal-reveal{display:none;margin-top:10px;padding-top:10px;border-top:1px solid rgba(245,197,66,.35);}
+  .deal-reveal.on{display:block;}
+  .deal-reveal .deal-title{font-family:'Barlow Condensed';font-weight:800;font-size:17px;color:var(--gold);}
+  .deal-reveal .deal-copy{font-size:13px;line-height:1.45;margin-top:4px;}
+  .deal-reveal .deal-note{font-size:11px;color:var(--muted);margin-top:7px;}
+  .deal-flag{display:inline-flex;align-items:center;background:linear-gradient(180deg,#ffeeb0,#f5c542);color:#1a1400;border-radius:5px;padding:3px 7px;font-size:10px;font-weight:900;letter-spacing:.4px;white-space:nowrap;box-shadow:0 2px 8px rgba(245,197,66,.25);}
+  .deal-preview{margin-top:10px;}
   .mdealbox{background:linear-gradient(95deg,rgba(0,194,168,.16),rgba(245,197,66,.10));border:1px solid var(--gold);border-radius:12px;padding:13px 15px;margin:14px 0;}
   .mdealbox .st{font-family:'Barlow Condensed';font-weight:700;font-size:15px;color:var(--gold);}
   .mdealbox .sd{font-size:12.5px;color:#e4e4ea;margin-top:3px;}
@@ -273,7 +287,7 @@
   .claimbox{background:var(--panel);border:1px dashed var(--gold);border-radius:12px;padding:14px;margin:14px 0;text-align:center;}
   .claimbox b{font-family:'Barlow Condensed';font-weight:700;font-size:16px;display:block;}
   .claimbox span{font-size:12px;color:var(--muted);display:block;margin:4px 0 11px;}
-  .claimbtn{background:linear-gradient(180deg,#ffe08a 0%,#f5c542 45%,#e0a81f 100%);color:#1a1400;border:none;border-radius:11px;padding:11px 20px;font-weight:700;font-size:14px;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -2px 6px rgba(120,80,0,.28),0 5px 14px rgba(245,197,66,.3);text-shadow:0 1px 0 rgba(255,255,255,.35);}
+  .claimbtn{background:rgba(255,255,255,.03);color:var(--gold);border:1px solid rgba(245,197,66,.5);border-radius:12px;padding:11px 20px;font-weight:700;font-size:14px;cursor:pointer;}
   .claimbtn:active{transform:translateY(1px) scale(.99);}
   .pendbadge{display:inline-block;background:var(--pink);color:#fff;font-size:11px;font-weight:800;letter-spacing:.3px;padding:2px 8px;border-radius:999px;vertical-align:middle;margin-left:4px;}
   .pendbanner{background:linear-gradient(95deg,rgba(255,46,126,.16),rgba(245,197,66,.1));border:1px solid var(--pink);border-radius:12px;padding:12px 14px;margin:0 0 14px;display:flex;align-items:center;gap:10px;cursor:pointer;}
@@ -465,8 +479,8 @@
       <!-- TODAY'S SPECIALS -->
       <div class="planactivity" onclick="go('specials')">
         <div class="pa-k">Do Inglewood</div>
-        <h2>Today's Specials</h2>
-        <p>Every special, deal and members-only offer in the city, all day — breakfast to last call.</p>
+        <h2>Today's Deals</h2>
+        <p>Premium local businesses light up one featured deal for today.</p>
         <div class="pa-go">&#8594;</div>
       </div>
       <div class="pa-sub">
@@ -485,7 +499,7 @@
       </div>
 
       <div class="sect" style="display:none">
-        <div class="sect-head"><h3>Today's Offers</h3><a onclick="filterTo('Specials')">See all</a></div>
+        <div class="sect-head"><h3>Today's Deals</h3><a onclick="filterTo('Specials')">See all</a></div>
         <div class="hscroll" id="special-cards"></div>
       </div>
 
@@ -718,7 +732,7 @@
     </div>
     <!-- TODAY'S SPECIALS -->
     <div class="view" id="view-specials">
-      <div class="head-bar"><div class="back" onclick="go('home')">&#8249;</div><div class="logo-mini" role="img" aria-label="Do Inglewood" title="Home" onclick="go('home')"></div><span class="htitle">Today's Specials</span></div>
+      <div class="head-bar"><div class="back" onclick="go('home')">&#8249;</div><div class="logo-mini" role="img" aria-label="Do Inglewood" title="Home" onclick="go('home')"></div><span class="htitle">Today's Deals</span></div>
       <div class="planactivity" onclick="surpriseMe()" style="margin:14px 16px 4px">
         <div class="pa-k">Feeling lucky?</div>
         <h2>Surprise Me &#127922;</h2>
@@ -727,7 +741,7 @@
       </div>
       <div class="filterbar" id="specials-filters" style="padding-top:12px"></div>
       <div style="padding:8px 16px 4px;display:flex;align-items:center;justify-content:space-between;gap:10px">
-        <div class="sect-head" style="margin:0"><h3>&#127863; Live Specials</h3></div>
+        <div class="sect-head" style="margin:0"><h3>&#127903; Live Deals</h3></div>
         <span id="specials-notify" onclick="cycleSpecialsNotify()"></span>
       </div>
       <div id="specials-list" style="padding:4px 16px 24px"></div>
@@ -883,8 +897,13 @@ function renderOwner(){
       '<div style="background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:11px 12px;margin:13px 0 8px;font-size:12px;color:var(--muted);line-height:1.5"><b style="color:var(--txt)">No booking system?</b> Leave the link blank. Customers request a table right here &mdash; we email you to Accept or Decline, and Do Inglewood emails them back automatically.</div>'+
       '<label class="flbl">Email for new-request alerts</label><input id="ob_notify" class="finput" type="email" placeholder="you@yourbusiness.com" value="'+String(b.notify_email||(CURRENT_USER&&CURRENT_USER.email)||'').replace(/"/g,'&quot;')+'"><div style="font-size:11px;color:var(--muted);margin-top:4px">Defaults to your login email if left blank.</div>'
     : '';
+  var dealSlot = paid
+    ? (b.special
+      ? '<div class="deal-slot"><div style="font-weight:800;font-family:\'Barlow Condensed\';font-size:16px;color:var(--gold)">&#127903; Your deal is live in Today\'s Deals</div><div style="font-size:12px;color:var(--muted);margin-top:3px">Keep one featured offer glowing at a time.</div></div>'
+      : '<div class="deal-slot dim"><div style="font-weight:800;font-family:\'Barlow Condensed\';font-size:16px">Your deal slot is dark.</div><div style="font-size:12px;color:var(--muted);margin:3px 0 10px">Light it up to land in Today\'s Deals.</div><button class="claimbtn" onclick="focusDealEditor()">Add Today\'s Deal</button></div>')
+    : '';
   var specialBlock = paid
-    ? '<label class="flbl">Special / offer</label><input id="ob_special" class="finput" value="'+String(b.special||'').replace(/"/g,'&quot;')+'">'+
+    ? '<label class="flbl">Today\'s Deal <span style="color:var(--muted);font-weight:500">(featured offer)</span></label><input id="ob_special" class="finput" oninput="previewOwnerDeal(this.value)" placeholder="e.g. Free dessert with any entree today" value="'+String(b.special||'').replace(/"/g,'&quot;')+'"><div id="deal-preview" class="deal-preview"></div>'+
       '<label class="flbl">&#11088; Do Member deal <span style="color:var(--muted);font-weight:500">(discount for app members — draws customers in)</span></label><input id="ob_mdeal" class="finput" placeholder="e.g. 10% off for Do Members" value="'+String(b.mdeal||b.member_deal||'').replace(/"/g,'&quot;')+'">'
     : '<input id="ob_special" type="hidden" value="'+String(b.special||'').replace(/"/g,'&quot;')+'"><input id="ob_mdeal" type="hidden" value="'+String(b.mdeal||b.member_deal||'').replace(/"/g,'&quot;')+'">';
   var menuBlock = paid
@@ -922,11 +941,17 @@ function renderOwner(){
     fld('Phone','ob_phone',b.phone)+fld('Website','ob_web',b.website)+fld('Price ($, $$, $$$)','ob_price',b.price_level)+
     fld('Avg per person ($)','ob_cpp',b.avg_per_person)+
     '<label class="flbl">Description</label><textarea id="ob_desc" class="finput" rows="3">'+String(b.review_quote||'').replace(/</g,'&lt;')+'</textarea>'+
-    reservBlock+specialBlock+menuBlock+
+    reservBlock+dealSlot+specialBlock+menuBlock+
     '<button class="btn btn-primary" style="width:100%;margin-top:16px;padding:14px" onclick="saveMyBiz()">Save changes</button>'+
     upsell+premiumUp+'<div id="owner-resv"></div>';
   catResvHint('ob_cat','ob_cat_hint');
+  previewOwnerDeal(b.special||'');
   renderOwnerResv();
+}
+function focusDealEditor(){ var e=document.getElementById('ob_special'); if(e){ e.focus(); e.scrollIntoView({behavior:'smooth',block:'center'}); } }
+function previewOwnerDeal(value){
+  var e=document.getElementById('deal-preview'); if(!e)return;
+  e.innerHTML=value&&value.trim()?'<div class="deal-slot"><button class="deal-btn" disabled>&#127903; SEE TODAY\'S DEAL &#8594;</button><div style="font-size:11px;color:var(--muted);margin-top:6px">Live preview · '+xmlEsc(value.trim())+'</div></div>':'<div class="deal-slot dim"><button class="deal-btn dim-btn" disabled>No deal today</button></div>';
 }
 async function saveMyBiz(){
   if(!MY_BIZ)return;
@@ -1043,6 +1068,26 @@ const FB = {
   park:"https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600&q=70",
   retail:"https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600&q=70"
 };
+const FALLBACKS = {
+  Mexican:[FB.mexican,"https://images.unsplash.com/photo-1552332386-f8dd00dc2f85?w=600&q=70","https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=600&q=70"],
+  "Soul Food":[FB.soul,"https://images.unsplash.com/photo-1547592180-85f173990554?w=600&q=70","https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?w=600&q=70"],
+  Lounge:[FB.lounge,FB.sports,"https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=600&q=70"],
+  Bar:[FB.bar,FB.lounge,"https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=600&q=70"],
+  Sports:[FB.sports,FB.lounge,"https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=600&q=70"]
+};
+function fallbackImg(category,name,tags){
+  var key=category;
+  if(!FALLBACKS[key]){
+    var text=[category,name].concat(Array.isArray(tags)?tags:[]).join(' ').toLowerCase();
+    if(/sports?|football|basketball/.test(text)) key='Sports';
+    else if(/lounge/.test(text)) key='Lounge';
+    else if(/bar|club|cocktail/.test(text)) key='Bar';
+    else if(/mexican|taco|taqueria|birria|cantina|burrito/.test(text)) key='Mexican';
+    else if(/soul food|southern|bbq|barbecue/.test(text)) key='Soul Food';
+  }
+  var set=FALLBACKS[key]||null;
+  return set ? set[hashStr(name||category)%set.length] : null;
+}
 
 /* ============ 50 REAL INGLEWOOD BUSINESSES ============ */
 const P = [
@@ -1098,12 +1143,31 @@ const P = [
   {k:"sofi",n:"SoFi Stadium",cat:"Stadium",tags:["Stadium","Event","Experience"],pid:"ChIJT4_7y4a3woARcEGeJLecuV8",img:FB.event,r:4.6,rc:21923,price:"$$$",cpp:0,hrs:"Event days",ph:"+1 424-541-9100",addr:"1001 S Stadium Dr",tier:1,special:null,exp:1,q:"The stadium is massive and genuinely breathtaking, an unforgettable venue that lives up to the hype."},
   {k:"forum",n:"Kia Forum",cat:"Stadium",tags:["Stadium","Event","Experience"],pid:"ChIJy3VFXVS2woARBmn6yKDq7rE",img:FB.event,r:4.5,rc:19628,price:"$$$",cpp:0,hrs:"Event days",ph:"+1 310-862-6200",addr:"3900 W Manchester Blvd",tier:1,special:null,exp:1,q:"Fantastic venue with an arena feel. Several bars, short lines, super easy to navigate."},
   {k:"intuit",n:"Intuit Dome",cat:"Stadium",tags:["Stadium","Event","Experience"],pid:"ChIJ24QXI963woARVyI650iw2oc",img:FB.event,r:4.4,rc:3085,price:"$$$",cpp:0,hrs:"Event days",ph:"+1 888-311-0231",addr:"3930 W Century Blvd",tier:1,special:null,exp:1,q:"One of the most thoughtfully designed venues ever. So hi-tech it is an experience, not just a game."},
+  {k:"youtube",n:"YouTube Theater",cat:"Event Space",tags:["Event Space","Event","Experience"],pid:"",img:FB.event,r:4.6,rc:1200,price:"$$$",cpp:0,hrs:"Event days",ph:"",addr:"1011 S Prairie Ave",tier:1,special:null,exp:1,q:"An intimate, beautifully designed theater inside Hollywood Park for concerts, comedy, and live events."},
   {k:"welcomemural",n:"Welcome to LA Mural",cat:"Landmark",tags:["Landmark","Experience","Photo Spot"],pid:"ChIJl9fOUAC3woARMk41E2TX_iI",img:FB.event,r:4.4,rc:12,price:"Free",cpp:0,hrs:"Open 24 hours",ph:"",addr:"5014 W Century Blvd",tier:1,special:null,exp:1,q:"Good for a quick pic. I try and stop at all the greetings-from murals when I travel."},
   {k:"grevillea",n:"Grevillea Art Park",cat:"Landmark",tags:["Landmark","Experience","Photo Spot"],pid:"ChIJj-DWXwK3woAR3vnG1PUUoO4",img:FB.event,r:4.1,rc:21,price:"Free",cpp:0,hrs:"Daily 6 AM-9 PM",ph:"",addr:"101 E Kelso St",tier:1,special:null,exp:1,q:"Fabulous mural, the largest of its kind funded by the WPA. A nice place to relax."},
   {k:"edvincent",n:"Edward Vincent Jr. Park",cat:"Park",tags:["Park","Experience"],pid:"ChIJVT23uqe3woARkwzSog70nss",img:FB.event,r:4.5,rc:1938,price:"Free",cpp:0,hrs:"Daily 8 AM-8 PM",ph:"+1 310-412-5370",addr:"700 Warren Ln",tier:1,special:null,exp:1,q:"Bright, open and full of life. Big grassy fields and long walking paths, warm and welcoming."},
   {k:"century",n:"Century Flowers",cat:"Florist",tags:["Florist","Experience","Gift"],pid:"ChIJ94ci6--2woARoEVlMcCTN1Q",img:FB.dessert,r:4.7,rc:140,price:"$$",cpp:25,hrs:"Daily 8 AM-8 PM",ph:"+1 310-330-9069",addr:"4701 W Century Blvd",tier:1,special:null,exp:1,q:"Educated me on the history of the location and good facts about flowers. Will be going back."}
 ];
 const PB = {}; P.forEach(p=>PB[p.k]=p);
+var BUILTIN_HEADLINES={youtube:P.filter(function(p){return p.k==='youtube';})};
+function normalizeFallbackImages(){
+  var known=Object.keys(FB).map(function(k){return FB[k];});
+  Object.keys(FALLBACKS).forEach(function(k){known=known.concat(FALLBACKS[k]);});
+  var last={};
+  P.forEach(function(p){
+    if(known.indexOf(p.img)>=0){
+      var set=FALLBACKS[p.cat]||null, key=p.cat||'Other';
+      if(set){
+        var index=hashStr(p.n)%set.length;
+        if(last[key]===index) index=(index+1)%set.length;
+        p.img=set[index]; last[key]=index;
+      } else {
+        var varied=fallbackImg(p.cat,p.n,p.tags); if(varied)p.img=varied;
+      }
+    }
+  });
+}
 
 /* ============ LOAD BUSINESSES FROM SUPABASE (falls back to built-in list) ============ */
 const CATIMG = {"Mexican":FB.mexican,"Soul Food":FB.soul,"Seafood":FB.seafood,"American":FB.american,"Restaurant":FB.food,"Food":FB.food,"Caribbean":FB.caribbean,"Lounge":FB.lounge,"Bar":FB.bar,"Casino":FB.casino,"Brunch":FB.brunch,"Dessert":FB.dessert,"Coffee":FB.coffee,"Hotels":FB.hotel,"Event Space":FB.event,"Movie":FB.event,"Stadium":FB.event,"Landmark":FB.event,"Park":FB.park,"Florist":FB.florist,"Barbershop":FB.barber,"Salon":FB.salon,"Nails":FB.nails,"Spa":FB.spa,"Massage":FB.spa,"Tattoo":FB.tattoo,"Beauty":FB.beauty,"Fitness":FB.fitness,"Photography":FB.event,"Auto":FB.retail,"Medical":FB.spa,"Dental":FB.spa,"Retail":FB.retail};
@@ -1112,6 +1176,8 @@ const CATIMG = {"Mexican":FB.mexican,"Soul Food":FB.soul,"Seafood":FB.seafood,"A
    under the generic "Services" still gets the right image), then a safe generic —
    so a business ALWAYS gets a real, relevant image, never a letter. */
 function catImg(cat,name,tags){
+  var varied=fallbackImg(cat,name,tags);
+  if(varied) return varied;
   if(cat && CATIMG[cat]) return CATIMG[cat];                 // specific known category wins
   var k=[cat,name].concat(Array.isArray(tags)?tags:[]).join(' ').toLowerCase();
   if(!k.trim()) return FB.food;
@@ -1197,6 +1263,21 @@ var MARQUEE = {
   'youtube theater':       {a:'#ff4d6a', b:'#2c0912', c:'#12030a'},  // theater — red
   'hollywood park casino': {a:'#ff2e7e', b:'#1c0a22', c:'#0a0512'}   // casino — pink
 };
+var VENUE_PHOTOS = {
+  'sofi stadium': 'assets/venues/sofi-stadium.jpg',
+  'kia forum': 'assets/venues/kia-forum.jpg',
+  'intuit dome': 'assets/venues/intuit-dome.jpg',
+  'youtube theater': 'assets/venues/youtube-theater.jpg',
+  'two hommés': 'assets/venues/two-hommes.jpg'
+};
+function venuePhoto(name){
+  var n=String(name||'').toLowerCase();
+  for(var key in VENUE_PHOTOS){ if(n.indexOf(key)>=0) return VENUE_PHOTOS[key]; }
+  return null;
+}
+function normalizeVenuePhotos(){
+  P.forEach(function(p){ var vp=venuePhoto(p.n); if(vp) p.img=vp; });
+}
 function heroCard(accent,c1,c2){
   var svg='<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450">'
     +'<defs>'
@@ -1220,11 +1301,13 @@ function marqueeCard(name){
   return null;
 }
 function pickImg(r){
-  // 1) marquee venues get the designed cinematic card (premium + always renders)
+  // 1) curated local venue photos beat every fallback, including marquee cards.
+  var vp=venuePhoto(r.name); if(vp) return vp;
+  // 2) the business's own real photo (from Google backfill) wins every fallback
+  if(r.photo_url && String(r.photo_url).indexOf('http')===0 && !/places\.googleapis\.com|maps\.googleapis\.com/i.test(String(r.photo_url))) return r.photo_url;
+  // 3) marquee venues get the designed cinematic card (premium + always renders)
   var mq=marqueeCard(r.name); if(mq) return mq;
-  // 2) the business's own real photo (from Google backfill) wins for everyone else
-  if(r.photo_url && String(r.photo_url).indexOf('http')===0) return r.photo_url;
-  // 3) otherwise an attractive, category/name-appropriate photo — so EVERY business shows a real image
+  // 4) otherwise an attractive, varied category/name-appropriate photo
   return catImg(r.category, r.name, r.tags);
 }
 // Layered background: the real photo (if any) OVER a colored tile, so a blocked/
@@ -1471,6 +1554,12 @@ async function loadBusinesses(){
       all.filter(function(r){return r.is_active!==false && r.approved!==false;}).forEach(r=>P.push(dbToApp(r)));   // paused + not-yet-approved businesses are hidden
       for(const k in PB){ delete PB[k]; }
       P.forEach(p=>PB[p.k]=p);
+      Object.keys(BUILTIN_HEADLINES).forEach(function(group){
+        BUILTIN_HEADLINES[group].forEach(function(seed){
+          var exists=P.some(function(p){return String(p.n||'').toLowerCase()===String(seed.n||'').toLowerCase();});
+          if(!exists){ var extra=Object.assign({},seed,{img:pickImg({name:seed.n,photo_url:null,category:seed.cat,tags:seed.tags})}); P.push(extra); PB[extra.k]=extra; }
+        });
+      });
       console.log('✓ Loaded '+P.length+' businesses live from Supabase');
       return true;
     }
@@ -1482,7 +1571,7 @@ async function loadBusinesses(){
 const FILTERS = ["All","Specials","Food","Mexican","Soul Food","Seafood","Lounges","Casino","Dessert","Coffee","Hotels","Brunch","Late Night"];
 function matchFilter(p,f){
   if(f==="All")return true;
-  if(f==="Specials")return !!p.special;
+  if(f==="Specials")return isDealLit(p);
   if(f==="Food")return (p.tags||[]).includes("Food");
   if(f==="Lounges")return p.cat==="Lounge"||(p.tags||[]).includes("Lounge");   // tile/list say "Lounges"; data is singular "Lounge"
   return p.cat===f || (p.tags||[]).includes(f);
@@ -1490,8 +1579,11 @@ function matchFilter(p,f){
 
 function starline(p){ if(p.r==null||p.r===''){return '<span style="color:var(--muted)">New spot</span>';} return `<span class="star">&#9733;</span> ${p.r} · ${p.rc>999?(p.rc/1000).toFixed(1)+'k':(p.rc||0)}`;}
 function isSponsored(p){ return !!(p && p.tier>=3); }
+function isDealLit(p){ return !!(p && p.tier>=2 && String(p.special||'').trim()); }
+function dealFlag(p){ return isDealLit(p)?'<span class="deal-flag">&#127903; TODAY\'S DEAL</span>':''; }
 function tierBadge(p){
   if(p.tags && p.tags.indexOf('Coming Soon')>=0)return '<span class="chip chip-special badge-tr">&#128197; Coming Soon</span>';
+  if(isDealLit(p))return '';
   if(isSponsored(p))return '<span class="chip chip-sponsored badge-tr">&#11088; Sponsored</span>';
   if(p.special)return '<span class="chip chip-special badge-tr">&#127863; Special</span>';
   if(p.tier>=2)return '<span class="chip chip-verified badge-tr">Verified</span>';
@@ -1500,12 +1592,12 @@ function tierBadge(p){
 
 /* HOME cards */
 // A displayable image = a real URL OR a designed inline card (marquee venues), not a blank.
-function realImg(u){ return !!u && (String(u).indexOf('http')===0 || String(u).indexOf('data:image')===0); }
+function realImg(u){ return !!u && (String(u).indexOf('http')===0 || String(u).indexOf('data:image')===0 || String(u).indexOf('assets/')===0); }
 function hasPhoto(p){ return !!(p && realImg(p.img)); }
 function cardHTML(p){
   return `<div class="card" onclick="openListing('${p.k}','home')">
     <div class="img" style="background-image:${bgLayers(p)}">${tierBadge(p)}</div>
-    <div class="body"><div class="name">${xmlEsc(p.n)}</div><div class="meta">${starline(p)} · ${xmlEsc(p.price)}</div></div>
+    <div class="body"><div class="name">${xmlEsc(p.n)}</div><div class="meta">${starline(p)} · ${xmlEsc(p.price)}</div>${dealFlag(p)}</div>
   </div>`;
 }
 // Resolve a curated business by its slug (built-in mode) OR by name (after the DB
@@ -1523,17 +1615,21 @@ function buildHome(){
   const popIds=['twohommes','sixseven','dulans','nile','meeting','conis'];
   const nearIds=['sofi','forum','intuit','anthem','casino','crestridge'];
   // Popping: PAID sponsored spots first, then curated favourites, topped up with high-rated photo'd spots
-  var sponsored=P.filter(p=>isSponsored(p)&&hasPhoto(p));
-  var pop=sponsored.concat(popIds.map(findBiz).filter(p=>p&&hasPhoto(p)&&sponsored.indexOf(p)<0));
+  var used={};
+  var sponsored=P.filter(p=>isSponsored(p)&&hasPhoto(p)&&!isDealLit(p)&&!p.mdeal);
+  var pop=sponsored.concat(popIds.map(findBiz).filter(p=>p&&hasPhoto(p)&&!isDealLit(p)&&!p.mdeal&&sponsored.indexOf(p)<0));
   if(pop.length<6){ for(var k in PB){ if(pop.length>=10)break; var b=PB[k]; if(hasPhoto(b)&&pop.indexOf(b)<0&&(b.tier>=2||(b.r||0)>=4.4)) pop.push(b); } }
+  pop.forEach(function(p){used[p.k]=1;});
   document.getElementById('popping-cards').innerHTML=pop.map(cardHTML).join('');
-  document.getElementById('near-cards').innerHTML=nearIds.map(findBiz).filter(p=>p&&hasPhoto(p)).map(cardHTML).join('');
-  const spec=P.filter(p=>p.special&&hasPhoto(p));
+  document.getElementById('near-cards').innerHTML=nearIds.map(findBiz).filter(p=>p&&hasPhoto(p)&&!used[p.k]).map(function(p){used[p.k]=1;return p;}).map(cardHTML).join('');
+  const spec=P.filter(p=>isDealLit(p)&&hasPhoto(p)&&!used[p.k]).slice(0,6);
+  spec.forEach(function(p){used[p.k]=1;});
   var sc=document.getElementById('special-cards'); var offersSect=sc.closest('.sect');
   if(spec.length){ sc.innerHTML=spec.map(p=>cardHTML(p)).join(''); if(offersSect)offersSect.style.display=''; }
   else if(offersSect){ offersSect.style.display='none'; }   // hide "Today's Offers" until a paid business posts a real special
   // Member Deals — the download magnet
-  const deals=P.filter(p=>p.mdeal&&hasPhoto(p));
+  const deals=P.filter(p=>p.mdeal&&hasPhoto(p)&&!used[p.k]).slice(0,6);
+  deals.forEach(function(p){used[p.k]=1;});
   var mc=document.getElementById('member-cards'), msect=document.getElementById('member-sect');
   if(deals.length){ mc.innerHTML=deals.map(dealCardHTML).join(''); if(msect)msect.style.display=''; }
   else if(msect){ msect.style.display='none'; }
@@ -1567,6 +1663,7 @@ function filterTo(f){go('explore');curFilter=f;buildFilters();renderExplore();}
 function isComingSoon(p){ return p.tags && p.tags.indexOf('Coming Soon')>=0; }
 function listBadge(p){
   if(isComingSoon(p)) return '<span class="chip chip-special">&#128197; Coming Soon</span>';
+  if(isDealLit(p)) return dealFlag(p);
   if(isSponsored(p)) return '<span class="chip chip-sponsored">&#11088; Sponsored</span>';
   if(p.special) return '<span class="chip chip-special">&#127863; Special</span>';
   if(p.tier>=2) return '<span class="chip chip-verified">Verified</span>';
@@ -1625,8 +1722,8 @@ function specialsCatMatch(p,cat){
   if(cat==='Hotels')return p.cat==='Hotels';
   return true;
 }
-// A spot counts for the specials page if it has a live special or member deal + a photo.
-function hasLiveSpecial(p){ return !!((p.special||p.mdeal)&&hasPhoto(p)); }
+// A Today's Deal is live only for a paid business with its featured special set.
+function hasLiveSpecial(p){ return isDealLit(p)&&hasPhoto(p); }
 // Only show category chips that actually have specials today (never a dead filter).
 function specialsCatsAvailable(){
   var avail={all:1};
@@ -1676,8 +1773,7 @@ function renderSpecials(){
     return;
   }
   el.innerHTML=list.map(function(p,i){
-    var offer = p.special ? xmlEsc(p.special)
-              : (CURRENT_USER ? ('&#11088; '+xmlEsc(p.mdeal)) : '&#11088; Join free to unlock &rarr;');
+    var offer = xmlEsc(p.special);
     return `<div class="listcard" style="animation-delay:${i*0.02}s" onclick="openListing('${p.k}','specials')">
         <div class="img" style="background-image:${bgLayers(p)}"></div>
         <div class="info">
@@ -1765,6 +1861,11 @@ function similarSpots(p){
       '<div style="font-size:11px;color:var(--muted)">'+starline(x)+' · '+(x.price||'')+'</div></div>';}).join('')+
     '</div></div>';
 }
+function dealBlockHTML(p){
+  if(!isDealLit(p)) return '<div class="deal-slot dim"><button class="deal-btn dim-btn" disabled>No deal today</button></div>';
+  return '<div class="deal-slot"><button class="deal-btn" onclick="revealDeal()">&#127903; SEE TODAY\'S DEAL &#8594;</button><div class="deal-reveal" id="deal-reveal"><div class="deal-title">&#127903; Today\'s Deal — '+xmlEsc(p.n)+'</div><div class="deal-copy">'+xmlEsc(p.special)+'</div><div class="deal-note">Valid today · Show this screen when you order</div></div></div>';
+}
+function revealDeal(){ var e=document.getElementById('deal-reveal'); if(e)e.classList.add('on'); }
 function openListing(k,from){
   lastList=from||'home';const p=PB[k];
   window._curListing=k;
@@ -1783,6 +1884,7 @@ function openListing(k,from){
     <div class="ldmeta"><span style="font-size:13px">${starline(p)}</span><span class="pricelv">${xmlEsc(p.price)}</span>${p.cat?`<span style="font-size:12px;color:var(--muted)">${xmlEsc(p.cat)}</span>`:''}${badge}</div>
     ${tagsRow}
     ${statusLine}
+    ${dealBlockHTML(p)}
     <div class="actrow">
       <div class="actpill" onclick="openDirections('${p.k}')"><span class="ai">${ICON.nav}</span>Directions</div>
       ${p.ph?`<a class="actpill" href="${telHref(p.ph)}"><span class="ai">${ICON.phone}</span>Call</a>`:''}
@@ -2166,6 +2268,7 @@ function renderSaved(){
 }
 /* ONBOARDING */
 let ob=0;
+try{ if(localStorage.getItem('di_onboard_done')==='1'){ document.getElementById('onboard').style.display='none'; } }catch(e){}
 // Same button on every screen: NEXT advances, and on the last screen it goes
 // straight into the app (Home). Simple, consistent, never a dead end.
 function obNext(){
@@ -2181,6 +2284,7 @@ function showObSlide(){
   if(sub) sub.textContent=last?'Enter Inglewood':'Keep going';
 }
 function finishOnboard(){
+  try{ localStorage.setItem('di_onboard_done','1'); }catch(e){}
   var o=document.getElementById('onboard'); if(o)o.style.display='none';
   go('home');
 }
@@ -2191,12 +2295,11 @@ function buildHero(){
   const h=document.getElementById('heroimg');
   Array.prototype.slice.call(h.querySelectorAll('.slide')).forEach(function(s){s.remove();});
   if(heroTimer){clearInterval(heroTimer);heroTimer=null;}
-  // Prefer REAL photos of the marquee venues; branded tiles only as a last resort.
+  // Keep the headline banner focused on main event destinations, never arbitrary listings.
   var slides=[];
-  ['sofi','intuit','forum'].forEach(function(id){ var p=findBiz(id); if(p&&realImg(p.img)) slides.push({img:p.img,name:p.n}); });
-  for(var k in PB){ if(slides.length>=6)break; var b=PB[k]; if(!b||!realImg(b.img))continue; var t=b.tags||[];
-    if(b.exp||b.cat==='Stadium'||b.cat==='Event Space'||t.indexOf('Stadium')>=0||t.indexOf('Event')>=0||t.indexOf('Experience')>=0){
-      if(!slides.some(function(s){return s.name===b.n;})) slides.push({img:b.img,name:b.n}); } }
+  ['sofi','intuit','forum','youtube','casino'].forEach(function(id){
+    var p=findBiz(id); if(p) slides.push({img:realImg(p.img)?p.img:marqueeCard(p.n)||venueTile(p.n,id),name:p.n});
+  });
   if(!slides.length){ slides=[{img:venueTile('SoFi Stadium','a'),name:'SoFi Stadium'},{img:venueTile('Kia Forum','b'),name:'Kia Forum'},{img:venueTile('Intuit Dome','c'),name:'Intuit Dome'},{img:venueTile('YouTube Theater','d'),name:'YouTube Theater'}]; }
   var capEl=h.querySelector('.cap'), capB=h.querySelector('.cap b');
   slides.forEach(function(s,i){var d=document.createElement('div');d.className='slide'+(i===0?' on':'');
@@ -2274,7 +2377,9 @@ async function initApp(){
   loadCatArt();
   loadBrandArt();
   paintObButton();
+  normalizeFallbackImages();
   await loadBusinesses();
+  normalizeVenuePhotos();
   await loadEvents();
   var _bl=document.getElementById('di-build'); if(_bl)_bl.textContent=DI_BUILD;
   buildHome();buildFilters();buildHero();renderHomeEvents();
