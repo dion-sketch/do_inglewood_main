@@ -305,4 +305,10 @@ From research (Sept 2026). Group by why they come; mark as Experience/landmark:
   oldest building), historic Market Street downtown, murals (already in app).
 - **Family:** Zimmer Children's Museum, Edward Vincent Jr. Park.
 - **Food heritage:** Dulan's Soul Food, Randy's, the soul-food/Black-owned scene.
-- **Do NOT add** City Hall — civic building, not a visitor destination.
+- **City Hall: INCLUDE it** per Dion (he considers it iconic/popular; his call overrides the earlier "skip"). Feature City Hall and Randy's in the home-page banner rotation.
+
+### Anchor list + home banner (Dion's updates)
+- **Anchor + Nearby applies to ALL main anchors — INCLUDING Hollywood Park Casino.**
+  Each anchor page: the venue on top, then spots within ~10 minutes below.
+- **HOME PAGE BANNER** should rotate Inglewood's iconic/popular destinations — Randy's
+  Donuts, City Hall, SoFi, Kia Forum, Intuit Dome, COSM, etc. (the "very popular" spots).
