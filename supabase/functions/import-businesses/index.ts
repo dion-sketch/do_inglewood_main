@@ -150,16 +150,19 @@ function fillPatch(row: any, d: { phone?: string; website?: string; hours?: stri
   return Object.keys(patch).length ? patch : null;
 }
 
-// ---- mode=backfill : enrich existing unclaimed rows that have no photo yet ----
+// ---- mode=backfill : enrich existing UNCLAIMED rows that have no photo yet ----
+// Guard on claimed_by (never touch a claimed/paid business's curated photo) rather
+// than on tier — so high-tier civic/marquee venues (SoFi, Kia Forum, Intuit Dome,
+// landmarks, parks) that were seeded as featured still get their real Google photos.
 async function backfill(limit: number) {
   // How many still need enriching (unclaimed + no hero photo + has a google id)?
   const { count } = await admin.from("di_businesses")
     .select("id", { count: "exact", head: true })
-    .lt("tier", 2).is("photo_url", null).not("google_place_id", "is", null);
+    .is("claimed_by", null).is("photo_url", null).not("google_place_id", "is", null);
 
   const { data: rows } = await admin.from("di_businesses")
     .select("id, google_place_id, tier, photo_url, photos, website, phone, hours, booking_url")
-    .lt("tier", 2).is("photo_url", null).not("google_place_id", "is", null)
+    .is("claimed_by", null).is("photo_url", null).not("google_place_id", "is", null)
     .limit(limit);
 
   let enriched = 0;
