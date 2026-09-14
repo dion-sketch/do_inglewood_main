@@ -454,14 +454,8 @@
       <h2>Welcome to <span class="g">Inglewood</span></h2>
       <p>Eat. Play. Stay. Every restaurant, lounge, hotel and hot spot in California's Entertainment City — in one place.</p>
     </div>
-    <div class="ob-slide" data-ob="1">
-      <div class="ob-ic">&#127881;</div>
-      <h2>See what's <span class="g">good today</span></h2>
-      <p>Specials, deals and members' offers all over the city — breakfast, brunch, family spots, dinner and late night. Reserve a table in a tap.</p>
-    </div>
-    <div class="ob-dots"><span class="on"></span><span></span></div>
     <div class="ob-foot">
-      <button class="dopill" id="obNext" onclick="obNext()"><span class="dobadge"><span class="do">Do</span></span><span class="lbl"><b id="obNextLbl">Next</b><span id="obNextSub">Keep going</span></span><span class="arw">&#8594;</span></button>
+      <button class="dopill" id="obNext" aria-label="Explore Inglewood" onclick="finishOnboard()"><span class="dobadge"><span class="do">Do</span></span><span class="lbl"><b id="obNextLbl">Explore Inglewood</b><span id="obNextSub">Enter Inglewood</span></span><span class="arw">&#8594;</span></button>
     </div>
   </div>
 
@@ -2321,8 +2315,7 @@ try{ if(localStorage.getItem('di_onboard_done')==='1'){ document.getElementById(
 // Same button on every screen: NEXT advances, and on the last screen it goes
 // straight into the app (Home). Simple, consistent, never a dead end.
 function obNext(){
-  if(ob<1){ ob++; showObSlide(); }
-  else { finishOnboard(); }
+  finishOnboard();
 }
 function showObSlide(){
   document.querySelectorAll('.ob-slide').forEach(function(s){ s.classList.toggle('on',+s.dataset.ob===ob); });
