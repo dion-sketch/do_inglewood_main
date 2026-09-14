@@ -37,6 +37,42 @@
    clearly different from a plain listing. Data fields exist (`special`, `mdeal`); the
    product emphasis and visibility are what Dion feels is missing.
 
+## 0.6 "Today's Deal" — the Specials system (locked wording + plan)
+
+The per-business Special is delivered as **one featured "Today's Deal"** per business.
+One switch for the owner powers the badge, the feed, and the notifications.
+
+**LIT vs DIM rule:**
+- **LIT** = business is premium/paying (treat `tier >= 2` as paid) **AND** has a deal set
+  (the `special` field). → glowing gold, clickable.
+- **DIM** = no deal, or not premium. → faded, unclickable.
+
+**Exact copy:**
+- Business page, LIT: gold button **`SEE TODAY'S DEAL →`**
+- Business page, DIM: faded unclickable pill **`No deal today`**
+- Card in a list, LIT: small gold flag **`🎟 TODAY'S DEAL`**; DIM: nothing.
+- Reveal on tap:
+  `🎟 Today's Deal — [Business]` / `[the deal]` / `Valid today · Show this screen when you order`
+- Owner (My Business), premium + no deal:
+  `Your deal slot is dark. Light it up to land in Today's Deals →  [Add Today's Deal]`
+
+**Why it matters:** the dim slot is the built-in upsell — customers learn to look for the
+gold one; businesses see the dark slot and want to light it up. It's the #1 Yelp
+differentiator.
+
+**The notification engine (the Groupon-style daily draw):** the one featured deal feeds:
+1. The gold button + card flag on the business.
+2. Home **"Today's Deals"** (curated top few).
+3. Notifications — **the Daily Dose** (a daily push, e.g. 11am: "Today in Inglewood:
+   15% off at Two Hommés · free cobbler at Dulan's…") and **the Post-Game Blast** (when a
+   SoFi/Kia Forum/Intuit event lets out, push nearby deals: "Game's over — 6 deals near
+   SoFi right now"). Live and local, not prepaid vouchers — drives real walk-in traffic.
+
+**Build order:** Wave 1 = LIT/DIM button + card flag + Today's Deals feed + owner
+"Add Today's Deal" (buildable now, no push infra). Wave 2 = the notification engine
+(needs installed-PWA push + game end-times; the morning/midday/evening + day-of-week
+preference model is already built for it).
+
 ## 1. Design north star (do not lose this)
 
 - **Premium, high-end, "Las Vegas" aesthetic.** Dion says this repeatedly. When in
