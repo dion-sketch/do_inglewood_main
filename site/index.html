@@ -2253,7 +2253,12 @@ function calShift(delta){ var d=new Date(calY,calM+delta,1); calY=d.getFullYear(
 function selectDay(iso){ selDate=iso; var d=parseD(iso); calY=d.getFullYear(); calM=d.getMonth(); renderEvents(); document.getElementById('screen').scrollTop=0; }
 function renderHomeEvents(){
   var today=new Date();today.setHours(0,0,0,0);
-  var up=EV.filter(e=>parseD(e.date)>=today).sort((a,b)=>a.date.localeCompare(b.date)||timeVal(a.time)-timeVal(b.time)).slice(0,8);
+  var up=[], seen={};
+  EV.filter(e=>parseD(e.date)>=today).sort((a,b)=>a.date.localeCompare(b.date)||timeVal(a.time)-timeVal(b.time)).forEach(function(e){
+    var title=String(e.title||'').toLowerCase().replace(/\bvs?\.?\b/g,'vs').replace(/\s+/g,' ').trim();
+    var key=title+'|'+String(e.venue||'').toLowerCase()+'|'+String(e.time||'').toLowerCase();
+    if(!seen[key]&&up.length<8){seen[key]=1;up.push(e);}
+  });
   var sect=document.getElementById('home-events-sect');
   if(!sect)return;
   if(!up.length){sect.style.display='none';return;}
