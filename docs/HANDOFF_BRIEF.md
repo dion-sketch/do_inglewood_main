@@ -262,3 +262,21 @@ Re-chasing stops when you VERIFY once and LOCK that exact version. The process:
 
 Once every box is a green screenshot, tag it and deploy. THAT is the version you go
 live on — and you can always return to it.
+
+## 9. Planned features (build AFTER v1.0 is locked & stable)
+
+### Anchor + Nearby — "what's around the venue" (Dion's idea, high value)
+For the MAIN ANCHOR venues only — SoFi Stadium, Kia Forum, Intuit Dome, COSM, YouTube
+Theater — the anchor's page shows the venue as the hero (with what's special about it),
+then a section like **"Steps from SoFi — within 5 minutes"** listing nearby spots sorted
+by distance, each showing distance + walk time (e.g. "0.3 mi · 6 min"). Cutoff ~1 mile /
+~5 min. This is the "I'm at the game — what's around me right now?" moment: the physical
+version of the app's core loop. It also doubles as the "near SoFi Stadium" SEO landing
+page (see growth notes).
+- **Needs coordinates (lat/lng)** for the anchor + businesses to compute distance. Google
+  Places returns these; if the DB doesn't store lat/lng yet, the photo backfill must add
+  them.
+
+### Add COSM
+COSM (immersive dome at Hollywood Park, next to SoFi) is a missing marquee anchor — add
+it with a real photo and the anchor treatment.
