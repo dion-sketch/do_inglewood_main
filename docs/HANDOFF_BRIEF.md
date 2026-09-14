@@ -200,6 +200,22 @@ own — the confusion is about WHERE things are verified. Follow this every time
   actually varied live before calling it done.
 (Append approved fixes here so they are never redone.)
 
+### Known root cause — disappearing images (FIX PROPERLY, don't patch)
+The app hotlinked ~34 fallback images from `images.unsplash.com`. Unsplash rate-limits
+and blocks hotlinking, so those images intermittently fail → black boxes / "disappearing"
+photos, all over the app, unpredictably. Every prior image "fix" relied on the same flaky
+external source, so it kept coming back.
+**RULE — no external image hosts for anything the app depends on.** Fallback/category
+images must be LOCAL (committed under `site/assets/`) or embedded as data URIs — never a
+hotlink to Unsplash or any third-party host. Every image must resolve to a final
+no-network layer (a designed inline-SVG card/gradient) so it can NEVER render black.
+Real per-business/venue photos (Supabase or committed assets) still take priority.
+
+### Deploy rule (locks images in on the live site)
+Deploy the **whole `site/` folder** (index.html + `assets/`), or connect **Netlify to the
+GitHub repo** so a push auto-deploys everything. **Never deploy `index.html` alone** — that
+drops the asset images and they break/vanish on the live site.
+
 ## 7. How to work with Dion (this is important to him)
 
 - **You can now SEE the site — use it.** Before saying anything is "done," open the site
