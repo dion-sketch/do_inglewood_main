@@ -293,3 +293,16 @@ Beyond COSM, curate Inglewood's iconic spots as landmarks/anchors:
 NOTE: many of these are likely ALREADY in the DB (imported from Google) — check first.
 The work is marking them as Experience/landmark, giving real photos, and the anchor
 treatment — not adding from scratch. (Post-v1.)
+
+### Researched destinations — "why people come to Inglewood" (curation targets)
+From research (Sept 2026). Group by why they come; mark as Experience/landmark:
+- **Events (the magnet):** SoFi Stadium, Kia Forum, Intuit Dome, YouTube Theater, COSM.
+- **Iconic landmark:** Randy's Donuts (the Big Donut, 1953; LA Conservancy historic).
+- **Hollywood Park district (eat/shop/play):** The Village at Hollywood Park, Hollywood
+  Park Casino, Cinépolis Luxury Cinemas (the theater is Cinépolis, NOT Cinemark; already
+  in app).
+- **Culture & history:** Inglewood Historical Society Museum, Centinela Adobe (1834,
+  oldest building), historic Market Street downtown, murals (already in app).
+- **Family:** Zimmer Children's Museum, Edward Vincent Jr. Park.
+- **Food heritage:** Dulan's Soul Food, Randy's, the soul-food/Black-owned scene.
+- **Do NOT add** City Hall — civic building, not a visitor destination.
