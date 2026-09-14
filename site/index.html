@@ -1042,42 +1042,42 @@ function addMenuRow(){ var h=document.getElementById('ob_menu'); if(h) h.insertA
 
 /* fallback curated imagery by category */
 const FB = {
-  mexican:"https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&q=70",
-  soul:"https://images.unsplash.com/photo-1432139555190-58524dae6a55?w=600&q=70",
-  seafood:"https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=600&q=70",
-  american:"https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&q=70",
-  lounge:"https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=600&q=70",
-  bar:"https://images.unsplash.com/photo-1572116469696-31de0f17cc34?w=600&q=70",
-  sports:"https://images.unsplash.com/photo-1577563908411-5077b6dc7624?w=600&q=70",
-  hotel:"https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=70",
-  dessert:"https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=600&q=70",
-  coffee:"https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600&q=70",
-  casino:"https://images.unsplash.com/photo-1596838132731-3301c3fd4317?w=600&q=70",
-  caribbean:"https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=70",
-  brunch:"https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?w=600&q=70",
-  event:"https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&q=70",
-  food:"https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=70",
-  barber:"https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=600&q=70",
-  salon:"https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600&q=70",
-  spa:"https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600&q=70",
-  nails:"https://images.unsplash.com/photo-1604654894610-df63bc536371?w=600&q=70",
-  tattoo:"https://images.unsplash.com/photo-1611501275019-9b5cda994e8d?w=600&q=70",
-  fitness:"https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&q=70",
-  beauty:"https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=600&q=70",
-  florist:"https://images.unsplash.com/photo-1563241527-3004b7be0ffd?w=600&q=70",
-  park:"https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600&q=70",
-  retail:"https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600&q=70"
+  mexican:"assets/cat/cat-01-k0kqal.jpg",
+  soul:"assets/cat/cat-02-yd9r1i.jpg",
+  seafood:"assets/cat/cat-03-nu6dv3.jpg",
+  american:"assets/cat/cat-04-irjxd2.jpg",
+  lounge:"assets/cat/cat-05-zbgt7k.jpg",
+  bar:"assets/cat/cat-06-6ks6a4.jpg",
+  sports:"assets/cat/cat-07-evzsz5.jpg",
+  hotel:"assets/cat/cat-08-uuijua.jpg",
+  dessert:"assets/cat/cat-09-681f2x.jpg",
+  coffee:"assets/cat/cat-10-yjhvtr.jpg",
+  casino:"assets/cat/cat-11-bbwbsm.jpg",
+  caribbean:"assets/cat/cat-12-r8wmew.jpg",
+  brunch:"assets/cat/cat-13-5oan6.jpg",
+  event:"assets/cat/cat-14-pgfyeu.jpg",
+  food:"assets/cat/cat-15-c5oggu.jpg",
+  barber:"assets/cat/cat-16-tvbs7x.jpg",
+  salon:"assets/cat/cat-17-txbilq.jpg",
+  spa:"assets/cat/cat-18-hp7j1m.jpg",
+  nails:"assets/cat/cat-19-jkeb6y.jpg",
+  tattoo:"assets/cat/cat-20-gi5hut.jpg",
+  fitness:"assets/cat/cat-21-z6yeut.jpg",
+  beauty:"assets/cat/cat-22-8gwhgj.jpg",
+  florist:"assets/cat/cat-23-xc2wis.jpg",
+  park:"assets/cat/cat-24-b5izuu.jpg",
+  retail:"assets/cat/cat-25-8wkbsd.jpg"
 };
 const FALLBACKS = {
-  Mexican:[FB.mexican,"https://images.unsplash.com/photo-1552332386-f8dd00dc2f85?w=600&q=70","https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=600&q=70"],
-  "Soul Food":[FB.soul,"https://images.unsplash.com/photo-1547592180-85f173990554?w=600&q=70","https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?w=600&q=70"],
-  Seafood:[FB.seafood,"https://images.unsplash.com/photo-1534943325882-3d9f3c5b4c3a?w=600&q=70","https://images.unsplash.com/photo-1559339352-11d035aa65de?w=600&q=70"],
-  American:[FB.american,"https://images.unsplash.com/photo-1550547660-d9450f859349?w=600&q=70","https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&q=70"],
-  Caribbean:[FB.caribbean,"https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?w=600&q=70","https://images.unsplash.com/photo-1547592180-85f173990554?w=600&q=70"],
-  Brunch:[FB.brunch,"https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=600&q=70","https://images.unsplash.com/photo-1525351484163-7529414344d8?w=600&q=70"],
-  Lounge:[FB.lounge,FB.sports,"https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=600&q=70"],
-  Bar:[FB.bar,FB.lounge,"https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=600&q=70"],
-  Sports:[FB.sports,FB.lounge,"https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=600&q=70"]
+  Mexican:[FB.mexican,"assets/cat/cat-26-ywz9j9.jpg","assets/cat/cat-27-iphbhj.jpg"],
+  "Soul Food":[FB.soul,"assets/cat/cat-28-xa8d6f.jpg","assets/cat/cat-29-530mag.jpg"],
+  Seafood:[FB.seafood,"assets/cat/cat-03-nu6dv3.jpg","assets/cat/cat-03-nu6dv3.jpg"],
+  American:[FB.american,"assets/cat/cat-03-nu6dv3.jpg","assets/cat/cat-03-nu6dv3.jpg"],
+  Caribbean:[FB.caribbean,"assets/cat/cat-29-530mag.jpg","assets/cat/cat-28-xa8d6f.jpg"],
+  Brunch:[FB.brunch,"assets/cat/cat-03-nu6dv3.jpg","assets/cat/cat-03-nu6dv3.jpg"],
+  Lounge:[FB.lounge,FB.sports,"assets/cat/cat-03-nu6dv3.jpg"],
+  Bar:[FB.bar,FB.lounge,"assets/cat/cat-03-nu6dv3.jpg"],
+  Sports:[FB.sports,FB.lounge,"assets/cat/cat-03-nu6dv3.jpg"]
 };
 function fallbackImg(category,name,tags){
   var key=category;
@@ -1315,9 +1315,10 @@ function bgLayers(p){
   // Guaranteed under-layer = an attractive category photo (never a letter tile),
   // so a blocked/failed/missing photo still shows a real, relevant image.
   var cat=catImg(p.cat||p.category, p.n||p.name, p.tags).replace(/'/g,'%27');
+  var safe=tileImg(p.n||p.name,p.k||p.n,p.cat||p.category).replace(/'/g,'%27');
   // Accept a real photo URL OR a designed inline card (marquee venues) — not just http.
   var photo=realImg(p.img) ? String(p.img).replace(/'/g,'%27') : cat;
-  return "url('"+photo+"'), url('"+cat+"')";
+  return "url('"+photo+"'), url('"+cat+"'), url('"+safe+"')";
 }
 function dbToApp(r){
   return {
@@ -1865,7 +1866,7 @@ function similarSpots(p){
   return '<div style="margin-top:22px"><div style="font-weight:800;font-size:15px;margin-bottom:10px">More '+(p.cat||'spots')+' like this</div>'+
     '<div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px">'+
     alts.map(function(x){return '<div onclick="openListing(\''+x.k+'\',lastList)" style="flex:0 0 auto;width:132px;cursor:pointer">'+
-      '<div style="height:86px;border-radius:10px;border:1px solid var(--line);background:#0f0f15 center/cover no-repeat;background-image:url(\''+similarImage(x).replace(/\'/g,"%27")+'\')"></div>'+
+      '<div style="height:86px;border-radius:10px;border:1px solid var(--line);background:#0f0f15 center/cover no-repeat;background-image:'+bgLayers(Object.assign({},x,{img:similarImage(x)}))+'></div>'+
       '<div style="font-size:12.5px;font-weight:700;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x.n+'</div>'+
       '<div style="font-size:11px;color:var(--muted)">'+starline(x)+' · '+(x.price||'')+'</div></div>';}).join('')+
     '</div></div>';
@@ -2312,8 +2313,8 @@ function buildHero(){
   if(!slides.length){ slides=[{img:venueTile('SoFi Stadium','a'),name:'SoFi Stadium'},{img:venueTile('Kia Forum','b'),name:'Kia Forum'},{img:venueTile('Intuit Dome','c'),name:'Intuit Dome'},{img:venueTile('YouTube Theater','d'),name:'YouTube Theater'}]; }
   var capEl=h.querySelector('.cap'), capB=h.querySelector('.cap b');
   slides.forEach(function(s,i){var d=document.createElement('div');d.className='slide'+(i===0?' on':'');
-    // Layer the photo OVER a guaranteed event image, so a broken/404 photo never leaves a black box.
-    d.style.backgroundImage="url('"+String(s.img).replace(/'/g,"%27")+"'), url('"+FB.event+"')";
+    // Layer the photo over local fallback art and a no-network SVG safety card.
+    d.style.backgroundImage="url('"+String(s.img).replace(/'/g,"%27")+"'), url('"+FB.event+"'), url('"+venueTile(s.name,String(i)).replace(/'/g,"%27")+"')";
     if(capEl)h.insertBefore(d,capEl);else h.insertBefore(d,h.firstChild);});
   if(capB&&slides[0])capB.textContent=slides[0].name;
   if(slides.length>1){ var hi=0; heroTimer=setInterval(function(){ var sl=h.querySelectorAll('.slide'); if(!sl.length)return; sl[hi].classList.remove('on'); hi=(hi+1)%sl.length; sl[hi].classList.add('on'); if(capB&&slides[hi])capB.textContent=slides[hi].name; },3600); }
