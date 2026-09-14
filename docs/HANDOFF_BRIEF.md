@@ -60,6 +60,16 @@ One switch for the owner powers the badge, the feed, and the notifications.
 gold one; businesses see the dark slot and want to light it up. It's the #1 Yelp
 differentiator.
 
+**Chosen button style — "Neon Marquee"** (dark fill, pulsing gold neon outline, like a
+casino sign). This is the LIT hero CTA look:
+- `background:#160f1c; color:#ffd76a; border:2px solid #f5c542;`
+- `text-shadow:0 0 9px rgba(245,197,66,.75);`
+- `box-shadow:0 0 20px rgba(245,197,66,.5), inset 0 0 14px rgba(245,197,66,.22);`
+- gentle pulse animation (box-shadow 16px↔30px over ~2.4s), disabled under
+  `prefers-reduced-motion`. Bold display caps, letter-spacing.
+Secondary buttons stay ghost/outline; DIM state stays faded + unclickable. Gold is an
+accent — one neon hero per screen, everything else dark/ghost.
+
 **The notification engine (the Groupon-style daily draw):** the one featured deal feeds:
 1. The gold button + card flag on the business.
 2. Home **"Today's Deals"** (curated top few).
