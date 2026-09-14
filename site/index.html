@@ -1107,41 +1107,47 @@ const PB = {}; P.forEach(p=>PB[p.k]=p);
 
 /* ============ LOAD BUSINESSES FROM SUPABASE (falls back to built-in list) ============ */
 const CATIMG = {"Mexican":FB.mexican,"Soul Food":FB.soul,"Seafood":FB.seafood,"American":FB.american,"Restaurant":FB.food,"Food":FB.food,"Caribbean":FB.caribbean,"Lounge":FB.lounge,"Bar":FB.bar,"Casino":FB.casino,"Brunch":FB.brunch,"Dessert":FB.dessert,"Coffee":FB.coffee,"Hotels":FB.hotel,"Event Space":FB.event,"Movie":FB.event,"Stadium":FB.event,"Landmark":FB.event,"Park":FB.park,"Florist":FB.florist,"Barbershop":FB.barber,"Salon":FB.salon,"Nails":FB.nails,"Spa":FB.spa,"Massage":FB.spa,"Tattoo":FB.tattoo,"Beauty":FB.beauty,"Fitness":FB.fitness,"Photography":FB.event,"Auto":FB.retail,"Medical":FB.spa,"Dental":FB.spa,"Retail":FB.retail};
-/* Any category → an attractive stock photo. Exact match first, then loose keyword
-   match, then a safe generic — so a business ALWAYS gets a real image, never a letter. */
-function catImg(cat){
-  if(!cat) return FB.food;
-  if(CATIMG[cat]) return CATIMG[cat];
-  var k=String(cat).toLowerCase();
-  if(/coffee|cafe|café|tea|espresso/.test(k)) return FB.coffee;
-  if(/dessert|bakery|boba|ice ?cream|donut|sweet|cake/.test(k)) return FB.dessert;
-  if(/night ?club|club/.test(k)) return FB.bar;
-  if(/bar|pub|brew|tavern/.test(k)) return FB.bar;
+/* Any business → an attractive stock photo. Exact category match first, then a loose
+   keyword match across category + NAME + tags (so an auto shop or tattoo studio filed
+   under the generic "Services" still gets the right image), then a safe generic —
+   so a business ALWAYS gets a real, relevant image, never a letter. */
+function catImg(cat,name,tags){
+  if(cat && CATIMG[cat]) return CATIMG[cat];                 // specific known category wins
+  var k=[cat,name].concat(Array.isArray(tags)?tags:[]).join(' ').toLowerCase();
+  if(!k.trim()) return FB.food;
+  // Appointment economy + specific services FIRST (most likely to be mis-bucketed as "Services").
+  // Short/ambiguous tokens use \b word boundaries so "Tea"rs≠tea, "Bar"barita≠bar, "spa"ce≠spa.
+  if(/barber|barbershop/.test(k)) return FB.barber;
+  if(/tattoo|piercing|\bink\b/.test(k)) return FB.tattoo;
+  if(/\bnails?\b|manicure|pedicure/.test(k)) return FB.nails;
+  if(/salon|\bhair\b|haircut|braids?|locs?|weave/.test(k)) return FB.salon;
+  if(/\bspa\b|massage|\bwax(ing)?\b|facial|skincare|skin care/.test(k)) return FB.spa;
+  if(/beauty|lashes|\blash\b|\bbrows?\b|makeup|cosmet|aesthetic/.test(k)) return FB.beauty;
+  if(/fitness|\bgym\b|yoga|pilates|crossfit|workout|training studio|personal train/.test(k)) return FB.fitness;
+  if(/auto|automotive|repair|\btire\b|mechanic|smog|oil change|body shop|car ?wash|detailing/.test(k)) return FB.retail;
+  if(/medical|dental|\bclinic\b|urgent care|doctor|dentist|orthodont|physical therapy|chiro/.test(k)) return FB.spa;
+  if(/florist|flowers?|floral/.test(k)) return FB.florist;
+  if(/photograph|photo studio/.test(k)) return FB.event;
+  // Food & nightlife.
+  if(/coffee|\bcafe\b|café|\btea\b|espresso|latte|roaster/.test(k)) return FB.coffee;
+  if(/dessert|bakery|boba|ice ?cream|donut|creamery|\bcake\b|pastr|gelato/.test(k)) return FB.dessert;
   if(/lounge/.test(k)) return FB.lounge;
-  if(/seafood|fish|oyster|crab/.test(k)) return FB.seafood;
-  if(/mexican|taco|taqueria|birria|cantina/.test(k)) return FB.mexican;
-  if(/soul|southern|bbq|barbe/.test(k)) return FB.soul;
-  if(/caribbean|jerk|jamaic/.test(k)) return FB.caribbean;
-  if(/brunch|breakfast/.test(k)) return FB.brunch;
-  if(/hotel|inn|motel|suites|stay|lodg/.test(k)) return FB.hotel;
-  if(/sport/.test(k)) return FB.sports;
+  if(/night ?club|\bclub\b|\bbar\b|\bpub\b|brewery|tavern|cocktail/.test(k)) return FB.bar;
+  if(/seafood|\bfish\b|oyster|\bcrab\b|shrimp|lobster/.test(k)) return FB.seafood;
+  if(/mexican|\btaco|taqueria|birria|cantina|burrito|mariscos/.test(k)) return FB.mexican;
+  if(/soul food|southern|\bbbq\b|barbecue/.test(k)) return FB.soul;
+  if(/caribbean|jerk|jamaic|island/.test(k)) return FB.caribbean;
+  if(/brunch|breakfast|pancake|waffle/.test(k)) return FB.brunch;
+  if(/hotel|\binn\b|motel|suites|lodg|resort/.test(k)) return FB.hotel;
   if(/casino|gaming|poker/.test(k)) return FB.casino;
-  if(/barber/.test(k)) return FB.barber;
-  if(/salon|hair/.test(k)) return FB.salon;
-  if(/nail|manicure/.test(k)) return FB.nails;
-  if(/spa|massage|wax|facial/.test(k)) return FB.spa;
-  if(/tattoo|ink|piercing/.test(k)) return FB.tattoo;
-  if(/beauty|lash|brow|makeup|cosmet/.test(k)) return FB.beauty;
-  if(/fitness|gym|yoga|pilates|crossfit|train/.test(k)) return FB.fitness;
-  if(/florist|flower|floral/.test(k)) return FB.florist;
-  if(/park|garden|trail|rec/.test(k)) return FB.park;
-  if(/photo/.test(k)) return FB.event;
-  if(/event|venue|hall|banquet/.test(k)) return FB.event;
-  if(/stadium|arena|dome|forum/.test(k)) return FB.event;
-  if(/landmark|mural|museum|art/.test(k)) return FB.event;
-  if(/auto|repair|tire|mechanic|car ?wash/.test(k)) return FB.retail;
-  if(/shop|store|market|boutique|retail/.test(k)) return FB.retail;
-  if(/medical|dental|clinic|health|doctor|dentist/.test(k)) return FB.spa;
+  if(/\bsports?\b/.test(k)) return FB.sports;
+  // Places & venues.
+  if(/stadium|arena|\bdome\b|\bforum\b/.test(k)) return FB.event;
+  if(/event|venue|banquet|\bhall\b/.test(k)) return FB.event;
+  if(/landmark|mural|museum|gallery/.test(k)) return FB.event;
+  if(/\bpark\b|garden|\btrail\b|recreation/.test(k)) return FB.park;
+  if(/\bshop\b|store|\bmarket\b|boutique|retail|clothing|apparel/.test(k)) return FB.retail;
+  if(/restaurant|grill|kitchen|\bfood\b|eatery|diner|\bcafe\b/.test(k)) return FB.food;
   return FB.food; // safe, appetizing generic
 }
 /* Branded placeholder tiles — each business gets a unique, clean gradient
@@ -1183,8 +1189,8 @@ function venueTile(title,seed){
 function pickImg(r){
   // 1) the business's own real photo (from Google backfill) always wins
   if(r.photo_url && String(r.photo_url).indexOf('http')===0) return r.photo_url;
-  // 2) otherwise an attractive category photo — so EVERY business shows a real image
-  return catImg(r.category);
+  // 2) otherwise an attractive, category/name-appropriate photo — so EVERY business shows a real image
+  return catImg(r.category, r.name, r.tags);
 }
 // Layered background: the real photo (if any) OVER a colored tile, so a blocked/
 // failed/missing photo never leaves a blank box — the tile shows through.
@@ -1192,7 +1198,7 @@ function pickImg(r){
 function bgLayers(p){
   // Guaranteed under-layer = an attractive category photo (never a letter tile),
   // so a blocked/failed/missing photo still shows a real, relevant image.
-  var cat=catImg(p.cat||p.category).replace(/'/g,'%27');
+  var cat=catImg(p.cat||p.category, p.n||p.name, p.tags).replace(/'/g,'%27');
   var photo=(p.img && String(p.img).indexOf('http')===0) ? p.img.replace(/'/g,'%27') : cat;
   return "url('"+photo+"'), url('"+cat+"')";
 }
@@ -2156,7 +2162,10 @@ function buildHero(){
       if(!slides.some(function(s){return s.name===b.n;})) slides.push({img:b.img,name:b.n}); } }
   if(!slides.length){ slides=[{img:venueTile('SoFi Stadium','a'),name:'SoFi Stadium'},{img:venueTile('Kia Forum','b'),name:'Kia Forum'},{img:venueTile('Intuit Dome','c'),name:'Intuit Dome'},{img:venueTile('YouTube Theater','d'),name:'YouTube Theater'}]; }
   var capEl=h.querySelector('.cap'), capB=h.querySelector('.cap b');
-  slides.forEach(function(s,i){var d=document.createElement('div');d.className='slide'+(i===0?' on':'');d.style.backgroundImage='url("'+s.img+'")';if(capEl)h.insertBefore(d,capEl);else h.insertBefore(d,h.firstChild);});
+  slides.forEach(function(s,i){var d=document.createElement('div');d.className='slide'+(i===0?' on':'');
+    // Layer the photo OVER a guaranteed event image, so a broken/404 photo never leaves a black box.
+    d.style.backgroundImage="url('"+String(s.img).replace(/'/g,"%27")+"'), url('"+FB.event+"')";
+    if(capEl)h.insertBefore(d,capEl);else h.insertBefore(d,h.firstChild);});
   if(capB&&slides[0])capB.textContent=slides[0].name;
   if(slides.length>1){ var hi=0; heroTimer=setInterval(function(){ var sl=h.querySelectorAll('.slide'); if(!sl.length)return; sl[hi].classList.remove('on'); hi=(hi+1)%sl.length; sl[hi].classList.add('on'); if(capB&&slides[hi])capB.textContent=slides[hi].name; },3600); }
 }
