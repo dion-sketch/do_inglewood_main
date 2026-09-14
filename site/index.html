@@ -2330,7 +2330,8 @@ function buildHero(){
   // Keep the headline banner focused on main event destinations, never arbitrary listings.
   var slides=[];
   ['sofi','intuit','forum','youtube','casino'].forEach(function(id){
-    var p=findBiz(id); if(p) slides.push({img:realImg(p.img)?p.img:marqueeCard(p.n)||venueTile(p.n,id),name:p.n});
+    var p=findBiz(id), name=p&&p.n||({sofi:'SoFi Stadium',intuit:'Intuit Dome',forum:'Kia Forum',youtube:'YouTube Theater',casino:'Hollywood Park Casino'}[id]);
+    if(p||name){ var local=venuePhoto(name); slides.push({img:local||realImg(p&&p.img)?p.img:marqueeCard(name)||venueTile(name,id),name:name}); }
   });
   if(!slides.length){ slides=[{img:venueTile('SoFi Stadium','a'),name:'SoFi Stadium'},{img:venueTile('Kia Forum','b'),name:'Kia Forum'},{img:venueTile('Intuit Dome','c'),name:'Intuit Dome'},{img:venueTile('YouTube Theater','d'),name:'YouTube Theater'}]; }
   var capEl=h.querySelector('.cap'), capB=h.querySelector('.cap b');
