@@ -1071,6 +1071,10 @@ const FB = {
 const FALLBACKS = {
   Mexican:[FB.mexican,"https://images.unsplash.com/photo-1552332386-f8dd00dc2f85?w=600&q=70","https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=600&q=70"],
   "Soul Food":[FB.soul,"https://images.unsplash.com/photo-1547592180-85f173990554?w=600&q=70","https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?w=600&q=70"],
+  Seafood:[FB.seafood,"https://images.unsplash.com/photo-1534943325882-3d9f3c5b4c3a?w=600&q=70","https://images.unsplash.com/photo-1559339352-11d035aa65de?w=600&q=70"],
+  American:[FB.american,"https://images.unsplash.com/photo-1550547660-d9450f859349?w=600&q=70","https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&q=70"],
+  Caribbean:[FB.caribbean,"https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?w=600&q=70","https://images.unsplash.com/photo-1547592180-85f173990554?w=600&q=70"],
+  Brunch:[FB.brunch,"https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=600&q=70","https://images.unsplash.com/photo-1525351484163-7529414344d8?w=600&q=70"],
   Lounge:[FB.lounge,FB.sports,"https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=600&q=70"],
   Bar:[FB.bar,FB.lounge,"https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=600&q=70"],
   Sports:[FB.sports,FB.lounge,"https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=600&q=70"]
@@ -1853,10 +1857,21 @@ function similarSpots(p){
   if(alts.length<2){ alts=P.filter(function(x){return x.k!==p.k && (x.tags||[]).some(function(t){return (p.tags||[]).indexOf(t)>=0;}) && hasPhoto(x);}); }
   alts=alts.slice(0,8);
   if(!alts.length) return '';
+  var usedImages={};
+  function similarImage(x){
+    var source=String(x.img||'');
+    var isCuratedFallback=Object.keys(FB).some(function(k){return FB[k]===source;}) || Object.keys(FALLBACKS).some(function(k){return FALLBACKS[k].indexOf(source)>=0;});
+    if(usedImages[source] && isCuratedFallback){
+      var varied=fallbackImg(x.cat,x.n,x.tags);
+      if(varied && !usedImages[varied]) source=varied;
+    }
+    usedImages[source]=1;
+    return source;
+  }
   return '<div style="margin-top:22px"><div style="font-weight:800;font-size:15px;margin-bottom:10px">More '+(p.cat||'spots')+' like this</div>'+
     '<div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px">'+
     alts.map(function(x){return '<div onclick="openListing(\''+x.k+'\',lastList)" style="flex:0 0 auto;width:132px;cursor:pointer">'+
-      '<div style="height:86px;border-radius:10px;border:1px solid var(--line);background:#0f0f15 center/cover no-repeat;background-image:url(\''+String(x.img).replace(/\'/g,"%27")+'\')"></div>'+
+      '<div style="height:86px;border-radius:10px;border:1px solid var(--line);background:#0f0f15 center/cover no-repeat;background-image:url(\''+similarImage(x).replace(/\'/g,"%27")+'\')"></div>'+
       '<div style="font-size:12.5px;font-weight:700;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x.n+'</div>'+
       '<div style="font-size:11px;color:var(--muted)">'+starline(x)+' · '+(x.price||'')+'</div></div>';}).join('')+
     '</div></div>';
