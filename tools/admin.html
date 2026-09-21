@@ -143,7 +143,7 @@ async function doSearchBiz(){
   var q=$('bizsearch').value.trim();
   if(q.length<2){ $('biz-list').innerHTML='<div class="mut">Type a name to find a business.</div>'; return; }
   try{
-    const rows=await api('di_businesses?select=id,name,category,tier,address,is_active,approved,is_large&name=ilike.*'+encodeURIComponent(q)+'*&limit=40',{headers:H()});
+    const rows=await api('di_businesses?select=id,name,category,tier,address,is_active,approved,is_large,featured&name=ilike.*'+encodeURIComponent(q)+'*&limit=40',{headers:H()});
     if(!rows.length){ $('biz-list').innerHTML='<div class="mut">No matches.</div>'; return; }
     $('biz-list').innerHTML=rows.map(function(b){
       var paused=(b.is_active===false);
@@ -153,6 +153,7 @@ async function doSearchBiz(){
         '<div class="mut">'+esc(b.category||'')+'</div>'+
         '<input id="addr-'+b.id+'" type="text" value="'+esc(b.address||'')+'" placeholder="address" style="margin-top:6px"></div>'+
         '<label class="mut" style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="large-'+b.id+'"'+(b.is_large?' checked':'')+'> Large (Enterprise)</label>'+
+        '<label class="mut" style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="featured-'+b.id+'"'+(b.featured?' checked':'')+'> Featured (paid placement)</label>'+
         '<select id="tier-'+b.id+'"><option value="1"'+(b.tier==1?' selected':'')+'>Free</option><option value="2"'+(b.tier==2?' selected':'')+'>Verified</option><option value="3"'+(b.tier==3?' selected':'')+'>Premium ⭐</option></select>'+
         '<button class="primary" onclick="saveBiz(\''+b.id+'\')">Save</button>'+
         (pending?'<button class="g" onclick="approveBiz(\''+b.id+'\')">Approve → publish</button>':'')+
@@ -163,9 +164,9 @@ async function doSearchBiz(){
 }
 async function saveBiz(id){
   var t=+$('tier-'+id).value;
-  var addrEl=$('addr-'+id), largeEl=$('large-'+id);
-  var body={tier:t}; if(addrEl) body.address=addrEl.value; if(largeEl) body.is_large=largeEl.checked;
-  try{ await fetch(SUPABASE_URL+'/rest/v1/di_businesses?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:HJ(),body:JSON.stringify(body)}); msg('Saved ✓ tier '+t+(largeEl&&largeEl.checked?' · Enterprise':'')); }catch(e){ msg('Error: '+e.message); }
+  var addrEl=$('addr-'+id), largeEl=$('large-'+id), featuredEl=$('featured-'+id);
+  var body={tier:t}; if(addrEl) body.address=addrEl.value; if(largeEl) body.is_large=largeEl.checked; if(featuredEl) body.featured=featuredEl.checked;
+  try{ await fetch(SUPABASE_URL+'/rest/v1/di_businesses?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:HJ(),body:JSON.stringify(body)}); msg('Saved ✓ tier '+t+(largeEl&&largeEl.checked?' · Enterprise':'')+(featuredEl&&featuredEl.checked?' · Featured':'')); }catch(e){ msg('Error: '+e.message); }
 }
 async function approveBiz(id){
   try{ await fetch(SUPABASE_URL+'/rest/v1/di_businesses?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:HJ(),body:JSON.stringify({approved:true})}); msg('Approved ✓ now visible in the app'); doSearchBiz(); }catch(e){ msg('Error: '+e.message); }

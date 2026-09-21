@@ -86,7 +86,7 @@
   .surprise-option:active{border-color:var(--gold);color:var(--gold);transform:scale(.98);}
   .surprise-picks{display:grid;gap:12px;margin-top:18px;}
   .surprise-pick{display:grid;grid-template-columns:92px 1fr;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px;cursor:pointer;}
-  .surprise-pick .pic{height:92px;border-radius:10px;background:center/cover no-repeat;}
+  .surprise-pick .pic{position:relative;height:92px;border-radius:10px;background:center/cover no-repeat;}
   .surprise-pick .name{font-weight:800;font-size:15px;}
   .surprise-pick .meta{font-size:11px;color:var(--muted);margin-top:4px;}
   .surprise-pick .why{font-size:12px;line-height:1.35;margin-top:7px;color:#e4e4ea;}
@@ -114,6 +114,7 @@
   .chip-verified{background:rgba(54,211,154,.15);color:var(--green);border:1px solid rgba(54,211,154,.35);}
   .chip-sponsored{background:linear-gradient(90deg,rgba(255,46,126,.22),rgba(245,197,66,.22));color:var(--gold);border:1px solid var(--gold);font-weight:700;}
   .chip-special{background:var(--grad);color:#1a0010;}
+  .chip-featured{background:linear-gradient(180deg,#ffeeb0,#f5c542);color:#1a1400;border:1px solid #f5c542;font-weight:800;}
   .badge-tl{position:absolute;top:8px;left:8px;}
   .badge-tr{position:absolute;top:8px;right:8px;}
 
@@ -917,6 +918,7 @@ function renderOwner(){
     : '';
   var specialBlock = paid
     ? '<label class="flbl">Today\'s Deal <span style="color:var(--muted);font-weight:500">(featured offer)</span></label><input id="ob_special" class="finput" oninput="previewOwnerDeal(this.value)" placeholder="e.g. Free dessert with any entree today" value="'+String(b.special||'').replace(/"/g,'&quot;')+'"><div id="deal-preview" class="deal-preview"></div>'+
+      '<label class="mut" style="display:flex;align-items:center;gap:8px;margin:8px 0 4px;font-size:12.5px"><input type="checkbox" id="ob_gameday"'+(b.game_day_special?' checked':'')+'> &#127944; Highlight as a Game Day Special (shows on event pages near SoFi, Kia Forum, Intuit Dome)</label>'+
       '<label class="flbl">&#11088; Do Member deal <span style="color:var(--muted);font-weight:500">(discount for app members — draws customers in)</span></label><input id="ob_mdeal" class="finput" placeholder="e.g. 10% off for Do Members" value="'+String(b.mdeal||b.member_deal||'').replace(/"/g,'&quot;')+'">'
     : '<input id="ob_special" type="hidden" value="'+String(b.special||'').replace(/"/g,'&quot;')+'"><input id="ob_mdeal" type="hidden" value="'+String(b.mdeal||b.member_deal||'').replace(/"/g,'&quot;')+'">';
   var menuBlock = paid
@@ -978,6 +980,7 @@ async function saveMyBiz(){
     upd.notify_email=gv('ob_notify')||null;
     var sp=document.getElementById('ob_special'); if(sp) upd.special=(sp.value||'').trim()||null;
     var md=document.getElementById('ob_mdeal'); if(md) upd.member_deal=(md.value||'').trim()||null;
+    var gd=document.getElementById('ob_gameday'); if(gd) upd.game_day_special=!!gd.checked;
     var menu=[]; document.querySelectorAll('#ob_menu .menu-item').forEach(function(row){ var ne=row.querySelector('.menu-name'), pe=row.querySelector('.menu-price'); var n=(ne&&ne.value||'').trim(); if(n) menu.push({name:n, price:(pe&&pe.value||'').trim()}); });
     upd.menu = menu.length?menu:null;
   }
@@ -1355,6 +1358,7 @@ function dbToApp(r){
     price:r.price_level, cpp:r.avg_per_person||0, hrs:r.hours,
     q:r.review_quote, tier:r.tier||1, special:r.special||null, mdeal:r.member_deal||null,
     book:r.booking_url||null, prov:r.reservation_provider||null,
+    featured:!!r.featured, gameDay:!!r.game_day_special,
     claimed:!!r.claimed_by,
     photos:r.photos||[], menu:r.menu||[],
     img: pickImg(r)
@@ -1605,15 +1609,34 @@ function matchFilter(p,f){
 
 function starline(p){ if(p.r==null||p.r===''){return '<span style="color:var(--muted)">New spot</span>';} return `<span class="star">&#9733;</span> ${p.r} · ${p.rc>999?(p.rc/1000).toFixed(1)+'k':(p.rc||0)}`;}
 function isSponsored(p){ return !!(p && p.tier>=3); }
+function isFeatured(p){ return !!(p && p.featured); }
 function isDealLit(p){ return !!(p && p.tier>=2 && String(p.special||'').trim()); }
-function dealFlag(p){ return isDealLit(p)?'<span class="deal-flag">&#127903; TODAY\'S DEAL</span>':''; }
+function isGameDaySpecial(p){ return !!(p && p.gameDay && isDealLit(p)); }
+// Short offer text for a badge (e.g. "20% off before the game") — trimmed so it never wraps a card.
+function dealOfferText(p){
+  var s=String((p&&p.special)||'').trim(); if(!s) return '';
+  return s.length>34 ? s.slice(0,33)+'…' : s;
+}
+// The bright gold deal badge — shown on every card with an active special (Explore,
+// game-day planner, Surprise Me, Specials, Home). Game Day specials get their own label.
+function dealFlag(p){
+  if(!isDealLit(p)) return '';
+  var txt=dealOfferText(p);
+  var label=isGameDaySpecial(p)?'&#127944; GAME DAY DEAL':"&#127903; TODAY'S DEAL";
+  return '<span class="deal-flag">'+label+(txt?': '+xmlEsc(txt):'')+'</span>';
+}
+// Paid top-tier placement — always clearly labeled so guests know it's promoted.
+function featuredBadge(p){ return isFeatured(p)?'<span class="chip chip-featured badge-tl">&#11088; Featured</span>':''; }
+// Sort weight used everywhere a list needs deals/featured spots first: Featured > Game
+// Day deal > any active deal > everything else. Higher score sorts first.
+function dealSortScore(p){ return (isFeatured(p)?4:0)+(isGameDaySpecial(p)?2:0)+(isDealLit(p)?1:0); }
 function tierBadge(p){
   if(p.tags && p.tags.indexOf('Coming Soon')>=0)return '<span class="chip chip-special badge-tr">&#128197; Coming Soon</span>';
   if(isDealLit(p))return '';
   if(isSponsored(p))return '<span class="chip chip-sponsored badge-tr">&#11088; Sponsored</span>';
   if(p.special)return '<span class="chip chip-special badge-tr">&#127863; Special</span>';
   if(p.tier>=2)return '<span class="chip chip-verified badge-tr">Verified</span>';
-  return '<span class="chip chip-import badge-tl">Imported</span>';
+  return '<span class="chip chip-import badge-tr">Imported</span>';
 }
 
 /* HOME cards */
@@ -1622,7 +1645,7 @@ function realImg(u){ return !!u && (String(u).indexOf('http')===0 || String(u).i
 function hasPhoto(p){ return !!(p && realImg(p.img)); }
 function cardHTML(p){
   return `<div class="card" onclick="openListing('${p.k}','home')">
-    <div class="img" style="background-image:${bgLayers(p)}">${tierBadge(p)}</div>
+    <div class="img" style="background-image:${bgLayers(p)}">${featuredBadge(p)}${tierBadge(p)}</div>
     <div class="body"><div class="name">${xmlEsc(p.n)}</div><div class="meta">${starline(p)} · ${xmlEsc(p.price)}</div>${dealFlag(p)}</div>
   </div>`;
 }
@@ -1657,23 +1680,25 @@ function findBiz(id){
 function buildHome(){
   const popIds=['twohommes','sixseven','dulans','nile','meeting','conis'];
   const nearIds=['sofi','forum','intuit','anthem','casino','crestridge'];
-  // Popping: PAID sponsored spots first, then curated favourites, topped up with high-rated photo'd spots
+  // Popping: Featured (paid top placement) first, then PAID sponsored spots, then curated favourites,
+  // topped up with high-rated photo'd spots
   var used={};
-  var sponsored=P.filter(p=>isSponsored(p)&&hasPhoto(p)&&!isDealLit(p)&&!p.mdeal);
-  var pop=sponsored.concat(popIds.map(findBiz).filter(p=>p&&hasPhoto(p)&&!isDealLit(p)&&!p.mdeal&&sponsored.indexOf(p)<0));
+  var featured=P.filter(p=>isFeatured(p)&&hasPhoto(p)&&!isDealLit(p)&&!p.mdeal);
+  var sponsored=P.filter(p=>isSponsored(p)&&hasPhoto(p)&&!isDealLit(p)&&!p.mdeal&&featured.indexOf(p)<0);
+  var pop=featured.concat(sponsored).concat(popIds.map(findBiz).filter(p=>p&&hasPhoto(p)&&!isDealLit(p)&&!p.mdeal&&featured.indexOf(p)<0&&sponsored.indexOf(p)<0));
   if(pop.length<6){ for(var k in PB){ if(pop.length>=10)break; var b=PB[k]; if(hasPhoto(b)&&pop.indexOf(b)<0&&(b.tier>=2||(b.r||0)>=4.4)) pop.push(b); } }
   pop.forEach(function(p){used[p.k]=1;});
   var usedImages={};
   document.getElementById('popping-cards').innerHTML=allocateHomeCards(pop,usedImages).map(cardHTML).join('');
   var near=nearIds.map(findBiz).filter(p=>p&&hasPhoto(p)&&!used[p.k]).map(function(p){used[p.k]=1;return p;});
   document.getElementById('near-cards').innerHTML=allocateHomeCards(near,usedImages).map(cardHTML).join('');
-  const spec=P.filter(p=>isDealLit(p)&&hasPhoto(p)&&!used[p.k]).slice(0,6);
+  const spec=P.filter(p=>isDealLit(p)&&hasPhoto(p)&&!used[p.k]).sort(function(a,b){return dealSortScore(b)-dealSortScore(a);}).slice(0,6);
   spec.forEach(function(p){used[p.k]=1;});
   var sc=document.getElementById('special-cards'); var offersSect=sc.closest('.sect');
   if(spec.length){ sc.innerHTML=allocateHomeCards(spec,usedImages).map(cardHTML).join(''); if(offersSect)offersSect.style.display=''; }
   else if(offersSect){ offersSect.style.display='none'; }   // hide "Today's Offers" until a paid business posts a real special
   // Member Deals — the download magnet
-  const deals=P.filter(p=>p.mdeal&&hasPhoto(p)&&!used[p.k]).slice(0,6);
+  const deals=P.filter(p=>p.mdeal&&hasPhoto(p)&&!used[p.k]).sort(function(a,b){return dealSortScore(b)-dealSortScore(a);}).slice(0,6);
   deals.forEach(function(p){used[p.k]=1;});
   var mc=document.getElementById('member-cards'), msect=document.getElementById('member-sect');
   if(deals.length && mc){ mc.innerHTML=allocateHomeCards(deals,usedImages).map(dealCardHTML).join(''); if(msect)msect.style.display=''; }
@@ -1708,11 +1733,14 @@ function filterTo(f){go('explore');curFilter=f;buildFilters();renderExplore();}
 function isComingSoon(p){ return p.tags && p.tags.indexOf('Coming Soon')>=0; }
 function listBadge(p){
   if(isComingSoon(p)) return '<span class="chip chip-special">&#128197; Coming Soon</span>';
-  if(isDealLit(p)) return dealFlag(p);
-  if(isSponsored(p)) return '<span class="chip chip-sponsored">&#11088; Sponsored</span>';
-  if(p.special) return '<span class="chip chip-special">&#127863; Special</span>';
-  if(p.tier>=2) return '<span class="chip chip-verified">Verified</span>';
-  return '<span class="chip chip-import">Imported</span>';
+  var badges=[];
+  if(isFeatured(p)) badges.push('<span class="chip chip-featured">&#11088; Featured</span>');
+  if(isDealLit(p)) badges.push(dealFlag(p));
+  else if(isSponsored(p)) badges.push('<span class="chip chip-sponsored">&#11088; Sponsored</span>');
+  else if(p.special) badges.push('<span class="chip chip-special">&#127863; Special</span>');
+  else if(p.tier>=2) badges.push('<span class="chip chip-verified">Verified</span>');
+  else badges.push('<span class="chip chip-import">Imported</span>');
+  return badges.join(' ');
 }
 function exploreMatches(){
   var box=document.getElementById('searchBox');
@@ -1720,8 +1748,8 @@ function exploreMatches(){
   var list=P.filter(p=>matchFilter(p,curFilter));
   if(q){ list=list.filter(function(p){ return (p.n+' '+p.cat+' '+((p.tags||[]).join(' '))+' '+(p.addr||'')).toLowerCase().indexOf(q)>=0; }); }
   else { list=list.filter(hasPhoto); }   // browsing shows only spots WITH a real photo; a search still finds every spot
-  // Paid (Premium) businesses surface to the top — the promoted-spot they're paying for
-  list=list.slice().sort(function(a,b){ return (isSponsored(b)?1:0)-(isSponsored(a)?1:0); });
+  // Featured + active-deal businesses surface to the top of every section, then paid (Premium) placement
+  list=list.slice().sort(function(a,b){ var s=dealSortScore(b)-dealSortScore(a); if(s) return s; return (isSponsored(b)?1:0)-(isSponsored(a)?1:0); });
   return list;
 }
 function hoursCardHTML(p){
@@ -1817,19 +1845,21 @@ function renderSpecials(){
   buildSpecialsFilters(); updateNotifyLabel();
   var el=document.getElementById('specials-list'); if(!el)return;
   var list=P.filter(function(p){ return hasLiveDeal(p)&&specialsCatMatch(p,specialsCat); });
-  // Sponsored/paid specials surface first, then the rest
-  list=list.slice().sort(function(a,b){ return (isSponsored(b)?1:0)-(isSponsored(a)?1:0); });
+  // Featured + Game Day deals surface first, then paid (Premium) placement, then the rest
+  list=list.slice().sort(function(a,b){ var s=dealSortScore(b)-dealSortScore(a); if(s) return s; return (isSponsored(b)?1:0)-(isSponsored(a)?1:0); });
   if(!list.length){
     el.innerHTML='<div style="padding:40px 20px;text-align:center;color:var(--muted);font-size:14px">No live specials in this category right now. Try another vibe — or check back soon, new offers drop all day.</div>';
     return;
   }
   el.innerHTML=list.map(function(p,i){
     var offer = p.special ? xmlEsc(p.special) : '<span style="color:var(--gold)">&#128274; Join free to unlock</span>';
+    var badges=(isFeatured(p)?'<span class="chip chip-featured">&#11088; Featured</span> ':'')+(isDealLit(p)?dealFlag(p):'');
     return `<div class="listcard" style="animation-delay:${i*0.02}s" onclick="openListing('${p.k}','specials')">
         <div class="img" style="background-image:${bgLayers(p)}"></div>
         <div class="info">
           <div class="name">${xmlEsc(p.n)}</div>
           <div class="sub">${xmlEsc(p.cat)}${p.addr?' · '+xmlEsc(p.addr):''}</div>
+          ${badges?`<div style="margin-top:4px">${badges}</div>`:''}
           <div style="font-size:12.5px;color:var(--gold);font-weight:700;margin-top:3px;line-height:1.35">${offer}</div>
         </div>
       </div>`;
@@ -1851,10 +1881,10 @@ function surpriseMatches(p){
   var o=openNow(p.hrs); return !o||o.open;
 }
 function renderSurprisePicks(){
-  var pool=P.filter(surpriseMatches); if(!pool.length)pool=P.filter(hasPhoto); pool.sort(function(a,b){return (isDealLit(b)?1:0)-(isDealLit(a)?1:0)||(b.r||0)-(a.r||0);});
+  var pool=P.filter(surpriseMatches); if(!pool.length)pool=P.filter(hasPhoto); pool.sort(function(a,b){return dealSortScore(b)-dealSortScore(a)||(b.r||0)-(a.r||0);});
   var picks=pool.slice(0,3), today=EV.filter(function(e){return e.date===isoOf(new Date());})[0];
   var heading=today?'Three picks, including a spot near '+xmlEsc(today.venue||'today’s event'):'Three picks open now';
-  document.getElementById('surprise-body').innerHTML='<div class="eyebrow">Your local shortlist</div><h2>'+heading+'</h2><div class="subcopy">'+(surpriseMood==='any'?'Anything goes':surpriseMood)+' · '+(surpriseBudget==='any'?'Any budget':surpriseBudget)+' · local distance shown by address until coordinates are available.</div><div class="surprise-picks">'+picks.map(function(p){var o=openNow(p.hrs);return '<div class="surprise-pick" onclick="openListing(\''+p.k+'\',\'surprise\')"><div class="pic" style="background-image:'+bgLayers(p)+'"></div><div><div class="name">'+xmlEsc(p.n)+'</div><div class="meta">'+xmlEsc(p.addr||'Inglewood')+' · '+(o?xmlEsc(o.label):'Hours vary')+'</div><div class="why">'+xmlEsc(p.q||'A strong local option with a good reason to go today.')+'</div>'+(p.special?'<div class="deal">&#127903; '+xmlEsc(p.special)+'</div>':'')+'</div></div>';}).join('')+'</div><button class="btn btn-ghost" style="width:100%;margin-top:16px" onclick="renderSurprisePicks()">Shuffle &#8594;</button>';
+  document.getElementById('surprise-body').innerHTML='<div class="eyebrow">Your local shortlist</div><h2>'+heading+'</h2><div class="subcopy">'+(surpriseMood==='any'?'Anything goes':surpriseMood)+' · '+(surpriseBudget==='any'?'Any budget':surpriseBudget)+' · local distance shown by address until coordinates are available.</div><div class="surprise-picks">'+picks.map(function(p){var o=openNow(p.hrs);return '<div class="surprise-pick" onclick="openListing(\''+p.k+'\',\'surprise\')"><div class="pic" style="background-image:'+bgLayers(p)+'">'+featuredBadge(p)+'</div><div><div class="name">'+xmlEsc(p.n)+'</div><div class="meta">'+xmlEsc(p.addr||'Inglewood')+' · '+(o?xmlEsc(o.label):'Hours vary')+'</div><div class="why">'+xmlEsc(p.q||'A strong local option with a good reason to go today.')+'</div>'+(isDealLit(p)?'<div style="margin-top:4px">'+dealFlag(p)+'</div>':(p.special?'<div class="deal">&#127903; '+xmlEsc(p.special)+'</div>':''))+'</div></div>';}).join('')+'</div><button class="btn btn-ghost" style="width:100%;margin-top:16px" onclick="renderSurprisePicks()">Shuffle &#8594;</button>';
 }
 
 /* LISTING DETAIL */
@@ -2333,8 +2363,8 @@ var calY=null, calM=null;
 var VENUE_COORDS={'sofi stadium':[33.9535,-118.3392],'kia forum':[33.9581,-118.3419],'intuit dome':[33.9560,-118.3436],'youtube theater':[33.9537,-118.3398]};
 function distanceMiles(a,b){if(!a||!b||!Number.isFinite(a.lat)||!Number.isFinite(a.lng)||!Number.isFinite(b.lat)||!Number.isFinite(b.lng))return null;var r=Math.PI/180,la=(b.lat-a.lat)*r,lo=(b.lng-a.lng)*r,x=Math.sin(la/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(lo/2)**2;return 3958.8*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
 function eventAnchor(e){var b=e.business_id&&PB[e.business_id];if(Number.isFinite(e.lat)&&Number.isFinite(e.lng))return{lat:e.lat,lng:e.lng};if(b&&Number.isFinite(b.lat)&&Number.isFinite(b.lng))return{lat:b.lat,lng:b.lng};var c=VENUE_COORDS[String(e.venue||'').toLowerCase()];return c?{lat:c[0],lng:c[1]}:null;}
-function plannerCard(p,a,checkMin){var d=distanceMiles(a,p),s=d==null?'Distance unavailable':d.toFixed(1)+' mi';var statusTag='';if(checkMin!=null){var st=hoursStatusAt(p.hrs,checkMin);if(st)statusTag=' · <span style="color:'+(st.open?'var(--green)':'#ff7a7a')+'">'+(st.open?'Open then':'Closed then')+'</span>';}return '<div class="evrow" onclick="openListing(\''+evEsc(p.k)+ '\')"><div class="evbody"><div class="evname">'+evEsc(p.n)+'</div><div class="evmeta">'+evEsc(p.cat||'')+' · '+evEsc(s)+statusTag+' · '+evEsc(p.addr||'')+'</div></div></div>';}
-function plannerSection(title,items,a,checkMin){items=items.slice().sort(function(x,y){var dx=distanceMiles(a,x),dy=distanceMiles(a,y);return(dx==null?Infinity:dx)-(dy==null?Infinity:dy);});return '<div style="padding:12px 16px 0"><div class="sect-head"><h3>'+title+'</h3><span style="font-size:11px;color:var(--muted)">'+items.length+' nearby</span></div>'+(items.length?items.slice(0,8).map(function(p){return plannerCard(p,a,checkMin);}).join(''):'<div class="ev-empty" style="margin:0 0 8px;padding:18px">No matching spots yet.</div>')+'</div>';}
+function plannerCard(p,a,checkMin){var d=distanceMiles(a,p),s=d==null?'Distance unavailable':d.toFixed(1)+' mi';var statusTag='';if(checkMin!=null){var st=hoursStatusAt(p.hrs,checkMin);if(st)statusTag=' · <span style="color:'+(st.open?'var(--green)':'#ff7a7a')+'">'+(st.open?'Open then':'Closed then')+'</span>';}var nameBadge=isFeatured(p)?' <span class="chip chip-featured" style="vertical-align:middle">&#11088; Featured</span>':'';var dealBadge=isDealLit(p)?'<div style="margin-top:4px">'+dealFlag(p)+'</div>':'';return '<div class="evrow" onclick="openListing(\''+evEsc(p.k)+ '\')"><div class="evbody"><div class="evname">'+evEsc(p.n)+nameBadge+'</div><div class="evmeta">'+evEsc(p.cat||'')+' · '+evEsc(s)+statusTag+' · '+evEsc(p.addr||'')+'</div>'+dealBadge+'</div></div>';}
+function plannerSection(title,items,a,checkMin){items=items.slice().sort(function(x,y){var s=dealSortScore(y)-dealSortScore(x);if(s)return s;var dx=distanceMiles(a,x),dy=distanceMiles(a,y);return(dx==null?Infinity:dx)-(dy==null?Infinity:dy);});return '<div style="padding:12px 16px 0"><div class="sect-head"><h3>'+title+'</h3><span style="font-size:11px;color:var(--muted)">'+items.length+' nearby</span></div>'+(items.length?items.slice(0,8).map(function(p){return plannerCard(p,a,checkMin);}).join(''):'<div class="ev-empty" style="margin:0 0 8px;padding:18px">No matching spots yet.</div>')+'</div>';}
 var VENUE_PARKING_TIPS={
   'sofi stadium':['Most SoFi Stadium lots require a pre-purchased parking pass — buy one ahead through Ticketmaster or the SoFi app.','Rideshare pickup/drop-off is in a designated lot with a walk to the gates — check the SoFi app for the current zone.'],
   'kia forum':['Kia Forum has on-site lots plus overflow parking on nearby side streets and church lots — arrive early on sellout nights.','Rideshare pickup/drop-off is just off Prairie Ave, a short walk from the main entrance.'],
