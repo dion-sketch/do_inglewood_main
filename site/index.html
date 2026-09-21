@@ -77,6 +77,20 @@
   .surprise-banner{display:block;margin:10px 20px 0;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--panel);cursor:pointer;box-shadow:0 8px 20px rgba(255,46,126,.16);}
   .surprise-banner img{display:block;width:100%;height:auto;aspect-ratio:2172/724;object-fit:cover;}
   .surprise-banner:active{transform:scale(.99);}
+  .surprise-flow{padding:18px 20px 90px;}
+  .surprise-flow .eyebrow{font-family:'Barlow Condensed';font-size:11px;letter-spacing:2px;color:var(--pink);text-transform:uppercase;}
+  .surprise-flow h2{font-family:'Barlow Condensed';font-size:30px;line-height:1;margin-top:5px;}
+  .surprise-flow .subcopy{font-size:13px;color:var(--muted);line-height:1.45;margin-top:8px;}
+  .surprise-options{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:18px;}
+  .surprise-option{background:var(--panel);border:1px solid var(--line);border-radius:13px;color:var(--txt);padding:18px 10px;text-align:center;font-family:'Barlow Condensed';font-size:18px;font-weight:700;cursor:pointer;}
+  .surprise-option:active{border-color:var(--gold);color:var(--gold);transform:scale(.98);}
+  .surprise-picks{display:grid;gap:12px;margin-top:18px;}
+  .surprise-pick{display:grid;grid-template-columns:92px 1fr;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px;cursor:pointer;}
+  .surprise-pick .pic{height:92px;border-radius:10px;background:center/cover no-repeat;}
+  .surprise-pick .name{font-weight:800;font-size:15px;}
+  .surprise-pick .meta{font-size:11px;color:var(--muted);margin-top:4px;}
+  .surprise-pick .why{font-size:12px;line-height:1.35;margin-top:7px;color:#e4e4ea;}
+  .surprise-pick .deal{font-size:12px;color:var(--gold);font-weight:700;margin-top:5px;}
   .pa-sub{display:flex;gap:8px;margin:10px 20px 0;}
   .pa-sub button{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--txt);border-radius:11px;padding:11px;font-family:'Barlow Condensed';font-weight:600;font-size:14px;cursor:pointer;letter-spacing:.3px;}
 
@@ -723,6 +737,10 @@
       <div id="owner-body" style="padding:16px 20px 60px;"></div>
     </div>
     <!-- TODAY'S SPECIALS -->
+    <div class="view" id="view-surprise">
+      <div class="head-bar"><div class="back" onclick="go('home')">&#8249;</div><div class="logo-mini" role="img" aria-label="Do Inglewood" title="Home" onclick="go('home')"></div><span class="htitle">Surprise Me</span></div>
+      <div id="surprise-body" class="surprise-flow"></div>
+    </div>
     <div class="view" id="view-specials">
       <div class="head-bar"><div class="back" onclick="go('home')">&#8249;</div><div class="logo-mini" role="img" aria-label="Do Inglewood" title="Home" onclick="go('home')"></div><span class="htitle">Today's Deals</span></div>
       <a class="surprise-banner" href="#" onclick="surpriseMe();return false;" aria-label="Surprise Me" style="margin:14px 16px 4px">
@@ -1804,14 +1822,26 @@ function renderSpecials(){
       </div>`;
   }).join('');
 }
-function surpriseMe(){
-  // Pick a random worthwhile spot — photographed, and either verified/paid or well-rated.
-  var good=P.filter(function(p){ return hasPhoto(p)&&((p.tier||1)>=2||(p.r||0)>=4.3); });
-  if(!good.length) good=P.filter(hasPhoto);
-  if(!good.length){ toast('Nothing to pick yet'); return; }
-  var pick=good[Math.floor(Math.random()*good.length)];
-  toast('Today’s pick ✨');
-  openListing(pick.k,'specials');
+var surpriseMood=null, surpriseBudget=null;
+function surpriseMe(){ surpriseMood=null; surpriseBudget=null; renderSurpriseMood(); go('surprise'); }
+function renderSurpriseMood(){
+  document.getElementById('surprise-body').innerHTML='<div class="eyebrow">A quick local pick</div><h2>What are you in the mood for?</h2><div class="subcopy">Two taps, three good options around Inglewood.</div><div class="surprise-options">'+[['eat','Eat'],['drink','Drink'],['do','Do something'],['any','Anything']].map(function(x){return '<button class="surprise-option" onclick="chooseSurpriseMood(\''+x[0]+'\')">'+x[1]+'</button>';}).join('')+'</div>';
+}
+function chooseSurpriseMood(m){ surpriseMood=m; document.getElementById('surprise-body').innerHTML='<div class="eyebrow">One more tap</div><h2>Budget?</h2><div class="subcopy">We’ll keep the picks open now when the hours are known.</div><div class="surprise-options">'+[['$','$'],['$$','$$'],['$$$','$$$'],['any','Doesn’t matter']].map(function(x){return '<button class="surprise-option" onclick="chooseSurpriseBudget(\''+x[0]+'\')">'+x[1]+'</button>';}).join('')+'</div>'; }
+function chooseSurpriseBudget(b){ surpriseBudget=b; renderSurprisePicks(); }
+function surpriseMatches(p){
+  if(!hasPhoto(p))return false;
+  if(surpriseBudget!=='any'&&surpriseBudget&&p.price!==surpriseBudget)return false;
+  if(surpriseMood==='eat'&&!/food|restaurant|mexican|soul|seafood|caribbean|american|brunch|dessert/i.test((p.cat+' '+(p.tags||[]).join(' '))))return false;
+  if(surpriseMood==='drink'&&!/lounge|bar|coffee|cafe|casino/i.test((p.cat+' '+(p.tags||[]).join(' '))))return false;
+  if(surpriseMood==='do'&&!/event|stadium|movie|park|fitness|beauty|salon|landmark|experience/i.test((p.cat+' '+(p.tags||[]).join(' '))))return false;
+  var o=openNow(p.hrs); return !o||o.open;
+}
+function renderSurprisePicks(){
+  var pool=P.filter(surpriseMatches); if(!pool.length)pool=P.filter(hasPhoto); pool.sort(function(a,b){return (isDealLit(b)?1:0)-(isDealLit(a)?1:0)||(b.r||0)-(a.r||0);});
+  var picks=pool.slice(0,3), today=EV.filter(function(e){return e.date===isoOf(new Date());})[0];
+  var heading=today?'Three picks, including a spot near '+xmlEsc(today.venue||'today’s event'):'Three picks open now';
+  document.getElementById('surprise-body').innerHTML='<div class="eyebrow">Your local shortlist</div><h2>'+heading+'</h2><div class="subcopy">'+(surpriseMood==='any'?'Anything goes':surpriseMood)+' · '+(surpriseBudget==='any'?'Any budget':surpriseBudget)+' · local distance shown by address until coordinates are available.</div><div class="surprise-picks">'+picks.map(function(p){var o=openNow(p.hrs);return '<div class="surprise-pick" onclick="openListing(\''+p.k+'\',\'surprise\')"><div class="pic" style="background-image:'+bgLayers(p)+'"></div><div><div class="name">'+xmlEsc(p.n)+'</div><div class="meta">'+xmlEsc(p.addr||'Inglewood')+' · '+(o?(o.open?'Open now':'Closed'):'Hours vary')+'</div><div class="why">'+xmlEsc(p.q||'A strong local option with a good reason to go today.')+'</div>'+(p.special?'<div class="deal">&#127903; '+xmlEsc(p.special)+'</div>':'')+'</div></div>';}).join('')+'</div><button class="btn btn-ghost" style="width:100%;margin-top:16px" onclick="renderSurprisePicks()">Shuffle &#8594;</button>';
 }
 
 /* LISTING DETAIL */
@@ -1962,7 +1992,7 @@ function openListing(k,from){
 }
 
 /* NAV */
-const views=['home','explore','events','listing','claim','claimform','add','saved','owner','specials'];
+const views=['home','explore','events','listing','claim','claimform','add','saved','owner','surprise','specials'];
 function openAddForm(){
   if(!CURRENT_USER){ toast('Sign in first to add your business'); acctPrompt('signin'); return; }
   var w=document.getElementById('ab_cat_wrap');
@@ -2285,6 +2315,7 @@ function go(v){
   ['home','explore','events','build','plans'].forEach(t=>document.getElementById('tab-'+t).classList.remove('on'));
   if(v==='home')document.getElementById('tab-home').classList.add('on');
   else if(v==='explore'||v==='listing')document.getElementById('tab-explore').classList.add('on');
+  else if(v==='surprise')document.getElementById('tab-build').classList.add('on');
   else if(v==='events')document.getElementById('tab-events').classList.add('on');
   else if(v==='specials')document.getElementById('tab-build').classList.add('on');
   else if(v==='saved')document.getElementById('tab-plans').classList.add('on');
