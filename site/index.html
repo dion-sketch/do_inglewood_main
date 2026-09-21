@@ -1724,6 +1724,11 @@ function exploreMatches(){
   list=list.slice().sort(function(a,b){ return (isSponsored(b)?1:0)-(isSponsored(a)?1:0); });
   return list;
 }
+function hoursCardHTML(p){
+  var o=openNow(p.hrs);
+  if(o) return '<span style="font-size:11px;font-weight:700;color:'+(o.open?'var(--green)':'#ff7a7a')+'">'+xmlEsc(o.label)+'</span>';
+  return '<span style="font-size:11px;color:var(--muted)">'+xmlEsc(p.hrs||'')+'</span>';
+}
 function paintExplore(list){
   var el=document.getElementById('explore-list');
   if(!list.length){el.innerHTML='<div style="padding:40px 20px;text-align:center;color:var(--muted);font-size:14px">No spots match — try another word or category.</div>';return;}
@@ -1735,7 +1740,7 @@ function paintExplore(list){
           <div class="name">${xmlEsc(p.n)}</div>
           <div class="sub">${xmlEsc(p.cat)}${p.addr?' · '+xmlEsc(p.addr):''}</div>
           <div class="row"><span style="font-size:12px">${starline(p)}</span><span class="pricelv">${xmlEsc(p.price||'')}</span></div>
-          <div class="row">${listBadge(p)}<span style="font-size:11px;color:var(--muted)">${xmlEsc(p.hrs||'')}</span></div>
+          <div class="row">${listBadge(p)}${hoursCardHTML(p)}</div>
         </div>
       </div>`;}).join('');
   if(list.length>exploreLimit){
@@ -1849,7 +1854,7 @@ function renderSurprisePicks(){
   var pool=P.filter(surpriseMatches); if(!pool.length)pool=P.filter(hasPhoto); pool.sort(function(a,b){return (isDealLit(b)?1:0)-(isDealLit(a)?1:0)||(b.r||0)-(a.r||0);});
   var picks=pool.slice(0,3), today=EV.filter(function(e){return e.date===isoOf(new Date());})[0];
   var heading=today?'Three picks, including a spot near '+xmlEsc(today.venue||'today’s event'):'Three picks open now';
-  document.getElementById('surprise-body').innerHTML='<div class="eyebrow">Your local shortlist</div><h2>'+heading+'</h2><div class="subcopy">'+(surpriseMood==='any'?'Anything goes':surpriseMood)+' · '+(surpriseBudget==='any'?'Any budget':surpriseBudget)+' · local distance shown by address until coordinates are available.</div><div class="surprise-picks">'+picks.map(function(p){var o=openNow(p.hrs);return '<div class="surprise-pick" onclick="openListing(\''+p.k+'\',\'surprise\')"><div class="pic" style="background-image:'+bgLayers(p)+'"></div><div><div class="name">'+xmlEsc(p.n)+'</div><div class="meta">'+xmlEsc(p.addr||'Inglewood')+' · '+(o?(o.open?'Open now':'Closed'):'Hours vary')+'</div><div class="why">'+xmlEsc(p.q||'A strong local option with a good reason to go today.')+'</div>'+(p.special?'<div class="deal">&#127903; '+xmlEsc(p.special)+'</div>':'')+'</div></div>';}).join('')+'</div><button class="btn btn-ghost" style="width:100%;margin-top:16px" onclick="renderSurprisePicks()">Shuffle &#8594;</button>';
+  document.getElementById('surprise-body').innerHTML='<div class="eyebrow">Your local shortlist</div><h2>'+heading+'</h2><div class="subcopy">'+(surpriseMood==='any'?'Anything goes':surpriseMood)+' · '+(surpriseBudget==='any'?'Any budget':surpriseBudget)+' · local distance shown by address until coordinates are available.</div><div class="surprise-picks">'+picks.map(function(p){var o=openNow(p.hrs);return '<div class="surprise-pick" onclick="openListing(\''+p.k+'\',\'surprise\')"><div class="pic" style="background-image:'+bgLayers(p)+'"></div><div><div class="name">'+xmlEsc(p.n)+'</div><div class="meta">'+xmlEsc(p.addr||'Inglewood')+' · '+(o?xmlEsc(o.label):'Hours vary')+'</div><div class="why">'+xmlEsc(p.q||'A strong local option with a good reason to go today.')+'</div>'+(p.special?'<div class="deal">&#127903; '+xmlEsc(p.special)+'</div>':'')+'</div></div>';}).join('')+'</div><button class="btn btn-ghost" style="width:100%;margin-top:16px" onclick="renderSurprisePicks()">Shuffle &#8594;</button>';
 }
 
 /* LISTING DETAIL */
@@ -1877,10 +1882,68 @@ function toggleFav(k,ev){ if(ev&&ev.stopPropagation)ev.stopPropagation(); if(!k)
   var h=document.getElementById('ldFav'); if(h){ h.innerHTML=on?'&#9829;':'&#9825;'; h.style.color=on?'var(--pink)':''; }
 }
 function shareBiz(k){ var p=PB[k]; if(!p)return; var text=p.n+' · '+(p.cat||'')+' in Inglewood\n'+(p.addr||'')+'\nFound on Do Inglewood 🎟️'; if(navigator.share){ navigator.share({title:p.n,text:text}).catch(function(){}); } else if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(function(){toast('Copied — paste it anywhere');}); } else { toast('Sharing not supported'); } }
-/* Best-effort open/closed check for free-text hours at any minute-of-day. Returns null when unsure (never guesses wrong). */
-function hoursStatusAt(hrs,minuteOfDay){
+/* Format minutes-from-midnight as "9:00 AM" (drops :00 only when not needed). */
+function fmtTime(mins){
+  mins=((Math.round(mins)%1440)+1440)%1440;
+  var h=Math.floor(mins/60), m=mins%60;
+  var ap=h>=12?'PM':'AM', h12=h%12; if(h12===0)h12=12;
+  return h12+(m?':'+String(m).padStart(2,'0'):'')+' '+ap;
+}
+var _DOW_NAMES=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+/* Parse Google's "Monday: 11:00 AM – 10:00 PM · Tuesday: ..." weekday_text format
+   (joined with " · " by the import function) into a per-day schedule. Returns null
+   for anything else (short curated strings like "Daily · 8 AM–10 PM" fall through
+   to the single-range parser below). */
+function parseWeeklyHours(hrs){
   var s=String(hrs||''); if(!s) return null;
-  if(/24\s*hour|24h/i.test(s)) return {open:true,reason:'24h'};
+  var parts=s.split(/\s*·\s*/).map(function(x){return x.trim();}).filter(Boolean);
+  var entries=[], matched=0;
+  parts.forEach(function(part){
+    var m=part.match(/^(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday):\s*(.*)$/i);
+    if(!m) return;
+    matched++;
+    var idx=_DOW_NAMES.indexOf(m[1].charAt(0).toUpperCase()+m[1].slice(1).toLowerCase());
+    var rest=m[2].trim();
+    if(!rest || /closed/i.test(rest)){ entries.push({day:idx,closed:true,ranges:[]}); return; }
+    function to24(h,mm,ap){ h=+h; mm=+mm||0; ap=(ap||'').toUpperCase(); if(ap==='PM'&&h<12)h+=12; if(ap==='AM'&&h===12)h=0; return h*60+mm; }
+    var ranges=[];
+    rest.split(',').forEach(function(r){
+      var rm=r.match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM)\s*[–-]\s*(\d{1,2})(?::(\d{2}))?\s*(AM|PM)/i);
+      if(rm) ranges.push({start:to24(rm[1],rm[2],rm[3]),end:to24(rm[4],rm[5],rm[6])});
+    });
+    entries.push({day:idx,closed:!ranges.length,ranges:ranges});
+  });
+  if(matched<3) return null;   // not a full weekly listing — let the simple parser handle it
+  return entries;
+}
+/* Open/closed + next-transition time for a parsed weekly schedule, at a given
+   minute-of-day on today's weekday. Looks ahead up to 7 days for the next opening. */
+function weeklyStatusAt(entries,minuteOfDay,dayOfWeek){
+  var todays=entries.filter(function(e){return e.day===dayOfWeek;})[0];
+  if(todays && !todays.closed){
+    for(var i=0;i<todays.ranges.length;i++){
+      var r=todays.ranges[i], end=r.end<=r.start?r.end+1440:r.end;
+      if(minuteOfDay>=r.start && minuteOfDay<end) return {open:true,until:r.end%1440};
+    }
+  }
+  for(var d=0;d<8;d++){
+    var dayIdx=(dayOfWeek+d)%7;
+    var entry=entries.filter(function(e){return e.day===dayIdx;})[0];
+    if(!entry||entry.closed) continue;
+    for(var j=0;j<entry.ranges.length;j++){
+      var rr=entry.ranges[j];
+      if(d===0 && rr.start<=minuteOfDay) continue;   // that window already passed today
+      return {open:false,opensAt:rr.start,opensDay:d};
+    }
+  }
+  return {open:false};
+}
+/* Best-effort open/closed check for free-text hours at any minute-of-day. Returns null when unsure (never guesses wrong). */
+function hoursStatusDetailed(hrs,minuteOfDay){
+  var s=String(hrs||''); if(!s) return null;
+  if(/24\s*hour|24h/i.test(s)) return {open:true,special:'24h'};
+  var weekly=parseWeeklyHours(s);
+  if(weekly) return weeklyStatusAt(weekly,minuteOfDay,new Date().getDay());
   if(/\btil\b|\buntil\b|appointment|showtime|event day|front desk/i.test(s)) return null; // ambiguous → don't guess
   var m=s.match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?\s*[–-]\s*(\d{1,2})(?::(\d{2}))?\s*(AM|PM)/i);
   if(!m) return null;
@@ -1889,21 +1952,43 @@ function hoursStatusAt(hrs,minuteOfDay){
     var dm=s.match(/(Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s*[–-]\s*(Sun|Mon|Tue|Wed|Thu|Fri|Sat)/);
     if(dm){ var a=days[dm[1]], b=days[dm[2]]; openDay=(a<=b)?(today>=a&&today<=b):(today>=a||today<=b); }
   }
-  if(!openDay) return {open:false,reason:'closedDay'};
+  if(!openDay) return {open:false,closedToday:true};
   function to24(h,mm,ap){ h=+h; mm=+mm||0; ap=(ap||'').toUpperCase(); if(ap==='PM'&&h<12)h+=12; if(ap==='AM'&&h===12)h=0; return h*60+mm; }
   var endAp=m[6], startAp=m[3]||endAp;
   var start=to24(m[1],m[2],startAp), end=to24(m[4],m[5],endAp);
   var cur=((minuteOfDay%1440)+1440)%1440;
   var isOpen=(end>start)?(cur>=start&&cur<end):(cur>=start||cur<end);
-  return {open:isOpen,reason:'window'};
+  return isOpen?{open:true,until:end%1440}:{open:false};
 }
-/* Best-effort "Open now" from free-text hours. Returns null when unsure (never guesses wrong). */
+/* Thin wrapper kept for the game-day planner's before/after-event checks (open/closed only). */
+function hoursStatusAt(hrs,minuteOfDay){
+  var st=hoursStatusDetailed(hrs,minuteOfDay); if(!st) return null;
+  return {open:st.open,reason:st.special||(st.closedToday?'closedDay':'window')};
+}
+/* Best-effort "Open now until X" / "Closed · opens X" from free-text hours (never guesses wrong). */
 function openNow(hrs){
   var cur=(function(){var n=new Date();return n.getHours()*60+n.getMinutes();})();
-  var st=hoursStatusAt(hrs,cur); if(!st) return null;
-  if(st.reason==='24h') return {open:true,label:'Open 24 hours'};
-  if(st.reason==='closedDay') return {open:false,label:'Closed today'};
-  return st.open?{open:true,label:'Open now'}:{open:false,label:'Closed now'};
+  var st=hoursStatusDetailed(hrs,cur); if(!st) return null;
+  if(st.special==='24h') return {open:true,label:'Open 24 hours'};
+  if(st.open) return {open:true,label:st.until!=null?('Open now until '+fmtTime(st.until)):'Open now'};
+  if(st.opensAt!=null){
+    var dayTxt=st.opensDay?(' '+_DOW_NAMES[(new Date().getDay()+st.opensDay)%7].slice(0,3)):'';
+    return {open:false,label:'Closed · opens '+fmtTime(st.opensAt)+dayTxt};
+  }
+  return {open:false,label:st.closedToday?'Closed today':'Closed now'};
+}
+/* Clean day-by-day hours list for detail pages (bolds today). Returns null when the
+   hours string isn't a full weekly listing — callers fall back to the raw text. */
+function dayByDayHTML(hrs){
+  var weekly=parseWeeklyHours(hrs); if(!weekly) return null;
+  var todayIdx=new Date().getDay();
+  var byDay={}; weekly.forEach(function(e){byDay[e.day]=e;});
+  return '<div style="margin-top:2px">'+_DOW_NAMES.map(function(name,idx){
+    var e=byDay[idx];
+    var txt=!e?'—':(e.closed?'Closed':e.ranges.map(function(r){return fmtTime(r.start)+' – '+fmtTime(r.end);}).join(', '));
+    var isToday=idx===todayIdx;
+    return '<div style="display:flex;justify-content:space-between;gap:10px;padding:3px 0;font-size:13px;'+(isToday?'font-weight:800;color:var(--txt)':'color:var(--muted)')+'"><span>'+name+'</span><span>'+xmlEsc(txt)+'</span></div>';
+  }).join('')+'</div>';
 }
 function menuHTML(p){
   var m=p.menu||[]; if(!m.length) return '';
@@ -1933,7 +2018,7 @@ function similarSpots(p){
   return '<div style="margin-top:22px"><div style="font-weight:800;font-size:15px;margin-bottom:10px">More '+(p.cat||'spots')+' like this</div>'+
     '<div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px">'+
     alts.map(function(x){return '<div onclick="openListing(\''+x.k+'\',lastList)" style="flex:0 0 auto;width:132px;cursor:pointer">'+
-      '<div style="height:86px;border-radius:10px;border:1px solid var(--line);background:#0f0f15 center/cover no-repeat;background-image:'+bgLayers(Object.assign({},x,{img:similarImage(x)}))+'></div>'+
+      '<div style="height:86px;border-radius:10px;border:1px solid var(--line);background:#0f0f15 center/cover no-repeat;background-image:'+bgLayers(Object.assign({},x,{img:similarImage(x)}))+'"></div>'+
       '<div style="font-size:12.5px;font-weight:700;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x.n+'</div>'+
       '<div style="font-size:11px;color:var(--muted)">'+starline(x)+' · '+(x.price||'')+'</div></div>';}).join('')+
     '</div></div>';
@@ -1956,6 +2041,10 @@ function openListing(k,from){
   else if(isReservable(p)&&p.ph) _statusParts.push('<span style="color:var(--muted);font-weight:700">'+ICON.phone+' Call to book</span>');
   var statusLine=_statusParts.length?'<div style="font-size:12.5px;margin-top:8px;display:flex;gap:14px;flex-wrap:wrap">'+_statusParts.join('')+'</div>':'';
   var tagsRow=(p.tags&&p.tags.length)?'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">'+p.tags.slice(0,4).map(function(t){return '<span style="font-size:11px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:3px 9px">'+xmlEsc(t)+'</span>';}).join('')+'</div>':'';
+  var _daily=p.hrs?dayByDayHTML(p.hrs):null;
+  var hoursRow=!p.hrs?'':(_daily
+    ?'<div class="ldrow" style="align-items:flex-start"><span class="k">Hours</span><div class="v" style="flex:1">'+_daily+'</div></div>'
+    :'<div class="ldrow"><span class="k">Hours</span><span class="v">'+xmlEsc(p.hrs)+(p.tier<2?' <span style="color:var(--gold);font-size:11px">· confirm</span>':'')+'</span></div>');
   document.getElementById('ldbody').innerHTML=`
     <h2>${xmlEsc(p.n)}</h2>
     <div class="ldmeta"><span style="font-size:13px">${starline(p)}</span><span class="pricelv">${xmlEsc(p.price)}</span>${p.cat?`<span style="font-size:12px;color:var(--muted)">${xmlEsc(p.cat)}</span>`:''}${badge}</div>
@@ -1976,7 +2065,7 @@ function openListing(k,from){
     <div style="margin-top:12px">
       <div class="ldrow"><span class="k">Category</span><span class="v">${xmlEsc(p.cat)}</span></div>
       <div class="ldrow"><span class="k">Address</span><span class="v">${xmlEsc(p.addr)}${/Inglewood/.test(p.addr||'')?'':', Inglewood'}</span></div>
-      ${p.hrs?`<div class="ldrow"><span class="k">Hours</span><span class="v">${xmlEsc(p.hrs)}${p.tier<2?' <span style="color:var(--gold);font-size:11px">· confirm</span>':''}</span></div>`:''}
+      ${p.hrs?hoursRow:''}
       ${p.ph?`<div class="ldrow"><span class="k">Phone</span><span class="v"><a href="${telHref(p.ph)}" style="color:var(--pink);text-decoration:none">${xmlEsc(p.ph)}</a></span></div>`:''}
       ${p.web?`<div class="ldrow"><span class="k">Website</span><span class="v"><a href="${webUrl(p.web)}" target="_blank" rel="noopener" style="color:var(--pink);text-decoration:none">${prettyWeb(p.web)} &#8599;</a></span></div>`:''}
       ${p.cpp?`<div class="ldrow"><span class="k">Avg / person</span><span class="v">~$${p.cpp}${p.tier<2?' <span style="color:var(--muted);font-size:11px">· estimated</span>':''}</span></div>`:''}
