@@ -916,9 +916,11 @@ function renderOwner(){
       ? '<div class="deal-slot"><div style="font-weight:800;font-family:\'Barlow Condensed\';font-size:16px;color:var(--gold)">&#127903; Your deal is live in Today\'s Deals</div><div style="font-size:12px;color:var(--muted);margin-top:3px">Keep one featured offer glowing at a time.</div></div>'
       : '<div class="deal-slot dim"><div style="font-weight:800;font-family:\'Barlow Condensed\';font-size:16px">Your deal slot is dark.</div><div style="font-size:12px;color:var(--muted);margin:3px 0 10px">Light it up to land in Today\'s Deals.</div><button class="claimbtn" onclick="focusDealEditor()">Add Today\'s Deal</button></div>')
     : '';
+  var gameDayToggle = Object.prototype.hasOwnProperty.call(b,'game_day_special')
+    ? '<label class="mut" style="display:flex;align-items:center;gap:8px;margin:8px 0 4px;font-size:12.5px"><input type="checkbox" id="ob_gameday"'+(b.game_day_special?' checked':'')+'> &#127944; Highlight as a Game Day Special (shows on event pages near SoFi, Kia Forum, Intuit Dome)</label>'
+    : '<div class="mut" style="font-size:12px;margin:8px 0 4px">Game Day Special toggle appears after the featured/game-day database migration runs.</div>';
   var specialBlock = paid
-    ? '<label class="flbl">Today\'s Deal <span style="color:var(--muted);font-weight:500">(featured offer)</span></label><input id="ob_special" class="finput" oninput="previewOwnerDeal(this.value)" placeholder="e.g. Free dessert with any entree today" value="'+String(b.special||'').replace(/"/g,'&quot;')+'"><div id="deal-preview" class="deal-preview"></div>'+
-      '<label class="mut" style="display:flex;align-items:center;gap:8px;margin:8px 0 4px;font-size:12.5px"><input type="checkbox" id="ob_gameday"'+(b.game_day_special?' checked':'')+'> &#127944; Highlight as a Game Day Special (shows on event pages near SoFi, Kia Forum, Intuit Dome)</label>'+
+    ? '<label class="flbl">Today\'s Deal <span style="color:var(--muted);font-weight:500">(featured offer)</span></label><input id="ob_special" class="finput" oninput="previewOwnerDeal(this.value)" placeholder="e.g. Free dessert with any entree today" value="'+String(b.special||'').replace(/"/g,'&quot;')+'"><div id="deal-preview" class="deal-preview"></div>'+gameDayToggle+
       '<label class="flbl">&#11088; Do Member deal <span style="color:var(--muted);font-weight:500">(discount for app members — draws customers in)</span></label><input id="ob_mdeal" class="finput" placeholder="e.g. 10% off for Do Members" value="'+String(b.mdeal||b.member_deal||'').replace(/"/g,'&quot;')+'">'
     : '<input id="ob_special" type="hidden" value="'+String(b.special||'').replace(/"/g,'&quot;')+'"><input id="ob_mdeal" type="hidden" value="'+String(b.mdeal||b.member_deal||'').replace(/"/g,'&quot;')+'">';
   var menuBlock = paid
@@ -980,7 +982,7 @@ async function saveMyBiz(){
     upd.notify_email=gv('ob_notify')||null;
     var sp=document.getElementById('ob_special'); if(sp) upd.special=(sp.value||'').trim()||null;
     var md=document.getElementById('ob_mdeal'); if(md) upd.member_deal=(md.value||'').trim()||null;
-    var gd=document.getElementById('ob_gameday'); if(gd) upd.game_day_special=!!gd.checked;
+    var gd=document.getElementById('ob_gameday'); if(gd && Object.prototype.hasOwnProperty.call(MY_BIZ,'game_day_special')) upd.game_day_special=!!gd.checked;
     var menu=[]; document.querySelectorAll('#ob_menu .menu-item').forEach(function(row){ var ne=row.querySelector('.menu-name'), pe=row.querySelector('.menu-price'); var n=(ne&&ne.value||'').trim(); if(n) menu.push({name:n, price:(pe&&pe.value||'').trim()}); });
     upd.menu = menu.length?menu:null;
   }

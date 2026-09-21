@@ -143,17 +143,26 @@ async function doSearchBiz(){
   var q=$('bizsearch').value.trim();
   if(q.length<2){ $('biz-list').innerHTML='<div class="mut">Type a name to find a business.</div>'; return; }
   try{
-    const rows=await api('di_businesses?select=id,name,category,tier,address,is_active,approved,is_large,featured&name=ilike.*'+encodeURIComponent(q)+'*&limit=40',{headers:H()});
+    var rows;
+    try{
+      rows=await api('di_businesses?select=id,name,category,tier,address,is_active,approved,is_large,featured&name=ilike.*'+encodeURIComponent(q)+'*&limit=40',{headers:H()});
+    }catch(e){
+      if(!/featured|42703|schema cache|column/i.test(e.message||'')) throw e;
+      rows=await api('di_businesses?select=id,name,category,tier,address,is_active,approved,is_large&name=ilike.*'+encodeURIComponent(q)+'*&limit=40',{headers:H()});
+    }
     if(!rows.length){ $('biz-list').innerHTML='<div class="mut">No matches.</div>'; return; }
     $('biz-list').innerHTML=rows.map(function(b){
       var paused=(b.is_active===false);
       var pending=(b.approved===false);
+      var featuredControl=Object.prototype.hasOwnProperty.call(b,'featured')
+        ? '<label class="mut" style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="featured-'+b.id+'"'+(b.featured?' checked':'')+'> Featured (paid placement)</label>'
+        : '<span class="mut" style="font-size:12px">Featured toggle available after migration</span>';
       return '<div class="row" id="brow-'+b.id+'"><div class="grow"><div class="nm">'+esc(b.name)+
         (pending?' <span class="pill p1">Pending — hidden</span>':'')+(paused?' <span class="pill p1">Paused</span>':'')+'</div>'+
         '<div class="mut">'+esc(b.category||'')+'</div>'+
         '<input id="addr-'+b.id+'" type="text" value="'+esc(b.address||'')+'" placeholder="address" style="margin-top:6px"></div>'+
         '<label class="mut" style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="large-'+b.id+'"'+(b.is_large?' checked':'')+'> Large (Enterprise)</label>'+
-        '<label class="mut" style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="featured-'+b.id+'"'+(b.featured?' checked':'')+'> Featured (paid placement)</label>'+
+        featuredControl+
         '<select id="tier-'+b.id+'"><option value="1"'+(b.tier==1?' selected':'')+'>Free</option><option value="2"'+(b.tier==2?' selected':'')+'>Verified</option><option value="3"'+(b.tier==3?' selected':'')+'>Premium ⭐</option></select>'+
         '<button class="primary" onclick="saveBiz(\''+b.id+'\')">Save</button>'+
         (pending?'<button class="g" onclick="approveBiz(\''+b.id+'\')">Approve → publish</button>':'')+
