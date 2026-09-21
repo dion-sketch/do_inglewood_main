@@ -1,0 +1,4 @@
+-- Geocoding existing rows requires the server-side import-businesses Edge
+-- Function with GOOGLE_PLACES_API_KEY. Invoke it repeatedly with:
+--   POST /functions/v1/import-businesses?mode=backfill&limit=25
+-- Never put the Google key in the browser or SQL scripts.

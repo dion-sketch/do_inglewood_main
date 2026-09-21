@@ -92,15 +92,16 @@ async function nearby(type: string, keyword?: string): Promise<any[]> {
 
 // Pull the rich details we show on a business page.
 async function details(placeId: string): Promise<{
-  phone?: string; website?: string; hours?: string; photoRefs: string[];
+  phone?: string; website?: string; hours?: string; latitude?: number; longitude?: number; photoRefs: string[];
 }> {
   try {
-    const fields = "formatted_phone_number,website,opening_hours,photos";
+    const fields = "formatted_phone_number,website,opening_hours,photos,geometry";
     const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=${fields}&key=${KEY}`;
     const j = (await (await fetch(url)).json()).result || {};
     const hours = j.opening_hours?.weekday_text?.join(" · ");
     const photoRefs = (j.photos || []).slice(0, MAX_PHOTOS).map((p: any) => p.photo_reference).filter(Boolean);
-    return { phone: j.formatted_phone_number, website: j.website, hours, photoRefs };
+    return { phone: j.formatted_phone_number, website: j.website, hours,
+      latitude: j.geometry?.location?.lat, longitude: j.geometry?.location?.lng, photoRefs };
   } catch { return { photoRefs: [] }; }
 }
 
@@ -155,14 +156,16 @@ function fillPatch(row: any, d: { phone?: string; website?: string; hours?: stri
 // than on tier — so high-tier civic/marquee venues (SoFi, Kia Forum, Intuit Dome,
 // landmarks, parks) that were seeded as featured still get their real Google photos.
 async function backfill(limit: number) {
-  // How many still need enriching (unclaimed + no hero photo + has a google id)?
+  // Enrich unclaimed rows missing photos OR coordinates. This lets the same
+  // repeated admin backfill populate locations even when photos already exist.
+  const needsEnrichment = "photo_url.is.null,photo_url.eq.,latitude.is.null,longitude.is.null";
   const { count } = await admin.from("di_businesses")
     .select("id", { count: "exact", head: true })
-    .is("claimed_by", null).is("photo_url", null).not("google_place_id", "is", null);
+    .is("claimed_by", null).not("google_place_id", "is", null).or(needsEnrichment);
 
   const { data: rows } = await admin.from("di_businesses")
-    .select("id, google_place_id, tier, photo_url, photos, website, phone, hours, booking_url")
-    .is("claimed_by", null).is("photo_url", null).not("google_place_id", "is", null)
+    .select("id, google_place_id, tier, photo_url, photos, website, phone, hours, booking_url, latitude, longitude")
+    .is("claimed_by", null).not("google_place_id", "is", null).or(needsEnrichment)
     .limit(limit);
 
   let enriched = 0;
@@ -170,6 +173,8 @@ async function backfill(limit: number) {
     const d = await details(row.google_place_id);
     const photos = d.photoRefs.length ? await fetchPhotos(row.google_place_id, d.photoRefs) : [];
     const patch = fillPatch(row, d, photos) || {};
+    if (d.latitude != null && row.latitude == null) patch.latitude = d.latitude;
+    if (d.longitude != null && row.longitude == null) patch.longitude = d.longitude;
     // If Google had no photo for this place, stamp photo_url = "" so the row is
     // marked as "tried" and won't be picked up again (the app shows its tile).
     if (!photos.length && !patch.photo_url) patch.photo_url = "";
@@ -209,6 +214,8 @@ async function importNew() {
       price_level: priceStr(p.price_level),
       phone: d.phone || "", website: d.website || null, hours: d.hours || null,
       photo_url: photos[0] || null, photos: photos.length ? photos : null,
+      latitude: d.latitude ?? p.geometry?.location?.lat ?? null,
+      longitude: d.longitude ?? p.geometry?.location?.lng ?? null,
       ...detectBooking(d.website),   // auto-plug an existing booking system if found
       tier: 1, approved: true, is_active: true, is_large: false,
     };

@@ -18,6 +18,12 @@ const TM_KEY       = Deno.env.get("TICKETMASTER_API_KEY") || "";
 const LATLONG = "33.9576,-118.3392";   // ~SoFi / Hollywood Park
 const RADIUS  = "4";
 const UNIT    = "miles";
+const VENUE_COORDS: Record<string, [number, number]> = {
+  "sofi stadium": [33.9535, -118.3392],
+  "kia forum": [33.9581, -118.3419],
+  "intuit dome": [33.9560, -118.3436],
+  "youtube theater": [33.9537, -118.3398],
+};
 
 // Only keep events at the Inglewood venues (guards against nearby-LA drift).
 const KEEP_VENUES = ["sofi", "intuit dome", "kia forum", "the forum", "youtube theater", "hollywood park"];
@@ -89,6 +95,7 @@ Deno.serve(async () => {
         if (seen.has(id)) continue;
         seen.add(id);
         const price = (ev.priceRanges && ev.priceRanges[0] && ev.priceRanges[0].min) ?? null;
+        const coords = VENUE_COORDS[vname.toLowerCase()];
         rows.push({
           id,
           title: ev.name,
@@ -100,6 +107,8 @@ Deno.serve(async () => {
           price_from: price,
           url: ev.url || null,
           image_url: bestImage(ev),
+          latitude: coords?.[0] ?? null,
+          longitude: coords?.[1] ?? null,
           status: "live",
         });
       }

@@ -553,6 +553,12 @@
       <div class="ev-note">Marquee events are pulled from Inglewood's venues &amp; the City calendar. Businesses can post their own game-day specials &amp; nights here. Confirm times with the venue before you go.</div>
     </div>
 
+    <!-- EVENT DETAIL / GAME-DAY PLANNER -->
+    <div class="view" id="view-event-detail">
+      <div class="head-bar"><div class="back" onclick="go('events')">&#8249;</div><div class="logo-mini" role="img" aria-label="Do Inglewood" title="Home" onclick="go('home')"></div><span class="htitle">Game Day</span></div>
+      <div id="event-detail-body"></div>
+    </div>
+
     <!-- SAVED ITINERARIES -->
     <div class="view" id="view-saved">
       <div class="head-bar"><div class="back" onclick="go('home')">&#8249;</div><div class="logo-mini" role="img" aria-label="Do Inglewood" title="Home" onclick="go('home')"></div><span class="htitle">Saved Spots</span></div>
@@ -1343,6 +1349,8 @@ function dbToApp(r){
   return {
     k:r.id, n:r.name, cat:r.category, tags:r.tags||[],
     addr:r.address, ph:r.phone||"", web:r.website||undefined,
+    lat:Number.isFinite(Number(r.latitude))?Number(r.latitude):null,
+    lng:Number.isFinite(Number(r.longitude))?Number(r.longitude):null,
     pid:r.google_place_id||"", r:r.rating, rc:r.rating_count,
     price:r.price_level, cpp:r.avg_per_person||0, hrs:r.hours,
     q:r.review_quote, tier:r.tier||1, special:r.special||null, mdeal:r.member_deal||null,
@@ -1869,10 +1877,10 @@ function toggleFav(k,ev){ if(ev&&ev.stopPropagation)ev.stopPropagation(); if(!k)
   var h=document.getElementById('ldFav'); if(h){ h.innerHTML=on?'&#9829;':'&#9825;'; h.style.color=on?'var(--pink)':''; }
 }
 function shareBiz(k){ var p=PB[k]; if(!p)return; var text=p.n+' · '+(p.cat||'')+' in Inglewood\n'+(p.addr||'')+'\nFound on Do Inglewood 🎟️'; if(navigator.share){ navigator.share({title:p.n,text:text}).catch(function(){}); } else if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(function(){toast('Copied — paste it anywhere');}); } else { toast('Sharing not supported'); } }
-/* Best-effort "Open now" from free-text hours. Returns null when unsure (never guesses wrong). */
-function openNow(hrs){
+/* Best-effort open/closed check for free-text hours at any minute-of-day. Returns null when unsure (never guesses wrong). */
+function hoursStatusAt(hrs,minuteOfDay){
   var s=String(hrs||''); if(!s) return null;
-  if(/24\s*hour|24h/i.test(s)) return {open:true,label:'Open 24 hours'};
+  if(/24\s*hour|24h/i.test(s)) return {open:true,reason:'24h'};
   if(/\btil\b|\buntil\b|appointment|showtime|event day|front desk/i.test(s)) return null; // ambiguous → don't guess
   var m=s.match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?\s*[–-]\s*(\d{1,2})(?::(\d{2}))?\s*(AM|PM)/i);
   if(!m) return null;
@@ -1881,13 +1889,21 @@ function openNow(hrs){
     var dm=s.match(/(Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s*[–-]\s*(Sun|Mon|Tue|Wed|Thu|Fri|Sat)/);
     if(dm){ var a=days[dm[1]], b=days[dm[2]]; openDay=(a<=b)?(today>=a&&today<=b):(today>=a||today<=b); }
   }
-  if(!openDay) return {open:false,label:'Closed today'};
+  if(!openDay) return {open:false,reason:'closedDay'};
   function to24(h,mm,ap){ h=+h; mm=+mm||0; ap=(ap||'').toUpperCase(); if(ap==='PM'&&h<12)h+=12; if(ap==='AM'&&h===12)h=0; return h*60+mm; }
   var endAp=m[6], startAp=m[3]||endAp;
   var start=to24(m[1],m[2],startAp), end=to24(m[4],m[5],endAp);
-  var cur=(function(){var n=new Date();return n.getHours()*60+n.getMinutes();})();
+  var cur=((minuteOfDay%1440)+1440)%1440;
   var isOpen=(end>start)?(cur>=start&&cur<end):(cur>=start||cur<end);
-  return isOpen?{open:true,label:'Open now'}:{open:false,label:'Closed now'};
+  return {open:isOpen,reason:'window'};
+}
+/* Best-effort "Open now" from free-text hours. Returns null when unsure (never guesses wrong). */
+function openNow(hrs){
+  var cur=(function(){var n=new Date();return n.getHours()*60+n.getMinutes();})();
+  var st=hoursStatusAt(hrs,cur); if(!st) return null;
+  if(st.reason==='24h') return {open:true,label:'Open 24 hours'};
+  if(st.reason==='closedDay') return {open:false,label:'Closed today'};
+  return st.open?{open:true,label:'Open now'}:{open:false,label:'Closed now'};
 }
 function menuHTML(p){
   var m=p.menu||[]; if(!m.length) return '';
@@ -1992,7 +2008,7 @@ function openListing(k,from){
 }
 
 /* NAV */
-const views=['home','explore','events','listing','claim','claimform','add','saved','owner','surprise','specials'];
+const views=['home','explore','events','event-detail','listing','claim','claimform','add','saved','owner','surprise','specials'];
 function openAddForm(){
   if(!CURRENT_USER){ toast('Sign in first to add your business'); acctPrompt('signin'); return; }
   var w=document.getElementById('ab_cat_wrap');
@@ -2139,7 +2155,7 @@ async function loadEvents(){
     const {data,error}=await SB.from('di_events').select('*').eq('status','live');
     if(error) throw error;
     if(data && data.length){
-      EV=data.map(r=>({id:r.id,title:r.title,venue:r.venue,category:r.category,source:r.source,date:r.event_date,time:r.start_time,price:r.price_from,url:r.url,img:r.image_url,business_id:r.business_id}));
+      EV=data.map(r=>({id:r.id,title:r.title,venue:r.venue,category:r.category,source:r.source,date:r.event_date,time:r.start_time,price:r.price_from,url:r.url,img:r.image_url,business_id:r.business_id,lat:Number.isFinite(Number(r.latitude))?Number(r.latitude):null,lng:Number.isFinite(Number(r.longitude))?Number(r.longitude):null}));
       console.log('✓ Loaded '+EV.length+' events live from Supabase');
       return;
     }
@@ -2225,6 +2241,42 @@ function jumpMonth(y,m){
   selectDay(target);
 }
 var calY=null, calM=null;
+var VENUE_COORDS={'sofi stadium':[33.9535,-118.3392],'kia forum':[33.9581,-118.3419],'intuit dome':[33.9560,-118.3436],'youtube theater':[33.9537,-118.3398]};
+function distanceMiles(a,b){if(!a||!b||!Number.isFinite(a.lat)||!Number.isFinite(a.lng)||!Number.isFinite(b.lat)||!Number.isFinite(b.lng))return null;var r=Math.PI/180,la=(b.lat-a.lat)*r,lo=(b.lng-a.lng)*r,x=Math.sin(la/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(lo/2)**2;return 3958.8*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
+function eventAnchor(e){var b=e.business_id&&PB[e.business_id];if(Number.isFinite(e.lat)&&Number.isFinite(e.lng))return{lat:e.lat,lng:e.lng};if(b&&Number.isFinite(b.lat)&&Number.isFinite(b.lng))return{lat:b.lat,lng:b.lng};var c=VENUE_COORDS[String(e.venue||'').toLowerCase()];return c?{lat:c[0],lng:c[1]}:null;}
+function plannerCard(p,a,checkMin){var d=distanceMiles(a,p),s=d==null?'Distance unavailable':d.toFixed(1)+' mi';var statusTag='';if(checkMin!=null){var st=hoursStatusAt(p.hrs,checkMin);if(st)statusTag=' · <span style="color:'+(st.open?'var(--green)':'#ff7a7a')+'">'+(st.open?'Open then':'Closed then')+'</span>';}return '<div class="evrow" onclick="openListing(\''+evEsc(p.k)+ '\')"><div class="evbody"><div class="evname">'+evEsc(p.n)+'</div><div class="evmeta">'+evEsc(p.cat||'')+' · '+evEsc(s)+statusTag+' · '+evEsc(p.addr||'')+'</div></div></div>';}
+function plannerSection(title,items,a,checkMin){items=items.slice().sort(function(x,y){var dx=distanceMiles(a,x),dy=distanceMiles(a,y);return(dx==null?Infinity:dx)-(dy==null?Infinity:dy);});return '<div style="padding:12px 16px 0"><div class="sect-head"><h3>'+title+'</h3><span style="font-size:11px;color:var(--muted)">'+items.length+' nearby</span></div>'+(items.length?items.slice(0,8).map(function(p){return plannerCard(p,a,checkMin);}).join(''):'<div class="ev-empty" style="margin:0 0 8px;padding:18px">No matching spots yet.</div>')+'</div>';}
+var VENUE_PARKING_TIPS={
+  'sofi stadium':['Most SoFi Stadium lots require a pre-purchased parking pass — buy one ahead through Ticketmaster or the SoFi app.','Rideshare pickup/drop-off is in a designated lot with a walk to the gates — check the SoFi app for the current zone.'],
+  'kia forum':['Kia Forum has on-site lots plus overflow parking on nearby side streets and church lots — arrive early on sellout nights.','Rideshare pickup/drop-off is just off Prairie Ave, a short walk from the main entrance.'],
+  'intuit dome':['Intuit Dome parking is reservation-only for most games — book a spot in advance through the Clippers/Intuit Dome app.','Rideshare drop-off has its own dedicated lot separate from parking.'],
+  'youtube theater':['YouTube Theater shares the Hollywood Park lots with SoFi Stadium — check which lot your ticket references before you drive.']
+};
+function parkingTips(e){
+  var v=String(e.venue||'').toLowerCase();
+  var tips=(VENUE_PARKING_TIPS[v]||[]).concat([
+    'Arrive 90+ minutes before kickoff/doors — lots and nearby streets fill up fast on game days.',
+    'Metro K Line serves Downtown Inglewood and Fairview Heights stations near the venues — a car-free option worth checking for sold-out events.',
+    'Traffic on Century, Prairie, and Manchester backs up hard right before and after events — give yourself extra time either way.'
+  ]);
+  return '<div style="padding:12px 16px 0"><div class="sect-head"><h3>Parking &amp; getting there</h3></div><div class="ev-note" style="margin:8px 0 0">'+tips.map(function(t){return '• '+evEsc(t);}).join('<br>')+'</div></div>';
+}
+function openEvent(id){
+  var e=EV.find(function(x){return x.id===id;}); if(!e) return;
+  var a=eventAnchor(e);
+  var text=function(p){return(p.cat||'')+' '+(p.n||'');};
+  var startMin=timeVal(e.time)||null;
+  var beforeCheck=startMin!=null?startMin-150:null;   // ~2.5 hrs before kickoff/doors
+  var afterCheck=startMin!=null?startMin+210:null;     // ~30 min after an assumed 3-hour event
+  function likelyOpenAt(p,checkMin){ if(checkMin==null) return true; var st=hoursStatusAt(p.hrs,checkMin); return !st||st.open!==false; }
+  var before=P.filter(function(p){return /restaurant|food|bar|lounge|coffee|brunch|mexican|soul|caribbean|american|seafood/i.test(text(p))&&likelyOpenAt(p,beforeCheck);});
+  var after=P.filter(function(p){return /lounge|bar|dessert|coffee|restaurant|food|casino/i.test(text(p))&&likelyOpenAt(p,afterCheck);});
+  var hotels=P.filter(function(p){return /hotel|lodging/i.test(text(p));});
+  var deals=P.filter(function(p){return !!p.special||!!p.mdeal;});
+  var map='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(e.venue||'Inglewood');
+  document.getElementById('event-detail-body').innerHTML='<div style="padding:18px 16px 0"><div class="evtag '+evKindClass(e)+'">'+evEsc(evLabel(e).toUpperCase())+'</div><h1 style="font-family:\'Barlow Condensed\';font-size:30px;line-height:1.02;margin:9px 0 6px">'+evEsc(e.title)+'</h1><div style="color:var(--muted);font-size:13px;line-height:1.6">'+evEsc(e.date||'')+' · '+evEsc(e.time||'Time TBD')+'<br>📍 '+evEsc(e.venue||'Inglewood')+'</div><div style="display:flex;gap:8px;margin:16px 0;flex-wrap:wrap"><button class="btn btn-gold" onclick="document.getElementById(\'game-day-plan\').scrollIntoView({behavior:\'smooth\'})">Plan my game day</button>'+(e.url?'<a class="btn btn-ghost" href="'+evEsc(e.url)+'" target="_blank" rel="noopener">Tickets</a>':'')+'<a class="btn btn-ghost" href="'+map+'" target="_blank" rel="noopener">Map</a></div></div><div id="game-day-plan">'+plannerSection('Before the game',before,a,beforeCheck)+plannerSection('After the game',after,a,afterCheck)+plannerSection('Staying over?',hotels,a)+plannerSection('Deals today',deals,a)+parkingTips(e)+'</div>';
+  go('event-detail');
+}
 function renderEvents(){
   buildEvFilters();
   var today=new Date();today.setHours(0,0,0,0);
@@ -2266,7 +2318,7 @@ function renderEvents(){
       (nextD?'<br><button class="btn btn-ghost" style="margin-top:12px" onclick="selectDay(\''+nextD+'\')">Next event · '+parseD(nextD).toLocaleDateString(undefined,{month:'short',day:'numeric'})+' &#8594;</button>':'')+'</div>';
   }else{
     body=evs.map(function(e){
-      return '<div class="evrow">'+
+      return '<div class="evrow" onclick="openEvent(\''+evEsc(e.id)+'\')">'+
         '<div class="evtime"><div class="t">'+evEsc(e.time||'')+'</div><div class="ic">'+evIcon(e)+'</div></div>'+
         '<div class="evbody"><div class="evname">'+evEsc(e.title)+'</div>'+
         '<div class="evmeta"><span class="evtag '+evKindClass(e)+'">'+evEsc(evLabel(e).toUpperCase())+'</span>'+
