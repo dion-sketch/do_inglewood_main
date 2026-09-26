@@ -878,6 +878,15 @@
       <div class="skip" onclick="closeResv()">Cancel</div>
     </div>
   </div>
+  <div class="acct-overlay" id="locOverlay">
+    <div class="acct-sheet">
+      <h3>&#128205; What's close to you?</h3>
+      <p id="locMsg"></p>
+      <p style="margin-top:-6px">&#128274; Your location stays on your phone. It's never sent to Do Inglewood or saved.</p>
+      <button class="ab" onclick="locYes()">Use my location</button>
+      <div class="skip" onclick="locNo()">Not now</div>
+    </div>
+  </div>
   <div class="redeem" id="redeem" role="dialog" aria-modal="true" aria-label="Show this deal to staff">
     <div class="rk" id="rd-k">&#127903; Show your ticket</div>
     <div class="rb" id="rd-biz"></div>
@@ -1742,7 +1751,7 @@ function hasPhoto(p){ return !!(p && realImg(p.img)); }
 function cardHTML(p){
   return `<div class="card" onclick="openListing('${p.k}','home')">
     <div class="img" style="background-image:${bgLayers(p)}">${featuredBadge(p)}${tierBadge(p)}</div>
-    <div class="body"><div class="name">${xmlEsc(p.n)}</div><div class="meta">${starline(p)} · ${xmlEsc(p.price)} ${nearbyChip(p)}</div>${dealFlag(p)}${sytFlag(p)}</div>
+    <div class="body"><div class="name">${xmlEsc(p.n)}</div><div class="meta">${starline(p)} · ${xmlEsc(p.price)} ${myDistChip(p)} ${nearbyChip(p)}</div>${dealFlag(p)}${sytFlag(p)}</div>
   </div>`;
 }
 function isFallbackPhoto(src){
@@ -1824,7 +1833,8 @@ function buildFilters(){
     return `<div class="fchip ${f===curFilter?'on':''}" onclick="setFilter('${f}')">${f}</div>`;
   });
   // Inglewood-only by default; this chip adds nearby cities (labeled "Nearby").
-  chips.splice(1,0,'<div class="fchip toggle '+(showNearby()?'on':'')+'" onclick="toggleNearby()">'+(showNearby()?'&#10003; Nearby cities':'+ Nearby cities')+'</div>');
+  chips.splice(1,0,'<div class="fchip toggle '+(nearMe?'on':'')+'" onclick="toggleNearMe()">&#128205; Near me</div>',
+    '<div class="fchip toggle '+(showNearby()?'on':'')+'" onclick="toggleNearby()">'+(showNearby()?'&#10003; Nearby cities':'+ Nearby cities')+'</div>');
   document.getElementById('filterbar').innerHTML=chips.join('');
 }
 function setFilter(f){curFilter=f;buildFilters();renderExplore();}
@@ -1852,7 +1862,7 @@ function exploreMatches(){
   else { list=list.filter(hasPhoto); }   // browsing shows only spots WITH a real photo; a search still finds every spot
   // Featured + active-deal businesses surface to the top of every section, then paid (Premium) placement
   list=list.slice().sort(function(a,b){ var s=dealSortScore(b)-dealSortScore(a); if(s) return s; return (isSponsored(b)?1:0)-(isSponsored(a)?1:0); });
-  return list;
+  return nearMe?nearSort(list):list;
 }
 function hoursCardHTML(p){
   var o=openNow(p.hrs);
@@ -1865,7 +1875,7 @@ function exploreRow(p,i){return `
         <div class="info">
           <div class="name">${xmlEsc(p.n)}</div>
           <div class="sub">${xmlEsc(p.cat)}${p.addr?' · '+xmlEsc(p.addr):''}</div>
-          <div class="row"><span style="font-size:12px">${starline(p)}</span><span class="pricelv">${xmlEsc(p.price||'')}</span></div>
+          <div class="row"><span style="font-size:12px">${starline(p)}</span><span class="pricelv">${xmlEsc(p.price||'')}</span><span style="font-size:12px">${myDistChip(p)}</span></div>
           <div class="row">${listBadge(p)}${hoursCardHTML(p)}</div>
         </div>
       </div>`;}
@@ -2830,6 +2840,79 @@ function closeRedeem(){
   try{ if(_wakeLock){ _wakeLock.release(); _wakeLock=null; } }catch(e){}
 }
 
+/* ============ LOCATION — on this phone only ============
+   Asked only when someone taps "Near me" or opens Event Day, after a short
+   explainer. The position lives in memory for this visit: it is never sent to
+   Supabase and never written to storage (only a "not today" answer is remembered).
+   If the browser already has permission, it's read quietly on load. */
+var USER_LOC=null, _locResolve=null, _locAskedThisVisit=false, nearMe=false, _dataReady=false;
+function locDeclinedToday(){ try{ return localStorage.getItem('di_loc_no')===isoOf(new Date()); }catch(e){ return false; } }
+function fetchLocation(){
+  return new Promise(function(res){
+    if(!navigator.geolocation) return res(false);
+    navigator.geolocation.getCurrentPosition(function(pos){ USER_LOC={lat:pos.coords.latitude,lng:pos.coords.longitude}; res(true); },
+      function(){ res(false); }, {enableHighAccuracy:false,maximumAge:5*60*1000,timeout:10000});
+  });
+}
+function askLocation(reason,e){
+  if(USER_LOC) return Promise.resolve(true);
+  if(!navigator.geolocation) return Promise.resolve(false);
+  _locAskedThisVisit=true;
+  document.getElementById('locMsg').textContent=reason==='event'
+    ? 'See your walk time to '+((e&&e.venue)||'the venue')+' and to the pregame spots around it.'
+    : 'Sort spots by what’s closest to you right now, with walk times.';
+  document.getElementById('locOverlay').classList.add('on');
+  return new Promise(function(res){ _locResolve=res; });
+}
+function locYes(){
+  document.getElementById('locOverlay').classList.remove('on');
+  fetchLocation().then(function(ok){
+    if(!ok){ try{ localStorage.setItem('di_loc_no',isoOf(new Date())); }catch(e){} toast('Location is off — showing distances from the venue'); }
+    afterLocationChange(); if(_locResolve){ _locResolve(ok); _locResolve=null; }
+  });
+}
+function locNo(){
+  document.getElementById('locOverlay').classList.remove('on');
+  try{ localStorage.setItem('di_loc_no',isoOf(new Date())); }catch(e){}
+  if(_locResolve){ _locResolve(false); _locResolve=null; }
+}
+function afterLocationChange(){
+  renderModeHome(); buildFilters();
+  if(document.getElementById('view-explore').classList.contains('active')) renderExplore(true);
+}
+function initLocation(){
+  try{ if(navigator.permissions) navigator.permissions.query({name:'geolocation'}).then(function(st){ if(st.state==='granted') fetchLocation().then(function(ok){ if(ok) afterLocationChange(); }); },function(){}); }catch(e){}
+}
+// Entering Event Day asks once per visit (and not again the same day after "Not now").
+function maybeAskForEventDay(){
+  var ob=document.getElementById('onboard');
+  if(!_dataReady || USER_LOC || _locAskedThisVisit || locDeclinedToday() || currentMode()!=='event') return;
+  if(ob && ob.style.display!=='none') return;              // wait until the mode picker is gone
+  if(!document.getElementById('view-home').classList.contains('active')) return;
+  var e=todaysAnchorEvents()[0]||nextAnchorEvent();
+  askLocation('event',e);
+}
+function myDistance(p){ return USER_LOC?distanceMiles(USER_LOC,p):null; }
+function distLabel(mi){ return mi==null?'':(mi<1.5?walkMins(mi)+' min walk':mi.toFixed(1)+' mi'); }
+function myDistChip(p){ var d=myDistance(p); return d==null?'':'<span style="color:var(--gold);font-weight:700">· '+distLabel(d)+'</span>'; }
+// Closest first for spots we can measure; the rest keep their order after them.
+function nearSort(list){
+  if(!USER_LOC) return list;
+  var withD=[], without=[];
+  list.forEach(function(p){ var d=myDistance(p); if(d==null) without.push(p); else withD.push({p:p,d:d}); });
+  withD.sort(function(a,b){ return a.d-b.d; });
+  return withD.map(function(x){ return x.p; }).concat(without);
+}
+function toggleNearMe(){
+  if(nearMe){ nearMe=false; buildFilters(); renderExplore(true); return; }
+  askLocation('near').then(function(ok){
+    if(!ok){ toast('Turn on location to sort by distance'); return; }
+    nearMe=true; buildFilters(); renderExplore(true);
+    var measurable=P.filter(function(p){ return myDistance(p)!=null; }).length;
+    if(measurable<20) toast('Distances are still being added for most spots');
+  });
+}
+
 /* ============ INGLEWOOD FIRST ============
    P holds what the app shows (Inglewood only unless "Nearby" is switched on);
    ALL_P holds every loaded business. PB keeps everything, so a shared link to a
@@ -2938,11 +3021,13 @@ function homeRow(title,list,link){
   if(!list.length) return '';
   return '<div class="sect"><div class="sect-head"><h3>'+title+'</h3>'+(link||'')+'</div><div class="hscroll">'+list.map(cardHTML).join('')+'</div></div>';
 }
+// "12 min walk from you" / "4.2 mi from you" — only when location is on.
+function youToVenue(e){ var mi=USER_LOC?distanceMiles(USER_LOC,eventAnchor(e)):null; return mi==null?'':distLabel(mi)+' from you'; }
 function evDayCard(isNext,e){
   var img=venuePhoto(e.venue), when=isNext?parseD(e.date).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'}):'Tonight';
   return '<div class="evday-card" style="background-image:'+(img?"url('"+String(img).replace(/'/g,'%27')+"')":'none')+'" onclick="openEvent(\''+evEsc(e.id)+'\')"><div class="in">'+
     '<div class="k">'+(isNext?'Next up · ':'')+when+(e.time?' · '+evEsc(e.time):'')+'</div><h3>'+evEsc(e.title)+'</h3>'+
-    '<div class="v">&#128205; '+evEsc(e.venue)+'</div><span class="go">Plan my night &#8594;</span></div></div>';
+    '<div class="v">&#128205; '+evEsc(e.venue)+(youToVenue(e)?' · <b style="color:var(--gold)">'+youToVenue(e)+'</b>':'')+'</div><span class="go">Plan my night &#8594;</span></div></div>';
 }
 function eventDayHome(){
   var used={}, html='', evs=todaysAnchorEvents(), sug=afterHoursSuggestion();
@@ -2964,15 +3049,15 @@ function anytimeHome(){
   var deals=markUsed(P.filter(function(p){ return hasLiveDeal(p); }).sort(byDealThenPopular).slice(0,8),used);
   html+=deals.length?homeRow('&#127903; Today’s Deals',deals,'<a onclick="go(\'specials\')">See all</a>')
                     :homeRow('&#128293; Popular right now',markUsed(popularSpots(null,8,used),used));
-  var open=markUsed(popularSpots(function(p){ var o=openNow(p.hrs); return !!(o&&o.open); },10,used),used);
-  html+=homeRow('Open now',open,'<a onclick="go(\'explore\')">Explore</a>');
+  var open=markUsed(nearSort(popularSpots(function(p){ var o=openNow(p.hrs); return !!(o&&o.open); },10,used)),used);
+  html+=homeRow(USER_LOC?'Open now near you':'Open now',open,'<a onclick="go(\'explore\')">Explore</a>');
   return html;
 }
 function afterHoursHome(){
   var used={}, html='';
   var night=markUsed(popularSpots(function(p){ return RX_NIGHT.test(bizText(p)) && openLate(p); },8,used),used);
   if(!night.length) night=markUsed(popularSpots(function(p){ return RX_NIGHT.test(bizText(p)); },8,used),used);
-  html+=homeRow('&#127769; After the show',night,'<a onclick="filterTo(\'Lounges\')">See all</a>');
+  html+=homeRow('&#127769; After the show',nearSort(night),'<a onclick="filterTo(\'Lounges\')">See all</a>');
   html+=homeRow('Late-night eats',markUsed(popularSpots(function(p){ return RX_FOOD.test(bizText(p)) && openLate(p); },8,used),used));
   return html||homeRow('&#128293; Popular right now',popularSpots(null,8));
 }
@@ -2990,6 +3075,7 @@ function renderModeHome(){
   var m=currentMode();
   el.innerHTML=m==='event'?eventDayHome():(m==='after'?afterHoursHome():anytimeHome());
   _modeSig=m+'|'+(afterHoursSuggestion()?1:0);
+  if(m==='event') setTimeout(maybeAskForEventDay,800);
 }
 // Re-check every few minutes so Event Day turns on / the After Hours nudge appears
 // without a reload — but only repaint when something actually changed.
@@ -3003,12 +3089,14 @@ async function initApp(){
   loadBrandArt();
   normalizeFallbackImages();
   applyAreaFilter();
+  initLocation();
   // Paint the local release immediately; Supabase can refresh it after the network responds.
   buildHome();buildFilters();buildHero();renderHomeEvents();renderModeHome();renderModePicker();
   await loadBusinesses();
   normalizeVenuePhotos();
   await loadEvents();
   await loadDeals();
+  _dataReady=true;
   var _bl=document.getElementById('di-build'); if(_bl)_bl.textContent=DI_BUILD;
   buildHome();buildFilters();buildHero();renderHomeEvents();renderModeHome();renderModePicker();
   var ev=document.getElementById('view-explore');

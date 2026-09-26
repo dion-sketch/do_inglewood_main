@@ -99,3 +99,32 @@ Checked afterwards: 4 venues, 246 events linked to a venue, 1,248 Inglewood / 27
 1. Run `27_sample_deals.sql`. On a show day, Event Day Home shows the "Deals Tonight" banner.
 2. Tap **Show**: the full-screen view with a ticking clock appears. Tap Done.
 3. Admin → Deals: add a deal, turn it off, edit it, then **Delete sample deals**.
+
+---
+
+## Phase 3 — Location (while the app is open)
+
+**What changed** (`site/index.html`)
+- A short explainer sheet ("What's close to you?") comes before the browser's own permission prompt.
+  - It says plainly that location stays on the phone and is never sent or saved.
+  - It appears only when someone taps **📍 Near me** in Explore, or when Event Day opens (once per visit).
+  - "Not now" isn't asked again that day.
+- If the browser already allowed location, it's read quietly with no sheet.
+- The position lives only in memory for the current visit. It's never written to storage and never included in any request to Supabase (checked: the only thing stored is the "not now" date).
+- With location on:
+  - Event Day cards show "**9 min walk from you**" to the venue.
+  - Cards and Explore rows show "8 min walk" (or miles when farther than 1.5 mi).
+  - Home's "Open now near you" and "After the show" sort closest first.
+  - **Near me** in Explore sorts by distance.
+- Without location, everything still works: the Show Your Ticket banner and pregame lists already sort by distance to the venue.
+
+**Decisions**
+- Walk time is based on 3 mph; above 1.5 mi, miles are shown instead.
+- Spots with no coordinates keep their normal order after the ones that can be measured, and show no distance rather than a guess.
+
+**Needs your call (costs money):** only **3 businesses have coordinates** right now, so walk times to spots are mostly missing. **Admin → "Add photos & details"** fills coordinates (and photos/hours) from Google. For ~1,500 rows that's a few thousand paid Google Places requests (Place Details + photos), roughly tens of dollars depending on your Google billing tier. Check Google Cloud billing before running it. Deploy the updated `import-businesses` function first (it's the version that also fills `is_inglewood` and no longer blanks photos).
+
+**What to test**
+1. Open on a phone on a show day in Event Day: the explainer shows, then the browser prompt. The event card shows your walk time.
+2. Tap "Not now", reload: not asked again today.
+3. Explore → 📍 Near me: closest spots first.
