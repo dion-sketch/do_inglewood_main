@@ -66,3 +66,16 @@ barbershop, nails) are pulled by keyword instead.
 - Spots with no Google photo are stamped as "tried" so the backfill skips them next
   time (they keep the branded category tile until an owner uploads a photo).
 - Tune `RADIUS`, `SWEEPS`, `MAX_PHOTOS`, `BACKFILL_BATCH` at the top of `index.ts`.
+
+## Inglewood flag (`is_inglewood`)
+The sweep radius reaches into Los Angeles, Hawthorne, Lennox and other cities. Each
+import now asks Google for the place's city (`address_components`, a Basic field with
+no extra charge) and stores `is_inglewood = true/false`. The app hides non-Inglewood
+spots by default and labels them "Nearby" when the visitor turns them on.
+
+Backfill also fills `is_inglewood` for rows where it is still empty. After
+`25_event_day_engagement.sql` runs, only rows whose address has no city are empty, so
+this touches a small number of rows (each one is a normal Place Details call).
+
+Deploy this version only **after** `25_event_day_engagement.sql` has run — it reads and
+writes the new `is_inglewood` column.

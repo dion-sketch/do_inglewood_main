@@ -55,6 +55,11 @@ const SWEEPS: [string, string, string?][] = [
   // ["dentist", "Dental"], ["doctor", "Medical"], ["car_repair", "Auto"],
 ];
 
+// The 4.5 km sweep reaches past the city line (Los Angeles, Hawthorne, Lennox…),
+// so every row records whether it is really in Inglewood. The app hides the rest
+// by default and labels them "Nearby".
+const isInglewoodCity = (city: string) => city.trim().toLowerCase() === "inglewood";
+
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const priceStr = (n: number | undefined) => (n && n > 0 ? "$".repeat(Math.min(n, 4)) : "$$");
 
@@ -92,16 +97,19 @@ async function nearby(type: string, keyword?: string): Promise<any[]> {
 
 // Pull the rich details we show on a business page.
 async function details(placeId: string): Promise<{
-  phone?: string; website?: string; hours?: string; latitude?: number; longitude?: number; photoRefs: string[];
+  phone?: string; website?: string; hours?: string; latitude?: number; longitude?: number;
+  city?: string; photoRefs: string[];
 }> {
   try {
-    const fields = "formatted_phone_number,website,opening_hours,photos,geometry";
+    // address_components is a Basic field (no extra cost) — it gives the real city.
+    const fields = "formatted_phone_number,website,opening_hours,photos,geometry,address_components";
     const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=${fields}&key=${KEY}`;
     const j = (await (await fetch(url)).json()).result || {};
     const hours = j.opening_hours?.weekday_text?.join(" · ");
     const photoRefs = (j.photos || []).slice(0, MAX_PHOTOS).map((p: any) => p.photo_reference).filter(Boolean);
+    const city = (j.address_components || []).find((c: any) => (c.types || []).includes("locality"))?.long_name;
     return { phone: j.formatted_phone_number, website: j.website, hours,
-      latitude: j.geometry?.location?.lat, longitude: j.geometry?.location?.lng, photoRefs };
+      latitude: j.geometry?.location?.lat, longitude: j.geometry?.location?.lng, city, photoRefs };
   } catch { return { photoRefs: [] }; }
 }
 
@@ -158,13 +166,13 @@ function fillPatch(row: any, d: { phone?: string; website?: string; hours?: stri
 async function backfill(limit: number) {
   // Enrich unclaimed rows missing photos OR coordinates. This lets the same
   // repeated admin backfill populate locations even when photos already exist.
-  const needsEnrichment = "photo_url.is.null,photo_url.eq.,latitude.is.null,longitude.is.null";
+  const needsEnrichment = "photo_url.is.null,photo_url.eq.,latitude.is.null,longitude.is.null,is_inglewood.is.null";
   const { count } = await admin.from("di_businesses")
     .select("id", { count: "exact", head: true })
     .is("claimed_by", null).not("google_place_id", "is", null).or(needsEnrichment);
 
   const { data: rows } = await admin.from("di_businesses")
-    .select("id, google_place_id, tier, photo_url, photos, website, phone, hours, booking_url, latitude, longitude")
+    .select("id, google_place_id, tier, photo_url, photos, website, phone, hours, booking_url, latitude, longitude, is_inglewood")
     .is("claimed_by", null).not("google_place_id", "is", null).or(needsEnrichment)
     .limit(limit);
 
@@ -175,9 +183,11 @@ async function backfill(limit: number) {
     const patch = fillPatch(row, d, photos) || {};
     if (d.latitude != null && row.latitude == null) patch.latitude = d.latitude;
     if (d.longitude != null && row.longitude == null) patch.longitude = d.longitude;
+    if (d.city && row.is_inglewood == null) patch.is_inglewood = isInglewoodCity(d.city);
     // If Google had no photo for this place, stamp photo_url = "" so the row is
     // marked as "tried" and won't be picked up again (the app shows its tile).
-    if (!photos.length && !patch.photo_url) patch.photo_url = "";
+    // Only for rows that have no photo yet — never blank out a photo that exists.
+    if (!photos.length && !patch.photo_url && !row.photo_url) patch.photo_url = "";
     const { error } = await admin.from("di_businesses").update(patch).eq("id", row.id);
     if (!error) enriched++;
   }
@@ -214,6 +224,7 @@ async function importNew() {
       price_level: priceStr(p.price_level),
       phone: d.phone || "", website: d.website || null, hours: d.hours || null,
       photo_url: photos[0] || null, photos: photos.length ? photos : null,
+      is_inglewood: d.city ? isInglewoodCity(d.city) : null,
       latitude: d.latitude ?? p.geometry?.location?.lat ?? null,
       longitude: d.longitude ?? p.geometry?.location?.lng ?? null,
       ...detectBooking(d.website),   // auto-plug an existing booking system if found
