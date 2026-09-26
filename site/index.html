@@ -488,6 +488,41 @@
   .fallback-head{font-family:'Barlow Condensed';font-weight:800;font-size:18px;margin:6px 0 10px;}
   .fchip.toggle{border-style:dashed;}
   .fchip.toggle.on{background:var(--panel-2);color:var(--gold);border:1px solid var(--gold);}
+
+  /* ============ SHOW YOUR TICKET deals ============ */
+  .deal-flag.syt{background:linear-gradient(90deg,#ff2e7e,#ff8a3d);color:#fff;box-shadow:0 2px 10px rgba(255,46,126,.35);margin-top:4px;}
+  .deal-flag.sample{background:var(--panel-2);color:var(--muted);box-shadow:none;border:1px dashed var(--line);margin-left:4px;}
+  .syt-banner{margin:14px 20px 0;border-radius:18px;padding:16px 14px 8px;background:linear-gradient(150deg,rgba(255,46,126,.2),rgba(245,197,66,.1) 60%,rgba(20,20,23,1));border:1px solid var(--pink);box-shadow:0 0 24px rgba(255,46,126,.22);}
+  .syt-banner .k{font-family:'Barlow Condensed';font-weight:800;font-size:12px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;}
+  .syt-banner h3{font-family:'Barlow Condensed';font-weight:800;font-size:26px;line-height:1;margin-top:3px;}
+  .syt-banner p{font-size:12px;color:#d4d4dc;margin-top:5px;line-height:1.4;}
+  .syt-row{display:flex;gap:11px;align-items:center;padding:10px 0;border-top:1px solid rgba(255,255,255,.08);cursor:pointer;}
+  .syt-row:first-of-type{margin-top:10px;}
+  .syt-row .pic{flex:0 0 54px;height:54px;border-radius:10px;background:#222 center/cover no-repeat;}
+  .syt-row .tx{flex:1;min-width:0;}
+  .syt-row b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .syt-row .o{display:block;font-size:12.5px;color:var(--gold);font-weight:700;margin-top:2px;line-height:1.3;}
+  .syt-row .d{display:block;font-size:11px;color:var(--muted);margin-top:2px;}
+  .syt-row button{flex:0 0 auto;border:0;border-radius:10px;padding:9px 11px;background:var(--grad);color:#1a0010;font-weight:900;font-size:12px;cursor:pointer;}
+  .tdeal{margin:14px 0;border-radius:14px;padding:14px;border:1px solid var(--pink);background:linear-gradient(100deg,rgba(255,46,126,.14),rgba(245,197,66,.08));}
+  .tdeal.friend{border-color:var(--purple);background:linear-gradient(100deg,rgba(155,107,255,.18),rgba(255,46,126,.08));}
+  .tdeal .tk{font-family:'Barlow Condensed';font-weight:800;font-size:12px;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase;}
+  .tdeal .tt{font-family:'Barlow Condensed';font-weight:800;font-size:21px;line-height:1.1;margin-top:4px;}
+  .tdeal .td{font-size:12.5px;color:#d4d4dc;margin-top:5px;line-height:1.4;}
+  .tdeal .row2{display:flex;gap:8px;margin-top:12px;}
+  .tdeal .row2 button{flex:1;border:0;border-radius:11px;padding:12px;font-family:'Barlow Condensed';font-weight:800;font-size:16px;letter-spacing:.5px;cursor:pointer;background:var(--grad);color:#1a0010;}
+  .tdeal .row2 button.ghost{background:rgba(255,255,255,.05);color:var(--gold);border:1px solid rgba(245,197,66,.5);}
+  /* "Show to staff" — full screen, with a live clock so a screenshot is easy to spot */
+  .redeem{position:absolute;inset:0;z-index:70;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px 26px;background:radial-gradient(120% 70% at 50% 0%,rgba(255,46,126,.35),transparent 60%),radial-gradient(100% 60% at 50% 100%,rgba(245,197,66,.25),transparent 60%),#0a0a0c;}
+  .redeem.on{display:flex;animation:fade .3s ease;}
+  .redeem .rk{font-family:'Barlow Condensed';font-weight:800;font-size:15px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;}
+  .redeem .rb{font-family:'Barlow Condensed';font-weight:800;font-size:22px;margin-top:18px;color:#e4e4ea;}
+  .redeem .rt{font-family:'Barlow Condensed';font-weight:800;font-size:40px;line-height:1;margin-top:6px;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .redeem .rdt{font-size:13px;color:#d4d4dc;margin-top:10px;line-height:1.45;max-width:300px;}
+  .redeem .rday{margin-top:26px;font-family:'Barlow Condensed';font-weight:800;font-size:26px;}
+  .redeem .rclock{font-family:'Barlow Condensed';font-weight:700;font-size:48px;letter-spacing:2px;color:var(--gold);animation:pulse 2s ease-in-out infinite;}
+  .redeem .rnote{font-size:12px;color:var(--muted);margin-top:14px;max-width:300px;line-height:1.45;}
+  .redeem .btn{margin-top:26px;max-width:300px;}
 </style>
 </head>
 <body>
@@ -842,6 +877,16 @@
       <button class="ab" onclick="submitResv()">Send request</button>
       <div class="skip" onclick="closeResv()">Cancel</div>
     </div>
+  </div>
+  <div class="redeem" id="redeem" role="dialog" aria-modal="true" aria-label="Show this deal to staff">
+    <div class="rk" id="rd-k">&#127903; Show your ticket</div>
+    <div class="rb" id="rd-biz"></div>
+    <div class="rt" id="rd-title"></div>
+    <div class="rdt" id="rd-det"></div>
+    <div class="rday" id="rd-day"></div>
+    <div class="rclock" id="rd-clock"></div>
+    <div class="rnote" id="rd-note"></div>
+    <button class="btn btn-primary" onclick="closeRedeem()">Done</button>
   </div>
   <div class="toast" id="toast"></div>
 </div>
@@ -1388,12 +1433,13 @@ function bgLayers(p){
   var photo=realImg(p.img) ? String(p.img).replace(/'/g,'%27') : cat;
   return "url('"+photo+"'), url('"+cat+"'), url('"+safe+"')";
 }
+// null/'' must stay null — Number(null) is 0, which would put a spot in the Atlantic.
+function coord(v){ return (v==null||v==='')?null:(Number.isFinite(Number(v))?Number(v):null); }
 function dbToApp(r){
   return {
     k:r.id, n:r.name, cat:r.category, tags:r.tags||[],
     addr:r.address, ph:r.phone||"", web:r.website||undefined,
-    lat:Number.isFinite(Number(r.latitude))?Number(r.latitude):null,
-    lng:Number.isFinite(Number(r.longitude))?Number(r.longitude):null,
+    lat:coord(r.latitude), lng:coord(r.longitude),
     pid:r.google_place_id||"", r:r.rating, rc:r.rating_count,
     price:r.price_level, cpp:r.avg_per_person||0, hrs:r.hours,
     q:r.review_quote, tier:r.tier||1, special:r.special||null, mdeal:r.member_deal||null,
@@ -1677,8 +1723,9 @@ function dealFlag(p){
 // Paid top-tier placement — always clearly labeled so guests know it's promoted.
 function featuredBadge(p){ return isFeatured(p)?'<span class="chip chip-featured badge-tl">&#11088; Featured</span>':''; }
 // Sort weight used everywhere a list needs deals/featured spots first: Featured > Game
-// Day deal > any active deal > everything else. Higher score sorts first.
-function dealSortScore(p){ return (isFeatured(p)?4:0)+(isGameDaySpecial(p)?2:0)+(isDealLit(p)?1:0); }
+// Day deal > any active deal > everything else (Show Your Ticket sits just under Featured).
+// Higher score sorts first.
+function dealSortScore(p){ return (isFeatured(p)?4:0)+(ticketDealFor(p)?3:0)+(isGameDaySpecial(p)?2:0)+((isDealLit(p)||liveDealsFor(p).length)?1:0); }
 function tierBadge(p){
   if(p.tags && p.tags.indexOf('Coming Soon')>=0)return '<span class="chip chip-special badge-tr">&#128197; Coming Soon</span>';
   if(isDealLit(p))return '';
@@ -1695,7 +1742,7 @@ function hasPhoto(p){ return !!(p && realImg(p.img)); }
 function cardHTML(p){
   return `<div class="card" onclick="openListing('${p.k}','home')">
     <div class="img" style="background-image:${bgLayers(p)}">${featuredBadge(p)}${tierBadge(p)}</div>
-    <div class="body"><div class="name">${xmlEsc(p.n)}</div><div class="meta">${starline(p)} · ${xmlEsc(p.price)} ${nearbyChip(p)}</div>${dealFlag(p)}</div>
+    <div class="body"><div class="name">${xmlEsc(p.n)}</div><div class="meta">${starline(p)} · ${xmlEsc(p.price)} ${nearbyChip(p)}</div>${dealFlag(p)}${sytFlag(p)}</div>
   </div>`;
 }
 function isFallbackPhoto(src){
@@ -1787,6 +1834,7 @@ function listBadge(p){
   if(isComingSoon(p)) return '<span class="chip chip-special">&#128197; Coming Soon</span>';
   var badges=[];
   if(isFeatured(p)) badges.push('<span class="chip chip-featured">&#11088; Featured</span>');
+  if(ticketDealFor(p)) badges.push(sytFlag(p));
   if(isDealLit(p)) badges.push(dealFlag(p));
   else if(isSponsored(p)) badges.push('<span class="chip chip-sponsored">&#11088; Sponsored</span>');
   else if(p.special) badges.push('<span class="chip chip-special">&#127863; Special</span>');
@@ -1861,7 +1909,7 @@ function specialsCatMatch(p,cat){
 }
 // A Today's Deal is live only for a paid business with its featured special set.
 function hasLiveSpecial(p){ return isDealLit(p)&&hasPhoto(p); }
-function hasLiveDeal(p){ return !!(p&&p.tier>=2&&(p.special||p.mdeal)&&hasPhoto(p)); }
+function hasLiveDeal(p){ return !!(p&&hasPhoto(p)&&((p.tier>=2&&(p.special||p.mdeal))||liveDealsFor(p).length)); }
 // Only show category chips that actually have specials today (never a dead filter).
 function specialsCatsAvailable(){
   var avail={all:1};
@@ -1912,8 +1960,9 @@ function renderSpecials(){
   if(fallback) list=popularSpots(function(p){ return specialsCatMatch(p,specialsCat); },12);
   if(title) title.innerHTML=fallback?'&#128293; Popular right now':'&#127903; Live Deals';
   el.innerHTML=list.map(function(p,i){
-    var offer = !hasLiveDeal(p) ? xmlEsc([p.cat,p.price].filter(Boolean).join(' · ')) : p.special ? xmlEsc(p.special) : '<span style="color:var(--gold)">&#128274; Join free to unlock</span>';
-    var badges=(isFeatured(p)?'<span class="chip chip-featured">&#11088; Featured</span> ':'')+(isDealLit(p)?dealFlag(p):'');
+    var dl=liveDealsFor(p)[0];
+    var offer = !hasLiveDeal(p) ? xmlEsc([p.cat,p.price].filter(Boolean).join(' · ')) : (p.tier>=2&&p.special) ? xmlEsc(p.special) : dl ? xmlEsc(dl.title) : '<span style="color:var(--gold)">&#128274; Join free to unlock</span>';
+    var badges=(isFeatured(p)?'<span class="chip chip-featured">&#11088; Featured</span> ':'')+(isDealLit(p)?dealFlag(p):'')+sytFlag(p);
     return `<div class="listcard" style="animation-delay:${i*0.02}s" onclick="openListing('${p.k}','specials')">
         <div class="img" style="background-image:${bgLayers(p)}"></div>
         <div class="info">
@@ -2120,6 +2169,7 @@ function dealBlockHTML(p){
 function revealDeal(){ var e=document.getElementById('deal-reveal'); if(e)e.classList.add('on'); }
 function openListing(k,from){
   lastList=from||'home';const p=PB[k];
+  logActivity(k,'view');
   window._curListing=k;
   var _fav=document.getElementById('ldFav'); if(_fav){ var on=isFav(k); _fav.innerHTML=on?'&#9829;':'&#9825;'; _fav.style.color=on?'var(--pink)':''; }
   document.getElementById('ldhero').style.backgroundImage=bgLayers(p);
@@ -2140,6 +2190,7 @@ function openListing(k,from){
     <div class="ldmeta"><span style="font-size:13px">${starline(p)}</span><span class="pricelv">${xmlEsc(p.price)}</span>${p.cat?`<span style="font-size:12px;color:var(--muted)">${xmlEsc(p.cat)}</span>`:''}${badge}</div>
     ${tagsRow}
     ${statusLine}
+    ${dealCardsHTML(p)}
     ${dealBlockHTML(p)}
     <div class="actrow">
       <div class="actpill" onclick="openDirections('${p.k}')"><span class="ai">${ICON.nav}</span>Directions</div>
@@ -2334,7 +2385,7 @@ async function loadEvents(){
     const {data,error}=await SB.from('di_events').select('*').eq('status','live');
     if(error) throw error;
     if(data && data.length){
-      EV=data.map(r=>({id:r.id,title:r.title,venue:r.venue,category:r.category,source:r.source,date:r.event_date,time:r.start_time,price:r.price_from,url:r.url,img:r.image_url,business_id:r.business_id,lat:Number.isFinite(Number(r.latitude))?Number(r.latitude):null,lng:Number.isFinite(Number(r.longitude))?Number(r.longitude):null}));
+      EV=data.map(r=>({id:r.id,title:r.title,venue:r.venue,category:r.category,source:r.source,date:r.event_date,time:r.start_time,price:r.price_from,url:r.url,img:r.image_url,business_id:r.business_id,lat:coord(r.latitude),lng:coord(r.longitude)}));
       console.log('✓ Loaded '+EV.length+' events live from Supabase');
       return;
     }
@@ -2423,7 +2474,7 @@ var calY=null, calM=null;
 var VENUE_COORDS={'sofi stadium':[33.9535,-118.3392],'kia forum':[33.9581,-118.3419],'intuit dome':[33.9560,-118.3436],'youtube theater':[33.9537,-118.3398]};
 function distanceMiles(a,b){if(!a||!b||!Number.isFinite(a.lat)||!Number.isFinite(a.lng)||!Number.isFinite(b.lat)||!Number.isFinite(b.lng))return null;var r=Math.PI/180,la=(b.lat-a.lat)*r,lo=(b.lng-a.lng)*r,x=Math.sin(la/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(lo/2)**2;return 3958.8*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
 function eventAnchor(e){var b=e.business_id&&PB[e.business_id];if(Number.isFinite(e.lat)&&Number.isFinite(e.lng))return{lat:e.lat,lng:e.lng};if(b&&Number.isFinite(b.lat)&&Number.isFinite(b.lng))return{lat:b.lat,lng:b.lng};var c=VENUE_COORDS[String(e.venue||'').toLowerCase()];return c?{lat:c[0],lng:c[1]}:null;}
-function plannerCard(p,a,checkMin){var d=distanceMiles(a,p),s=d==null?'Distance unavailable':d.toFixed(1)+' mi';var statusTag='';if(checkMin!=null){var st=hoursStatusAt(p.hrs,checkMin);if(st)statusTag=' · <span style="color:'+(st.open?'var(--green)':'#ff7a7a')+'">'+(st.open?'Open then':'Closed then')+'</span>';}var nameBadge=isFeatured(p)?' <span class="chip chip-featured" style="vertical-align:middle">&#11088; Featured</span>':'';var dealBadge=isDealLit(p)?'<div style="margin-top:4px">'+dealFlag(p)+'</div>':'';return '<div class="evrow" onclick="openListing(\''+evEsc(p.k)+ '\')"><div class="evbody"><div class="evname">'+evEsc(p.n)+nameBadge+'</div><div class="evmeta">'+evEsc(p.cat||'')+' · '+evEsc(s)+statusTag+' · '+evEsc(p.addr||'')+'</div>'+dealBadge+'</div></div>';}
+function plannerCard(p,a,checkMin){var d=distanceMiles(a,p),s=d==null?'Distance unavailable':d.toFixed(1)+' mi';var statusTag='';if(checkMin!=null){var st=hoursStatusAt(p.hrs,checkMin);if(st)statusTag=' · <span style="color:'+(st.open?'var(--green)':'#ff7a7a')+'">'+(st.open?'Open then':'Closed then')+'</span>';}var nameBadge=isFeatured(p)?' <span class="chip chip-featured" style="vertical-align:middle">&#11088; Featured</span>':'';var dealBadge=(isDealLit(p)||ticketDealFor(p))?'<div style="margin-top:4px">'+dealFlag(p)+sytFlag(p)+'</div>':'';return '<div class="evrow" onclick="openListing(\''+evEsc(p.k)+ '\')"><div class="evbody"><div class="evname">'+evEsc(p.n)+nameBadge+'</div><div class="evmeta">'+evEsc(p.cat||'')+' · '+evEsc(s)+statusTag+' · '+evEsc(p.addr||'')+'</div>'+dealBadge+'</div></div>';}
 function plannerSection(title,items,a,checkMin){if(!items.length)return '';items=items.slice().sort(function(x,y){var s=dealSortScore(y)-dealSortScore(x);if(s)return s;var dx=distanceMiles(a,x),dy=distanceMiles(a,y);return(dx==null?Infinity:dx)-(dy==null?Infinity:dy);});return '<div style="padding:12px 16px 0"><div class="sect-head"><h3>'+title+'</h3><span style="font-size:11px;color:var(--muted)">'+items.length+' nearby</span></div>'+items.slice(0,8).map(function(p){return plannerCard(p,a,checkMin);}).join('')+'</div>';}
 var VENUE_PARKING_TIPS={
   'sofi stadium':['Most SoFi Stadium lots require a pre-purchased parking pass — buy one ahead through Ticketmaster or the SoFi app.','Rideshare pickup/drop-off is in a designated lot with a walk to the gates — check the SoFi app for the current zone.'],
@@ -2451,9 +2502,9 @@ function openEvent(id){
   var before=P.filter(function(p){return /restaurant|food|bar|lounge|coffee|brunch|mexican|soul|caribbean|american|seafood/i.test(text(p))&&likelyOpenAt(p,beforeCheck);});
   var after=P.filter(function(p){return /lounge|bar|dessert|coffee|restaurant|food|casino/i.test(text(p))&&likelyOpenAt(p,afterCheck);});
   var hotels=P.filter(function(p){return /hotel|lodging/i.test(text(p));});
-  var deals=P.filter(function(p){return !!p.special||!!p.mdeal;});
+  var deals=P.filter(function(p){return !!p.special||!!p.mdeal||liveDealsFor(p).length>0;});
   var map='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(e.venue||'Inglewood');
-  document.getElementById('event-detail-body').innerHTML='<div style="padding:18px 16px 0"><div class="evtag '+evKindClass(e)+'">'+evEsc(evLabel(e).toUpperCase())+'</div><h1 style="font-family:\'Barlow Condensed\';font-size:30px;line-height:1.02;margin:9px 0 6px">'+evEsc(e.title)+'</h1><div style="color:var(--muted);font-size:13px;line-height:1.6">'+evEsc(e.date||'')+' · '+evEsc(e.time||'Time TBD')+'<br>📍 '+evEsc(e.venue||'Inglewood')+'</div><div style="display:flex;gap:8px;margin:16px 0;flex-wrap:wrap"><button class="btn btn-gold" onclick="document.getElementById(\'game-day-plan\').scrollIntoView({behavior:\'smooth\'})">Plan my game day</button>'+(e.url?'<a class="btn btn-ghost" href="'+evEsc(e.url)+'" target="_blank" rel="noopener">Tickets</a>':'')+'<a class="btn btn-ghost" href="'+map+'" target="_blank" rel="noopener">Map</a></div></div><div id="game-day-plan">'+plannerSection('Before the game',before,a,beforeCheck)+plannerSection('After the game',after,a,afterCheck)+plannerSection('Staying over?',hotels,a)+plannerSection('Deals today',deals,a)+parkingTips(e)+'</div>';
+  document.getElementById('event-detail-body').innerHTML='<div style="padding:18px 16px 0"><div class="evtag '+evKindClass(e)+'">'+evEsc(evLabel(e).toUpperCase())+'</div><h1 style="font-family:\'Barlow Condensed\';font-size:30px;line-height:1.02;margin:9px 0 6px">'+evEsc(e.title)+'</h1><div style="color:var(--muted);font-size:13px;line-height:1.6">'+evEsc(e.date||'')+' · '+evEsc(e.time||'Time TBD')+'<br>📍 '+evEsc(e.venue||'Inglewood')+'</div><div style="display:flex;gap:8px;margin:16px 0;flex-wrap:wrap"><button class="btn btn-gold" onclick="document.getElementById(\'game-day-plan\').scrollIntoView({behavior:\'smooth\'})">Plan my game day</button>'+(e.url?'<a class="btn btn-ghost" href="'+evEsc(e.url)+'" target="_blank" rel="noopener">Tickets</a>':'')+'<a class="btn btn-ghost" href="'+map+'" target="_blank" rel="noopener">Map</a></div></div>'+sytBannerHTML(e,e.date===isoOf(new Date()))+'<div id="game-day-plan">'+plannerSection('Before the game',before,a,beforeCheck)+plannerSection('After the game',after,a,afterCheck)+plannerSection('Staying over?',hotels,a)+plannerSection('Deals today',deals,a)+parkingTips(e)+'</div>';
   go('event-detail');
 }
 function renderEvents(){
@@ -2671,6 +2722,114 @@ function loadBrandArt(){
   // button stay clean, consistent text — labels match their actions. The brand
   // art still headlines the onboarding splash logo and the nav Do badge.
 }
+/* ============ ACTIVITY (anonymous) ============
+   A random id per device (di_sid) — no name, account or location. Feeds the
+   "Popping now" score. Repeat views/saves of the same spot are sent at most once
+   every 30 minutes; redeems always count. */
+function sessionId(){
+  var s=null;
+  try{ s=localStorage.getItem('di_sid'); }catch(e){}
+  if(!s){
+    s=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){var r=Math.random()*16|0;return (c==='x'?r:(r&3|8)).toString(16);});
+    try{ localStorage.setItem('di_sid',s); }catch(e){}
+  }
+  return s;
+}
+var _logged={};
+function logActivity(bizId,action,dealId){
+  if(!bizId) return;
+  var key=bizId+'|'+action+'|'+(dealId||''), now=Date.now();
+  if(action!=='redeem' && _logged[key] && now-_logged[key]<30*60*1000) return;
+  _logged[key]=now;
+  try{ SB.from('di_activity_events').insert({session_id:sessionId(),business_id:bizId,deal_id:dealId||null,action:action}).then(function(){},function(){}); }catch(e){}
+}
+
+/* ============ DEALS (di_deals) — Show Your Ticket / Bring a Friend ============
+   Admin-managed in tools/admin.html. The database only returns active deals
+   inside their dates; "event days only" deals also need a show today (at their
+   venue, if one is set). Before migration 25 runs, the table doesn't exist and
+   the app simply has no deal cards. */
+var DEALS=[], DEALS_BY_BIZ={};
+var VENUE_ID_BY_NAME={'sofi stadium':'sofi','kia forum':'kia_forum','intuit dome':'intuit_dome','youtube theater':'youtube_theater'};
+var VENUE_NAME_BY_ID={sofi:'SoFi Stadium',kia_forum:'Kia Forum',intuit_dome:'Intuit Dome',youtube_theater:'YouTube Theater'};
+var WINDOW_TEXT={pre:'Before the show',post:'After the show',all_day:'All day'};
+async function loadDeals(){
+  try{
+    var r=await SB.from('di_deals').select('id,business_id,deal_type,title,details,friend_offer,venue_id,valid_window,event_day_only,starts_on,ends_on,is_sample');
+    if(r.error) throw r.error;
+    DEALS=r.data||[];
+  }catch(e){ DEALS=[]; }
+  DEALS_BY_BIZ={};
+  DEALS.forEach(function(d){ (DEALS_BY_BIZ[d.business_id]=DEALS_BY_BIZ[d.business_id]||[]).push(d); });
+}
+function todaysVenueIds(){ var o={}; todaysAnchorEvents().forEach(function(e){ var v=VENUE_ID_BY_NAME[String(e.venue||'').trim().toLowerCase()]; if(v) o[v]=1; }); return o; }
+function dealLiveToday(d){
+  var today=isoOf(new Date());
+  if(d.starts_on && d.starts_on>today) return false;   // the app can stay open past midnight
+  if(d.ends_on && d.ends_on<today) return false;
+  if(!d.event_day_only) return true;
+  var v=todaysVenueIds();
+  return d.venue_id ? !!v[d.venue_id] : Object.keys(v).length>0;
+}
+function liveDealsFor(p){ return p?(DEALS_BY_BIZ[p.k]||[]).filter(dealLiveToday):[]; }
+function ticketDealFor(p){ return liveDealsFor(p).filter(function(d){ return d.deal_type==='show_ticket'; })[0]||null; }
+function sytFlag(p){
+  var d=ticketDealFor(p); if(!d) return '';
+  return '<span class="deal-flag syt">&#127903; SHOW YOUR TICKET</span>'+(d.is_sample?'<span class="deal-flag sample">Sample</span>':'');
+}
+function walkMins(mi){ return Math.max(1,Math.round(mi*20)); }   // ~3 mph
+function distanceText(mi){ return mi==null?'':(mi<0.1?'Steps away':mi.toFixed(1)+' mi · '+walkMins(mi)+' min walk'); }
+function dealWhen(d){
+  var bits=[WINDOW_TEXT[d.valid_window]||''];
+  if(d.venue_id) bits.push(VENUE_NAME_BY_ID[d.venue_id]+' tickets');
+  if(d.event_day_only) bits.push('event days');
+  return bits.filter(Boolean).join(' · ');
+}
+// Detail-page deal cards (Show Your Ticket, Bring a Friend, standard).
+function dealCardsHTML(p){
+  return liveDealsFor(p).map(function(d){
+    var kind=d.deal_type==='show_ticket'?'&#127903; Show Your Ticket':(d.deal_type==='bring_friend'?'&#128111; Bring a Friend':'&#127873; Deal');
+    var sample=d.is_sample?' · <span style="color:var(--muted)">Sample</span>':'';
+    return '<div class="tdeal'+(d.deal_type==='bring_friend'?' friend':'')+'"><div class="tk">'+kind+' · '+xmlEsc(dealWhen(d))+sample+'</div>'+
+      '<div class="tt">'+xmlEsc(d.title)+'</div>'+(d.details?'<div class="td">'+xmlEsc(d.details)+'</div>':'')+
+      '<div class="row2"><button onclick="openRedeem(\''+d.id+'\')">Show to staff &#8594;</button></div></div>';
+  }).join('');
+}
+// Event Day banner: participating spots, closest to today's venue first.
+function sytBannerHTML(e,tonight){
+  var a=e?eventAnchor(e):null;
+  var spots=P.filter(function(p){ return !!ticketDealFor(p); }).map(function(p){ return {p:p,d:ticketDealFor(p),mi:distanceMiles(a,p)}; });
+  if(!spots.length) return '';
+  spots.sort(function(x,y){ var dx=x.mi==null?Infinity:x.mi, dy=y.mi==null?Infinity:y.mi; return dx-dy || popularity(y.p)-popularity(x.p); });
+  return '<div class="syt-banner"><div class="k">&#127903; Show Your Ticket</div><h3>Deals '+(tonight?'Tonight':'on Event Days')+'</h3>'+
+    '<p>Show your '+(e?evEsc(e.venue):'event')+' ticket at these spots.</p>'+
+    spots.slice(0,6).map(function(s){
+      return '<div class="syt-row" onclick="openListing(\''+s.p.k+'\',\'home\')"><div class="pic" style="background-image:'+bgLayers(s.p)+'"></div>'+
+        '<div class="tx"><b>'+xmlEsc(s.p.n)+(s.d.is_sample?' <span style="font-size:10px;color:var(--muted)">SAMPLE</span>':'')+'</b><span class="o">'+xmlEsc(s.d.title)+'</span><span class="d">'+xmlEsc([WINDOW_TEXT[s.d.valid_window],distanceText(s.mi)].filter(Boolean).join(' · '))+'</span></div>'+
+        '<button onclick="event.stopPropagation();openRedeem(\''+s.d.id+'\')">Show</button></div>';
+    }).join('')+'</div>';
+}
+var _rdTimer=null, _wakeLock=null;
+function openRedeem(id){
+  var d=DEALS.filter(function(x){ return x.id===id; })[0]; if(!d) return;
+  var p=PB[d.business_id]||{n:''};
+  document.getElementById('rd-k').innerHTML=d.deal_type==='show_ticket'?'&#127903; Show your ticket':(d.deal_type==='bring_friend'?'&#128111; Bring a friend':'&#127873; Do Inglewood deal');
+  document.getElementById('rd-biz').textContent=p.n||'';
+  document.getElementById('rd-title').textContent=d.title;
+  document.getElementById('rd-det').textContent=[d.details,dealWhen(d)].filter(Boolean).join(' · ');
+  document.getElementById('rd-day').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
+  document.getElementById('rd-note').textContent=d.is_sample?'Sample deal for testing — not a real offer yet.':(d.deal_type==='show_ticket'?'Show this screen with your ticket for today’s event.':'Show this screen when you order.');
+  function tick(){ document.getElementById('rd-clock').textContent=new Date().toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit',second:'2-digit'}); }
+  tick(); clearInterval(_rdTimer); _rdTimer=setInterval(tick,1000);
+  document.getElementById('redeem').classList.add('on');
+  try{ if(navigator.wakeLock) navigator.wakeLock.request('screen').then(function(l){ _wakeLock=l; },function(){}); }catch(e){}
+  logActivity(d.business_id,'redeem',d.id);
+}
+function closeRedeem(){
+  document.getElementById('redeem').classList.remove('on'); clearInterval(_rdTimer);
+  try{ if(_wakeLock){ _wakeLock.release(); _wakeLock=null; } }catch(e){}
+}
+
 /* ============ INGLEWOOD FIRST ============
    P holds what the app shows (Inglewood only unless "Nearby" is switched on);
    ALL_P holds every loaded business. PB keeps everything, so a shared link to a
@@ -2790,7 +2949,7 @@ function eventDayHome(){
   if(sug) html+='<div class="suggest-bar"><span style="flex:1"><b>'+evEsc(sug.title)+'</b> is letting out. Keep the night going?</span><button onclick="setMode(\'after\')">After Hours &#8594;</button><button class="x" aria-label="Dismiss" onclick="dismissAfterHours()">&times;</button></div>';
   var shown=evs.length?evs:[nextAnchorEvent()].filter(Boolean);
   if(shown.length) html+='<div class="evday'+(shown.length>1?' multi':'')+'">'+shown.map(function(e){ return evDayCard(!evs.length,e); }).join('')+'</div>';
-  html+='<div id="syt-home"></div>';
+  html+=sytBannerHTML(shown[0],evs.length>0);
   // Every show today is over → the pregame list is stale; lead with after-show spots.
   var allOver=evs.length && evs.every(function(x){ return eventEndsAt(x)<=new Date(); });
   if(allOver) return html+afterHoursHome();
@@ -2849,6 +3008,7 @@ async function initApp(){
   await loadBusinesses();
   normalizeVenuePhotos();
   await loadEvents();
+  await loadDeals();
   var _bl=document.getElementById('di-build'); if(_bl)_bl.textContent=DI_BUILD;
   buildHome();buildFilters();buildHero();renderHomeEvents();renderModeHome();renderModePicker();
   var ev=document.getElementById('view-explore');

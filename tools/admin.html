@@ -13,7 +13,7 @@
   p.sub{color:var(--muted);margin:0 0 18px;font-size:14px;}
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px;}
   label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;}
-  input[type=password],input[type=text]{width:100%;padding:11px;border-radius:9px;border:1px solid var(--line);background:#0f0f15;color:var(--txt);font-size:14px;}
+  input[type=password],input[type=text],input[type=date],textarea{width:100%;padding:11px;border-radius:9px;border:1px solid var(--line);background:#0f0f15;color:var(--txt);font-size:14px;}
   button{border:0;border-radius:9px;padding:9px 15px;font-size:13px;font-weight:700;cursor:pointer;background:#22222c;color:var(--txt);}
   button.primary{background:linear-gradient(90deg,var(--pink),var(--gold));color:#111;}
   button.g{background:rgba(54,211,154,.18);color:var(--green);border:1px solid rgba(54,211,154,.4);}
@@ -33,12 +33,16 @@
   .p1{background:rgba(154,154,165,.15);color:#b9b9c4;} .p2{background:rgba(54,211,154,.15);color:var(--green);} .p3{background:linear-gradient(90deg,rgba(255,46,126,.2),rgba(245,197,66,.2));color:var(--gold);}
   #msg{font-size:12.5px;color:var(--green);min-height:16px;margin-top:6px;}
   .hidden{display:none;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  @media(max-width:640px){.grid2{grid-template-columns:1fr;}}
+  .fld{margin-bottom:10px;}
+  .pt{background:rgba(245,197,66,.16);color:var(--gold);} .pb{background:rgba(155,107,255,.18);color:#c7b1ff;} .ps{background:rgba(255,46,126,.16);color:var(--pink);}
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Do <span>Inglewood</span> — Admin</h1>
-  <p class="sub">Your private control panel. Approve claims, promote/pause/delete businesses, manage events.</p>
+  <p class="sub">Your private control panel. Approve claims, promote/pause/delete businesses, manage deals and events.</p>
 
   <div class="card" id="connect-card">
     <label>Supabase <b>service_role</b> key (Supabase → Project Settings → API Keys → <b>service_role</b> "secret")</label>
@@ -51,6 +55,7 @@
     <div class="tabs">
       <div class="tab on" data-tab="claims" onclick="showTab('claims')">Claims <span id="claims-n"></span></div>
       <div class="tab" data-tab="biz" onclick="showTab('biz')">Businesses</div>
+      <div class="tab" data-tab="deals" onclick="showTab('deals')">Deals</div>
       <div class="tab" data-tab="events" onclick="showTab('events')">Events</div>
     </div>
     <div id="msg"></div>
@@ -68,6 +73,36 @@
       </div>
       <input type="text" id="bizsearch" placeholder="Search a business by name…" oninput="searchBiz()">
       <div id="biz-list" style="margin-top:10px"><div class="mut">Type a name to find a business.</div></div>
+    </div>
+
+    <div class="card tabpane hidden" id="pane-deals">
+      <div class="nm" id="deal-form-title" style="margin-bottom:10px">New deal</div>
+      <input type="hidden" id="d_id">
+      <div class="fld"><label>Merchant (start typing a business name)</label>
+        <input type="text" id="d_biz" list="biz-dl" placeholder="e.g. Randy's Donuts" autocomplete="off"><datalist id="biz-dl"></datalist></div>
+      <div class="grid2">
+        <div class="fld"><label>Type</label><select id="d_type" onchange="dealTypeChanged()" style="width:100%">
+          <option value="show_ticket">🎟 Show Your Ticket</option><option value="bring_friend">👯 Bring a Friend</option><option value="standard">Standard deal</option></select></div>
+        <div class="fld"><label>Venue (whose ticket counts)</label><select id="d_venue" style="width:100%">
+          <option value="">Any venue</option><option value="sofi">SoFi Stadium</option><option value="kia_forum">Kia Forum</option><option value="intuit_dome">Intuit Dome</option><option value="youtube_theater">YouTube Theater</option></select></div>
+      </div>
+      <div class="fld"><label>Offer (short — shows on cards)</label><input type="text" id="d_title" maxlength="80" placeholder="15% off your order with a same-day ticket"></div>
+      <div class="fld"><label>Fine print (optional)</label><textarea id="d_details" rows="2" placeholder="Dine-in only. One per ticket."></textarea></div>
+      <div class="fld hidden" id="d_friend_wrap"><label>Better offer unlocked by sharing (Bring a Friend)</label><input type="text" id="d_friend" maxlength="80" placeholder="Bring a friend: 2-for-1 wings"></div>
+      <div class="grid2">
+        <div class="fld"><label>When</label><select id="d_window" style="width:100%"><option value="all_day">All day</option><option value="pre">Before the show</option><option value="post">After the show</option></select></div>
+        <div class="fld"><label>&nbsp;</label><label style="display:flex;gap:6px;align-items:center;color:var(--txt)"><input type="checkbox" id="d_eventonly"> Event days only</label></div>
+        <div class="fld"><label>Starts (optional)</label><input type="date" id="d_start"></div>
+        <div class="fld"><label>Ends (optional)</label><input type="date" id="d_end"></div>
+      </div>
+      <label style="display:flex;gap:6px;align-items:center;color:var(--txt);margin-bottom:12px"><input type="checkbox" id="d_active" checked> Active (visible in the app)</label>
+      <button class="primary" onclick="saveDeal()">Save deal</button>
+      <button onclick="resetDealForm()">Clear</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:22px 0 6px;flex-wrap:wrap;gap:8px">
+        <div class="nm">All deals</div>
+        <button class="r" onclick="deleteSampleDeals()">Delete sample deals</button>
+      </div>
+      <div id="deals-list"><div class="mut">Loading…</div></div>
     </div>
 
     <div class="card tabpane hidden" id="pane-events">
@@ -88,15 +123,15 @@ function H(){ return {apikey:KEY,Authorization:'Bearer '+KEY}; }
 function HJ(){ return {apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json',Prefer:'return=minimal'}; }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
 function msg(t){ $('msg').textContent=t; if(t) setTimeout(function(){ if($('msg').textContent===t)$('msg').textContent=''; },3500); }
-let BIZNAMES={}, CLAIMS={};
+let BIZNAMES={}, BIZADDR={}, CLAIMS={}, DEALS={};
 
 async function api(path,opts){ const r=await fetch(SUPABASE_URL+'/rest/v1/'+path,opts||{headers:H()}); if(!r.ok){ throw new Error('HTTP '+r.status+' '+(await r.text()).slice(0,120)); } const t=await r.text(); return t?JSON.parse(t):null; }
 
 async function loadBizNames(){
   let off=0; BIZNAMES={};
   while(true){
-    const rows=await api('di_businesses?select=id,name&limit=1000&offset='+off,{headers:H()});
-    rows.forEach(function(b){BIZNAMES[b.id]=b.name;});
+    const rows=await api('di_businesses?select=id,name,address&limit=1000&offset='+off,{headers:H()});
+    rows.forEach(function(b){BIZNAMES[b.id]=b.name; BIZADDR[b.id]=b.address||'';});
     if(rows.length<1000) break; off+=1000;
   }
 }
@@ -248,6 +283,87 @@ function showTab(t){
   document.querySelectorAll('.tabpane').forEach(function(el){el.classList.add('hidden');});
   $('pane-'+t).classList.remove('hidden');
   if(t==='events') loadEvents();
+  if(t==='deals') loadDeals();
+}
+
+/* ---------- DEALS (di_deals, from 25_event_day_engagement.sql) ---------- */
+var DEAL_TYPE={show_ticket:'<span class="pill pt">🎟 Show Your Ticket</span>',bring_friend:'<span class="pill pb">👯 Bring a Friend</span>',standard:'<span class="pill p1">Deal</span>'};
+var WINDOW_LABEL={all_day:'All day',pre:'Before the show',post:'After the show'};
+var VENUE_LABEL={sofi:'SoFi',kia_forum:'Kia Forum',intuit_dome:'Intuit Dome',youtube_theater:'YouTube Theater'};
+// Datalist entries read "Name — address" so two places with the same name can be told apart.
+function bizLabel(id){ return (BIZNAMES[id]||id)+(BIZADDR[id]?' — '+BIZADDR[id]:''); }
+function fillBizList(){
+  if($('biz-dl').options.length) return;
+  $('biz-dl').innerHTML=Object.keys(BIZNAMES).sort(function(a,b){return String(BIZNAMES[a]).localeCompare(BIZNAMES[b]);}).map(function(id){ return '<option value="'+esc(bizLabel(id))+'">'; }).join('');
+}
+function bizIdFromLabel(label){
+  label=String(label||'').trim(); if(!label) return null;
+  for(var id in BIZNAMES){ if(bizLabel(id)===label) return id; }
+  var byName=Object.keys(BIZNAMES).filter(function(id){ return String(BIZNAMES[id]).toLowerCase()===label.toLowerCase(); });
+  return byName.length===1?byName[0]:null;   // an exact, unique name also works
+}
+function dealTypeChanged(){ $('d_friend_wrap').classList.toggle('hidden',$('d_type').value!=='bring_friend'); }
+function resetDealForm(){
+  ['d_id','d_biz','d_title','d_details','d_friend','d_start','d_end'].forEach(function(id){ $(id).value=''; });
+  $('d_type').value='show_ticket'; $('d_venue').value=''; $('d_window').value='all_day';
+  $('d_eventonly').checked=false; $('d_active').checked=true; $('deal-form-title').textContent='New deal'; dealTypeChanged();
+}
+async function loadDeals(){
+  fillBizList();
+  try{
+    const rows=await api('di_deals?select=*&order=created_at.desc',{headers:H()});
+    DEALS={}; rows.forEach(function(d){ DEALS[d.id]=d; });
+    if(!rows.length){ $('deals-list').innerHTML='<div class="mut">No deals yet — add the first one above.</div>'; return; }
+    $('deals-list').innerHTML=rows.map(function(d){
+      var when=[WINDOW_LABEL[d.valid_window]||'', d.event_day_only?'event days only':'', d.venue_id?(VENUE_LABEL[d.venue_id]+' tickets'):'', (d.starts_on||d.ends_on)?((d.starts_on||'…')+' → '+(d.ends_on||'…')):''].filter(Boolean).join(' · ');
+      return '<div class="row" id="drow-'+d.id+'"><div class="grow"><div class="nm">'+esc(BIZNAMES[d.business_id]||d.business_id)+' '+(DEAL_TYPE[d.deal_type]||'')+
+        (d.is_sample?' <span class="pill ps">Sample</span>':'')+(d.is_active?'':' <span class="pill p1">Off</span>')+'</div>'+
+        '<div>'+esc(d.title)+(d.friend_offer?' <span class="mut">· shared: '+esc(d.friend_offer)+'</span>':'')+'</div><div class="mut">'+esc(when)+'</div></div>'+
+        '<button onclick="toggleDeal(\''+d.id+'\')">'+(d.is_active?'Turn off':'Turn on')+'</button>'+
+        '<button onclick="editDeal(\''+d.id+'\')">Edit</button>'+
+        '<button class="r" onclick="deleteDeal(\''+d.id+'\')">Delete</button></div>';
+    }).join('');
+  }catch(e){
+    var missing=/di_deals|PGRST205|42P01/.test(e.message||'');
+    $('deals-list').innerHTML='<div class="mut">'+(missing?'The deals table isn\'t in the database yet — run supabase/25_event_day_engagement.sql first.':'Could not load deals: '+esc(e.message))+'</div>';
+  }
+}
+function editDeal(id){
+  var d=DEALS[id]; if(!d) return;
+  $('d_id').value=d.id; $('d_biz').value=bizLabel(d.business_id); $('d_type').value=d.deal_type; $('d_venue').value=d.venue_id||'';
+  $('d_title').value=d.title||''; $('d_details').value=d.details||''; $('d_friend').value=d.friend_offer||'';
+  $('d_window').value=d.valid_window; $('d_eventonly').checked=!!d.event_day_only; $('d_start').value=d.starts_on||''; $('d_end').value=d.ends_on||'';
+  $('d_active').checked=!!d.is_active; $('deal-form-title').textContent='Edit deal'; dealTypeChanged(); window.scrollTo(0,0);
+}
+async function saveDeal(){
+  var bizId=bizIdFromLabel($('d_biz').value);
+  if(!bizId){ alert('Pick the merchant from the list (start typing its name).'); return; }
+  var title=$('d_title').value.trim(); if(!title){ alert('Add the offer text.'); return; }
+  var type=$('d_type').value, friend=$('d_friend').value.trim();
+  if(type==='bring_friend' && !friend){ alert('Bring a Friend deals need the better offer that sharing unlocks.'); return; }
+  var start=$('d_start').value||null, end=$('d_end').value||null;
+  if(start && end && end<start){ alert('The end date is before the start date.'); return; }
+  var row={ business_id:bizId, deal_type:type, title:title, details:$('d_details').value.trim()||null,
+    friend_offer:type==='bring_friend'?friend:null, venue_id:$('d_venue').value||null, valid_window:$('d_window').value,
+    event_day_only:$('d_eventonly').checked, starts_on:start, ends_on:end, is_active:$('d_active').checked };
+  var id=$('d_id').value;
+  try{
+    if(id) await api('di_deals?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:HJ(),body:JSON.stringify(row)});
+    else await api('di_deals',{method:'POST',headers:HJ(),body:JSON.stringify(row)});
+    msg(id?'Deal updated':'Deal added'); resetDealForm(); loadDeals();
+  }catch(e){ alert('Could not save: '+e.message); }
+}
+async function toggleDeal(id){
+  var d=DEALS[id]; if(!d) return;
+  try{ await api('di_deals?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:HJ(),body:JSON.stringify({is_active:!d.is_active})}); loadDeals(); }catch(e){ msg('Error: '+e.message); }
+}
+async function deleteDeal(id){
+  if(!confirm('Delete this deal?')) return;
+  try{ await api('di_deals?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:HJ()}); loadDeals(); msg('Deleted'); }catch(e){ msg('Error: '+e.message); }
+}
+async function deleteSampleDeals(){
+  if(!confirm('Delete every deal marked Sample?')) return;
+  try{ await api('di_deals?is_sample=eq.true',{method:'DELETE',headers:HJ()}); loadDeals(); msg('Sample deals deleted'); }catch(e){ msg('Error: '+e.message); }
 }
 $('connect').onclick=async function(){
   KEY=$('key').value.trim();

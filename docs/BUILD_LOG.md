@@ -67,3 +67,35 @@ Each phase says what changed, the decisions made (and why), and what to test.
 4. Explore: no Los Angeles or Hawthorne spots until you tap "+ Nearby cities"; then they carry a purple "Nearby" tag.
 5. Open a spot with no deal: there's no grey deal box.
 6. Specials tab: shows "Popular right now" when no business has a live deal.
+
+---
+
+## Phase 2 — Show Your Ticket deals
+
+**Database:** migration 25 is live (Rambo ran it along with turn_on_all + 20, 21, 22, 24 and set himself as admin).
+Checked afterwards: 4 venues, 246 events linked to a venue, 1,248 Inglewood / 276 non-Inglewood / 57 no-city listings. Every column the owner guard compares exists, and none of the fields the owner dashboard saves is a guarded one, so owner edits keep working.
+
+**What changed**
+- `tools/admin.html` — new **Deals** tab:
+  - Create, edit and schedule deals: merchant (type-ahead, shows the address so duplicate names can be told apart), type, offer, fine print, venue, before/after/all day, event days only, start/end dates, active.
+  - The list lets you turn a deal on/off, edit or delete it, plus a **Delete sample deals** button.
+- `site/index.html`
+  - Loads deals from `di_deals`.
+  - "Event days only" deals appear only when there's a show today, at their venue if one is set.
+  - **Event Day banner** "Show Your Ticket — Deals Tonight" on Home and on every event's game-day page. Participating spots are listed closest to the venue first, each with a **Show** button.
+  - **🎟 SHOW YOUR TICKET** badge on cards, Explore rows, Specials and the game-day planner. These spots sort just under Featured.
+  - Listing pages show a deal card with **Show to staff**. That opens a full-screen view: deal, merchant, today's date and a live ticking clock (so a screenshot is easy to spot), and it keeps the screen awake. Each open logs a `redeem`.
+  - Opening a listing logs a `view`. Activity uses a random device id only.
+  - **Fix:** listings without coordinates were being placed at 0,0, which showed "7,820 mi" distances. Missing coordinates now just show no distance.
+- `supabase/27_sample_deals.sql` (new, **needs to be run**): 5 sample Show Your Ticket deals, all marked `is_sample`, on Randy's Donuts, The Nile, 3 and Out, Dulan's and Six Seven Five. They're labeled "Sample" everywhere, and the Show to staff screen says "not a real offer yet".
+
+**Decisions**
+- A deal's before/after window is shown to the guest and staff but not enforced by the app. Staff decide at the counter; blocking a guest over a clock mismatch would be worse.
+- Samples use the most-reviewed copy of each merchant.
+
+**Found (not fixed — needs your call):** most businesses are listed twice, once from the curated seed and once from the Google import (e.g. "The Nile Restaurant and Bar" and "The Nile Restaurant & Bar" at the same address). Removing the duplicates means deleting rows, so I haven't touched them. A merge tool could be a follow-up.
+
+**What to test**
+1. Run `27_sample_deals.sql`. On a show day, Event Day Home shows the "Deals Tonight" banner.
+2. Tap **Show**: the full-screen view with a ticking clock appears. Tap Done.
+3. Admin → Deals: add a deal, turn it off, edit it, then **Delete sample deals**.
