@@ -523,6 +523,31 @@
   .redeem .rclock{font-family:'Barlow Condensed';font-weight:700;font-size:48px;letter-spacing:2px;color:var(--gold);animation:pulse 2s ease-in-out infinite;}
   .redeem .rnote{font-size:12px;color:var(--muted);margin-top:14px;max-width:300px;line-height:1.45;}
   .redeem .btn{margin-top:26px;max-width:300px;}
+
+  /* ============ SHARING: crew plans + story cards ============ */
+  .plan-flow{padding:18px 20px 110px;}
+  .plan-flow .eyebrow{font-family:'Barlow Condensed';font-size:12px;letter-spacing:2px;color:var(--pink);text-transform:uppercase;font-weight:800;}
+  .plan-flow h2{font-family:'Barlow Condensed';font-size:30px;line-height:1;margin-top:5px;}
+  .plan-flow .subcopy{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.45;}
+  .plan-step{position:relative;padding:0 0 18px 44px;margin-top:18px;}
+  .plan-step::before{content:"";position:absolute;left:15px;top:32px;bottom:-6px;width:2px;background:var(--line);}
+  .plan-step:last-of-type::before{display:none;}
+  .plan-step .num{position:absolute;left:0;top:0;width:32px;height:32px;border-radius:50%;background:var(--grad);color:#1a0010;font-weight:900;display:flex;align-items:center;justify-content:center;font-size:14px;}
+  .plan-step .lbl{font-family:'Barlow Condensed';font-weight:800;font-size:13px;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase;line-height:32px;}
+  .plan-opts{display:grid;gap:8px;margin-top:6px;}
+  .plan-opt{display:flex;gap:10px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px;cursor:pointer;}
+  .plan-opt.on{border-color:var(--pink);box-shadow:0 0 0 1px var(--pink),0 0 16px rgba(255,46,126,.25);}
+  .plan-opt .pic{flex:0 0 52px;height:52px;border-radius:9px;background:#222 center/cover no-repeat;}
+  .plan-opt .tx{flex:1;min-width:0;}
+  .plan-opt b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .plan-opt span{display:block;font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .plan-opt span.deal-flag{display:inline-flex;font-size:10px;margin-top:4px;}
+  .plan-opt span.deal-flag.syt{color:#fff;}
+  .plan-show{background:linear-gradient(100deg,rgba(245,197,66,.14),rgba(255,46,126,.08));border:1px solid rgba(245,197,66,.6);border-radius:12px;padding:12px;margin-top:6px;}
+  .plan-show b{font-size:15px;} .plan-show span{display:block;font-size:12px;color:#d4d4dc;margin-top:3px;}
+  .plan-cta{display:grid;gap:10px;margin-top:10px;}
+  .crew-btn{display:flex;align-items:center;justify-content:center;gap:8px;margin:12px 20px 0;padding:13px;border-radius:14px;border:1px dashed var(--pink);background:rgba(255,46,126,.08);color:var(--txt);font-family:'Barlow Condensed';font-weight:800;font-size:17px;letter-spacing:.3px;cursor:pointer;width:calc(100% - 40px);}
+  .crew-btn:active{transform:scale(.99);}
 </style>
 </head>
 <body>
@@ -814,6 +839,11 @@
     <div class="view" id="view-surprise">
       <div class="head-bar"><div class="back" onclick="go('home')">&#8249;</div><div class="logo-mini" role="img" aria-label="Do Inglewood" title="Home" onclick="go('home')"></div><span class="htitle">Surprise Me</span></div>
       <div id="surprise-body" class="surprise-flow"></div>
+    </div>
+    <!-- CREW PLAN (build + view a shared plan) -->
+    <div class="view" id="view-plan">
+      <div class="head-bar"><div class="back" onclick="planBack()">&#8249;</div><div class="logo-mini" role="img" aria-label="Do Inglewood" title="Home" onclick="go('home')"></div><span class="htitle">Crew Plan</span></div>
+      <div id="plan-body" class="plan-flow"></div>
     </div>
     <div class="view" id="view-specials">
       <div class="head-bar"><div class="back" onclick="go('home')">&#8249;</div><div class="logo-mini" role="img" aria-label="Do Inglewood" title="Home" onclick="go('home')"></div><span class="htitle">Today's Deals</span></div>
@@ -2030,7 +2060,7 @@ function toggleFav(k,ev){ if(ev&&ev.stopPropagation)ev.stopPropagation(); if(!k)
   toast(on?'Saved to favorites ♥':'Removed from favorites');
   var h=document.getElementById('ldFav'); if(h){ h.innerHTML=on?'&#9829;':'&#9825;'; h.style.color=on?'var(--pink)':''; }
 }
-function shareBiz(k){ var p=PB[k]; if(!p)return; var text=p.n+' · '+(p.cat||'')+' in Inglewood\n'+(p.addr||'')+'\nFound on Do Inglewood 🎟️'; if(navigator.share){ navigator.share({title:p.n,text:text}).catch(function(){}); } else if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(function(){toast('Copied — paste it anywhere');}); } else { toast('Sharing not supported'); } }
+function shareBiz(k){ var p=PB[k]; if(!p)return; var text=p.n+' · '+(p.cat||'')+' in Inglewood — found on Do Inglewood 🎟️'; shareLink(p.n,text,appUrl({spot:k})).then(function(ok){ if(ok) logActivity(k,'share'); }); }
 /* Format minutes-from-midnight as "9:00 AM" (drops :00 only when not needed). */
 function fmtTime(mins){
   mins=((Math.round(mins)%1440)+1440)%1440;
@@ -2200,13 +2230,14 @@ function openListing(k,from){
     <div class="ldmeta"><span style="font-size:13px">${starline(p)}</span><span class="pricelv">${xmlEsc(p.price)}</span>${p.cat?`<span style="font-size:12px;color:var(--muted)">${xmlEsc(p.cat)}</span>`:''}${badge}</div>
     ${tagsRow}
     ${statusLine}
-    ${dealCardsHTML(p)}
+    <div id="deal-cards">${dealCardsHTML(p)}</div>
     ${dealBlockHTML(p)}
     <div class="actrow">
       <div class="actpill" onclick="openDirections('${p.k}')"><span class="ai">${ICON.nav}</span>Directions</div>
       ${p.ph?`<a class="actpill" href="${telHref(p.ph)}"><span class="ai">${ICON.phone}</span>Call</a>`:''}
       ${p.web?`<a class="actpill" href="${webUrl(p.web)}" target="_blank" rel="noopener"><span class="ai">${ICON.globe}</span>Website</a>`:''}
       <div class="actpill" onclick="shareBiz('${p.k}')"><span class="ai">${ICON.share}</span>Share</div>
+      <div class="actpill" onclick="makeStory('${p.k}')"><span class="ai">&#128248;</span>Story</div>
     </div>
     ${(p.photos&&p.photos.length)?`<div style="display:flex;gap:8px;overflow-x:auto;margin:12px 0;padding-bottom:4px">${p.photos.map(u=>`<img src="${String(u).replace(/"/g,'&quot;')}" loading="lazy" style="height:120px;border-radius:12px;flex:0 0 auto">`).join('')}</div>`:''}
     ${p.special?`<div class="specialbox"><div class="st">&#127863; Active Special</div><div class="sd">${xmlEsc(p.special)}</div></div>`:''}
@@ -2248,7 +2279,7 @@ function openListing(k,from){
 }
 
 /* NAV */
-const views=['home','explore','events','event-detail','listing','claim','claimform','add','saved','owner','surprise','specials'];
+const views=['home','explore','events','event-detail','listing','claim','claimform','add','saved','owner','surprise','specials','plan'];
 function openAddForm(){
   if(!CURRENT_USER){ toast('Sign in first to add your business'); acctPrompt('signin'); return; }
   var w=document.getElementById('ab_cat_wrap');
@@ -2514,7 +2545,7 @@ function openEvent(id){
   var hotels=P.filter(function(p){return /hotel|lodging/i.test(text(p));});
   var deals=P.filter(function(p){return !!p.special||!!p.mdeal||liveDealsFor(p).length>0;});
   var map='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(e.venue||'Inglewood');
-  document.getElementById('event-detail-body').innerHTML='<div style="padding:18px 16px 0"><div class="evtag '+evKindClass(e)+'">'+evEsc(evLabel(e).toUpperCase())+'</div><h1 style="font-family:\'Barlow Condensed\';font-size:30px;line-height:1.02;margin:9px 0 6px">'+evEsc(e.title)+'</h1><div style="color:var(--muted);font-size:13px;line-height:1.6">'+evEsc(e.date||'')+' · '+evEsc(e.time||'Time TBD')+'<br>📍 '+evEsc(e.venue||'Inglewood')+'</div><div style="display:flex;gap:8px;margin:16px 0;flex-wrap:wrap"><button class="btn btn-gold" onclick="document.getElementById(\'game-day-plan\').scrollIntoView({behavior:\'smooth\'})">Plan my game day</button>'+(e.url?'<a class="btn btn-ghost" href="'+evEsc(e.url)+'" target="_blank" rel="noopener">Tickets</a>':'')+'<a class="btn btn-ghost" href="'+map+'" target="_blank" rel="noopener">Map</a></div></div>'+sytBannerHTML(e,e.date===isoOf(new Date()))+'<div id="game-day-plan">'+plannerSection('Before the game',before,a,beforeCheck)+plannerSection('After the game',after,a,afterCheck)+plannerSection('Staying over?',hotels,a)+plannerSection('Deals today',deals,a)+parkingTips(e)+'</div>';
+  document.getElementById('event-detail-body').innerHTML='<div style="padding:18px 16px 0"><div class="evtag '+evKindClass(e)+'">'+evEsc(evLabel(e).toUpperCase())+'</div><h1 style="font-family:\'Barlow Condensed\';font-size:30px;line-height:1.02;margin:9px 0 6px">'+evEsc(e.title)+'</h1><div style="color:var(--muted);font-size:13px;line-height:1.6">'+evEsc(e.date||'')+' · '+evEsc(e.time||'Time TBD')+'<br>📍 '+evEsc(e.venue||'Inglewood')+'</div><div style="display:flex;gap:8px;margin:16px 0;flex-wrap:wrap"><button class="btn btn-gold" onclick="document.getElementById(\'game-day-plan\').scrollIntoView({behavior:\'smooth\'})">Plan my game day</button>'+(e.url?'<a class="btn btn-ghost" href="'+evEsc(e.url)+'" target="_blank" rel="noopener">Tickets</a>':'')+'<a class="btn btn-ghost" href="'+map+'" target="_blank" rel="noopener">Map</a></div></div>'+sytBannerHTML(e,e.date===isoOf(new Date()))+'<button class="crew-btn" onclick="openPlanBuilder(\''+evEsc(e.id)+'\')">&#128111; Send plan to my crew</button><div id="game-day-plan">'+plannerSection('Before the game',before,a,beforeCheck)+plannerSection('After the game',after,a,afterCheck)+plannerSection('Staying over?',hotels,a)+plannerSection('Deals today',deals,a)+parkingTips(e)+'</div>';
   go('event-detail');
 }
 function renderEvents(){
@@ -2800,9 +2831,17 @@ function dealCardsHTML(p){
   return liveDealsFor(p).map(function(d){
     var kind=d.deal_type==='show_ticket'?'&#127903; Show Your Ticket':(d.deal_type==='bring_friend'?'&#128111; Bring a Friend':'&#127873; Deal');
     var sample=d.is_sample?' · <span style="color:var(--muted)">Sample</span>':'';
-    return '<div class="tdeal'+(d.deal_type==='bring_friend'?' friend':'')+'"><div class="tk">'+kind+' · '+xmlEsc(dealWhen(d))+sample+'</div>'+
+    if(d.deal_type==='bring_friend'){
+      var open=isUnlocked(d);
+      return '<div class="tdeal friend"><div class="tk">'+kind+' · '+xmlEsc(dealWhen(d))+sample+'</div>'+
+        '<div class="tt">'+xmlEsc(open?d.friend_offer:d.title)+'</div>'+
+        '<div class="td">'+(open?'&#127881; Unlocked by sharing'+(d.details?' · '+xmlEsc(d.details):''):'&#128111; Share with a friend to unlock: <b style="color:var(--txt)">'+xmlEsc(d.friend_offer)+'</b>')+'</div>'+
+        '<div class="row2">'+(open?'<button onclick="openRedeem(\''+d.id+'\')">Show to staff &#8594;</button><button class="ghost" onclick="shareDeal(\''+d.id+'\')">Share</button>'
+                                 :'<button onclick="shareDeal(\''+d.id+'\')">&#128111; Share to unlock</button><button class="ghost" onclick="openRedeem(\''+d.id+'\')">Use basic deal</button>')+'</div></div>';
+    }
+    return '<div class="tdeal"><div class="tk">'+kind+' · '+xmlEsc(dealWhen(d))+sample+'</div>'+
       '<div class="tt">'+xmlEsc(d.title)+'</div>'+(d.details?'<div class="td">'+xmlEsc(d.details)+'</div>':'')+
-      '<div class="row2"><button onclick="openRedeem(\''+d.id+'\')">Show to staff &#8594;</button></div></div>';
+      '<div class="row2"><button onclick="openRedeem(\''+d.id+'\')">Show to staff &#8594;</button><button class="ghost" style="flex:0 0 auto;padding:12px 16px" onclick="shareDeal(\''+d.id+'\')">Share</button></div></div>';
   }).join('');
 }
 // Event Day banner: participating spots, closest to today's venue first.
@@ -2825,7 +2864,7 @@ function openRedeem(id){
   var p=PB[d.business_id]||{n:''};
   document.getElementById('rd-k').innerHTML=d.deal_type==='show_ticket'?'&#127903; Show your ticket':(d.deal_type==='bring_friend'?'&#128111; Bring a friend':'&#127873; Do Inglewood deal');
   document.getElementById('rd-biz').textContent=p.n||'';
-  document.getElementById('rd-title').textContent=d.title;
+  document.getElementById('rd-title').textContent=dealOffer(d);
   document.getElementById('rd-det').textContent=[d.details,dealWhen(d)].filter(Boolean).join(' · ');
   document.getElementById('rd-day').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
   document.getElementById('rd-note').textContent=d.is_sample?'Sample deal for testing — not a real offer yet.':(d.deal_type==='show_ticket'?'Show this screen with your ticket for today’s event.':'Show this screen when you order.');
@@ -2911,6 +2950,212 @@ function toggleNearMe(){
     var measurable=P.filter(function(p){ return myDistance(p)!=null; }).length;
     if(measurable<20) toast('Distances are still being added for most spots');
   });
+}
+
+/* ============ SHARING — links, Bring a Friend, story cards, crew plans ============ */
+function appUrl(params){
+  var q=Object.keys(params||{}).map(function(k){ return k+'='+encodeURIComponent(params[k]); }).join('&');
+  return location.origin+location.pathname+(q?'?'+q:'');
+}
+function copyText(t){
+  if(navigator.clipboard && navigator.clipboard.writeText)
+    return navigator.clipboard.writeText(t).then(function(){ toast('Link copied — paste it anywhere'); return true; },function(){ window.prompt('Copy this link:',t); return true; });
+  window.prompt('Copy this link:',t); return Promise.resolve(true);
+}
+// Phone share sheet when there is one, otherwise copy the link. Resolves true when shared.
+function shareLink(title,text,url){
+  if(navigator.share) return navigator.share({title:title,text:text,url:url}).then(function(){ return true; },function(err){ return (err&&err.name==='AbortError')?false:copyText(text+'\n'+url); });
+  return copyText(text+'\n'+url);
+}
+function dealById(id){ return DEALS.filter(function(d){ return d.id===id; })[0]||null; }
+
+/* Bring a Friend: sharing the deal link unlocks the better offer on this phone. */
+function unlockedDeals(){ try{ return JSON.parse(localStorage.getItem('di_unlocked')||'{}'); }catch(e){ return {}; } }
+function isUnlocked(d){ return !!(d && unlockedDeals()[d.id]); }
+function dealOffer(d){ return (d.deal_type==='bring_friend' && isUnlocked(d))?d.friend_offer:d.title; }
+function shareDeal(id){
+  var d=dealById(id); if(!d) return;
+  var p=PB[d.business_id]||{n:'Do Inglewood'};
+  var text=d.deal_type==='bring_friend'
+    ? 'Come with me to '+p.n+' 👯 '+d.friend_offer+' — on Do Inglewood'
+    : p.n+': '+d.title+(d.deal_type==='show_ticket'?' with your ticket 🎟️':'')+' — on Do Inglewood';
+  shareLink(p.n,text,appUrl({deal:d.id})).then(function(ok){
+    if(!ok) return;
+    logActivity(d.business_id,'share',d.id);
+    if(d.deal_type==='bring_friend' && !isUnlocked(d)){
+      var u=unlockedDeals(); u[d.id]=isoOf(new Date());
+      try{ localStorage.setItem('di_unlocked',JSON.stringify(u)); }catch(e){}
+      toast('Unlocked 🎉 '+d.friend_offer);
+      var box=document.getElementById('deal-cards'); if(box) box.innerHTML=dealCardsHTML(PB[d.business_id]);
+    }
+  });
+}
+
+/* Story card — a 1080×1920 image for Instagram/TikTok/Snap stories. */
+function storyLine(p){
+  var e=todaysAnchorEvents()[0];
+  if(e && eventEndsAt(e)<=new Date()) return {top:'After the show at',sub:'after '+e.title};
+  if(e) return {top:'Pregaming at',sub:'before '+e.title+' 🎤'};
+  return {top:'Out in Inglewood at',sub:'California’s Entertainment City'};
+}
+function loadImg(src){
+  return new Promise(function(res){
+    if(!src) return res(null);
+    var im=new Image(); im.crossOrigin='anonymous';
+    im.onload=function(){ res(im); }; im.onerror=function(){ res(null); }; im.src=src;
+  });
+}
+function wrapLines(g,text,maxW,maxLines){
+  var words=String(text).split(/\s+/), lines=[], line='';
+  words.forEach(function(w){ var t=line?line+' '+w:w; if(g.measureText(t).width>maxW && line){ lines.push(line); line=w; } else line=t; });
+  if(line) lines.push(line);
+  if(lines.length>maxLines){ lines=lines.slice(0,maxLines); lines[maxLines-1]=lines[maxLines-1].replace(/\s*\S*$/,'')+'…'; }
+  return lines;
+}
+function drawStory(g,p,photo,logo){
+  var W=1080,H=1920, L=storyLine(p);
+  g.fillStyle='#0a0a0c'; g.fillRect(0,0,W,H);
+  if(photo){ // cover-fit into the top ~2/3
+    var bh=1300, s=Math.max(W/photo.width,bh/photo.height), w=photo.width*s, h=photo.height*s;
+    g.drawImage(photo,(W-w)/2,(bh-h)/2,w,h);
+  }
+  var fade=g.createLinearGradient(0,500,0,1400); fade.addColorStop(0,'rgba(10,10,12,0)'); fade.addColorStop(1,'rgba(10,10,12,1)');
+  g.fillStyle=fade; g.fillRect(0,0,W,1400);
+  var glow=g.createRadialGradient(W*0.8,1500,50,W*0.8,1500,900); glow.addColorStop(0,'rgba(255,46,126,.35)'); glow.addColorStop(1,'rgba(255,46,126,0)');
+  g.fillStyle=glow; g.fillRect(0,0,W,H);
+  if(logo){ var lw=340, lh=logo.height*(lw/logo.width); g.drawImage(logo,70,90,lw,lh); }
+  var grad=g.createLinearGradient(70,0,1010,0); grad.addColorStop(0,'#ff2e7e'); grad.addColorStop(.6,'#ff8a3d'); grad.addColorStop(1,'#f5c542');
+  g.textBaseline='alphabetic';
+  g.fillStyle='#f5c542'; g.font='800 58px "Barlow Condensed", Arial Narrow, sans-serif'; g.fillText(L.top.toUpperCase(),70,1330);
+  g.fillStyle='#ffffff'; g.font='800 124px "Barlow Condensed", Arial Narrow, sans-serif';
+  var y=1460; wrapLines(g,p.n,940,2).forEach(function(l){ g.fillText(l,70,y); y+=120; });
+  g.fillStyle=grad; g.font='700 60px "Barlow Condensed", Arial Narrow, sans-serif';
+  wrapLines(g,L.sub,940,2).forEach(function(l){ g.fillText(l,70,y+10); y+=70; });
+  g.fillStyle='rgba(255,255,255,.12)'; g.fillRect(70,1760,940,2);
+  g.fillStyle='#ffffff'; g.font='800 54px "Barlow Condensed", Arial Narrow, sans-serif'; g.fillText('Do Inglewood',70,1840);
+  g.fillStyle='#9a9aa5'; g.font='600 40px Inter, Arial, sans-serif'; g.textAlign='right'; g.fillText(location.host||'doinglewood',1010,1838); g.textAlign='left';
+  g.strokeStyle=grad; g.lineWidth=10; g.strokeRect(5,5,W-10,H-10);
+}
+function canvasBlob(c){ return new Promise(function(res,rej){ try{ c.toBlob(function(b){ b?res(b):rej(new Error('no blob')); },'image/png'); }catch(e){ rej(e); } }); }
+async function makeStory(k){
+  var p=PB[k]; if(!p) return;
+  toast('Making your story…');
+  try{ await document.fonts.load('800 124px "Barlow Condensed"'); }catch(e){}
+  var logoVar=getComputedStyle(document.documentElement).getPropertyValue('--logo')||'';
+  var m=logoVar.match(/url\(\s*['"]?(.*?)['"]?\s*\)/);
+  var imgs=await Promise.all([loadImg(realImg(p.img)?p.img:null), loadImg(m?m[1]:null)]);
+  var c=document.createElement('canvas'); c.width=1080; c.height=1920; var g=c.getContext('2d'), blob;
+  drawStory(g,p,imgs[0],imgs[1]);
+  // A photo from a host without CORS "taints" the canvas — redraw without it rather than fail.
+  try{ blob=await canvasBlob(c); }catch(e){ drawStory(g,p,null,imgs[1]); blob=await canvasBlob(c); }
+  var file=new File([blob],'do-inglewood-story.png',{type:'image/png'}), L=storyLine(p);
+  var text=L.top+' '+p.n+' '+L.sub+' — Do Inglewood';
+  logActivity(p.k,'share');
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    navigator.share({files:[file],text:text,url:appUrl({spot:p.k})}).catch(function(){});
+  } else {
+    var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='do-inglewood-story.png';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(a.href); },4000);
+    toast('Story saved — post it from your photos');
+  }
+  return blob;
+}
+
+/* Crew plans: pregame spot → the show → after-hours spot, saved to di_shared_plans
+   and shared as a short link (?plan=<code>) that opens the plan in the app. */
+var PLAN={};
+function afterShowSpots(e,limit,used){
+  var a=eventAnchor(e), check=eventStartMin(e)+EVENT_LENGTH_MIN;
+  return P.filter(function(p){ return hasPhoto(p) && !(used&&used[p.k]) && (RX_NIGHT.test(bizText(p))||RX_FOOD.test(bizText(p))) && likelyOpenAt(p,check); })
+    .sort(function(x,y){ var s=(RX_NIGHT.test(bizText(y))?1:0)-(RX_NIGHT.test(bizText(x))?1:0); if(s) return s; s=dealSortScore(y)-dealSortScore(x); if(s) return s; var dx=distanceMiles(a,x), dy=distanceMiles(a,y); dx=dx==null?Infinity:dx; dy=dy==null?Infinity:dy; if(dx!==dy) return dx-dy; return popularity(y)-popularity(x); })
+    .slice(0,limit||4);
+}
+function openPlanBuilder(eventId){
+  var e=EV.filter(function(x){ return x.id===eventId; })[0]||todaysAnchorEvents()[0]||nextAnchorEvent();
+  if(!e){ toast('No show to plan around yet'); return; }
+  var used={}, pre=markUsed(pregameSpots(e,4,used),used), after=afterShowSpots(e,4,used);
+  PLAN={event:e, preOpts:pre, afterOpts:after, pre:pre[0]&&pre[0].k, after:after[0]&&after[0].k, viewing:null};
+  renderPlanBuilder(); go('plan');
+}
+function planOptHTML(p,role,on,e){
+  var mi=distanceMiles(eventAnchor(e),p);
+  return '<div class="plan-opt'+(on?' on':'')+'" onclick="pickPlan(\''+role+'\',\''+p.k+'\')"><div class="pic" style="background-image:'+bgLayers(p)+'"></div>'+
+    '<div class="tx"><b>'+xmlEsc(p.n)+'</b><span>'+xmlEsc([p.cat,mi!=null?distLabel(mi)+' from the venue':''].filter(Boolean).join(' · '))+'</span>'+sytFlag(p)+'</div></div>';
+}
+function planShowHTML(e){
+  return '<div class="plan-show"><b>'+evEsc(e.title)+'</b><span>&#128205; '+evEsc(e.venue||'Inglewood')+' · '+parseD(e.date).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})+(e.time?' · '+evEsc(e.time):'')+'</span></div>';
+}
+function renderPlanBuilder(){
+  var e=PLAN.event;
+  document.getElementById('plan-body').innerHTML='<div class="eyebrow">&#128111; Send plan to my crew</div><h2>'+evEsc(e.title)+'</h2>'+
+    '<div class="subcopy">Pick a pregame spot and where you’ll go after. Your crew gets one link that opens the whole night.</div>'+
+    (PLAN.preOpts.length?'<div class="plan-step"><div class="num">1</div><div class="lbl">Pregame</div><div class="plan-opts">'+PLAN.preOpts.map(function(p){ return planOptHTML(p,'pre',p.k===PLAN.pre,e); }).join('')+'</div></div>':'')+
+    '<div class="plan-step"><div class="num">'+(PLAN.preOpts.length?2:1)+'</div><div class="lbl">The show</div>'+planShowHTML(e)+'</div>'+
+    (PLAN.afterOpts.length?'<div class="plan-step"><div class="num">'+(PLAN.preOpts.length?3:2)+'</div><div class="lbl">After the show</div><div class="plan-opts">'+PLAN.afterOpts.map(function(p){ return planOptHTML(p,'after',p.k===PLAN.after,e); }).join('')+'</div></div>':'')+
+    '<div class="plan-cta"><button class="btn btn-primary" id="sendPlanBtn" onclick="sendPlan()">&#128111; Send to my crew</button></div>';
+}
+function pickPlan(role,k){ PLAN[role]=k; renderPlanBuilder(); }
+async function sendPlan(){
+  var e=PLAN.event, btn=document.getElementById('sendPlanBtn');
+  var stops=[];
+  if(PLAN.pre) stops.push({role:'pregame',business_id:PLAN.pre});
+  stops.push({role:'event',event_id:e.id});
+  if(PLAN.after) stops.push({role:'after',business_id:PLAN.after});
+  if(btn){ btn.disabled=true; btn.textContent='Saving…'; }
+  var r;
+  try{ r=await SB.from('di_shared_plans').insert({event_id:e.id,stops:stops}).select('id').single(); }catch(err){ r={error:err}; }
+  if(btn){ btn.disabled=false; btn.innerHTML='&#128111; Send to my crew'; }
+  if(r.error || !r.data){ toast('Couldn’t save the plan — try again'); return; }
+  var pre=PB[PLAN.pre], after=PB[PLAN.after];
+  var text=[pre?'Pregame at '+pre.n:'', e.title+' @ '+e.venue, after?'after: '+after.n:''].filter(Boolean).join(' → ')+'. Here’s the plan 👇';
+  shareLink('Our plan for '+e.title,text,appUrl({plan:r.data.id})).then(function(ok){
+    if(ok){ [PLAN.pre,PLAN.after].forEach(function(k){ if(k) logActivity(k,'share'); }); }
+  });
+  PLAN.viewing=r.data.id;
+  renderPlanView({id:r.data.id,event_id:e.id,stops:stops});
+}
+function planStopCard(p,e,label){
+  if(!p) return '';
+  var mi=e?distanceMiles(eventAnchor(e),p):null;
+  return '<div class="plan-opt on" onclick="openListing(\''+p.k+'\',\'plan\')"><div class="pic" style="background-image:'+bgLayers(p)+'"></div>'+
+    '<div class="tx"><b>'+xmlEsc(p.n)+'</b><span>'+xmlEsc([label,mi!=null?distLabel(mi)+' from the venue':''].filter(Boolean).join(' · '))+'</span>'+sytFlag(p)+'</div></div>';
+}
+function renderPlanView(plan){
+  var e=EV.filter(function(x){ return x.id===plan.event_id; })[0]||null, n=0, html='';
+  PLAN.viewing=plan.id; PLAN.event=e;
+  var byRole={}; (plan.stops||[]).forEach(function(s){ byRole[s.role]=s; });
+  var pre=byRole.pregame&&PB[byRole.pregame.business_id], after=byRole.after&&PB[byRole.after.business_id];
+  if(pre) html+='<div class="plan-step"><div class="num">'+(++n)+'</div><div class="lbl">Pregame</div>'+planStopCard(pre,e,pre.cat)+'</div>';
+  if(e) html+='<div class="plan-step"><div class="num">'+(++n)+'</div><div class="lbl">The show</div>'+planShowHTML(e)+'</div>';
+  if(after) html+='<div class="plan-step"><div class="num">'+(++n)+'</div><div class="lbl">After the show</div>'+planStopCard(after,e,after.cat)+'</div>';
+  document.getElementById('plan-body').innerHTML='<div class="eyebrow">&#128111; Your crew’s plan</div><h2>'+(e?evEsc(e.title):'Night out in Inglewood')+'</h2>'+
+    '<div class="subcopy">Tap a stop for directions, deals and hours.</div>'+html+
+    '<div class="plan-cta">'+(e?'<button class="btn btn-primary" onclick="openEvent(\''+evEsc(e.id)+'\')">Game-day plan &amp; parking</button>':'')+
+    '<button class="btn btn-ghost" onclick="shareLink(\'Our plan\',\'Here’s the plan 👇\',appUrl({plan:\''+evEsc(plan.id)+'\'}))">Share this plan</button></div>';
+  go('plan');
+}
+async function openSharedPlan(code){
+  var r;
+  try{ r=await SB.from('di_shared_plans').select('id,event_id,stops').eq('id',code).maybeSingle(); }catch(e){ r={error:e}; }
+  if(r.error || !r.data){ toast('That plan link didn’t open — here’s tonight instead'); return false; }
+  renderPlanView(r.data); return true;
+}
+function planBack(){ if(PLAN.viewing || !PLAN.event) go('home'); else openEvent(PLAN.event.id); }
+
+/* Links into the app: ?plan=<code>, ?deal=<id>, ?spot=<business id>.
+   Someone arriving from a friend's link sees that first; the mode picker waits
+   until their next visit. */
+async function handleDeepLink(){
+  var q=new URLSearchParams(location.search), plan=q.get('plan'), deal=q.get('deal'), spot=q.get('spot');
+  if(!plan && !deal && !spot) return;
+  try{ history.replaceState(null,'',location.pathname); }catch(e){}
+  var ob=document.getElementById('onboard'); if(ob) ob.style.display='none';
+  if(plan){ await openSharedPlan(plan); return; }
+  var d=deal&&dealById(deal), k=d?d.business_id:spot;
+  if(k && PB[k]){
+    openListing(k,'home');
+    if(d) setTimeout(function(){ var el=document.getElementById('deal-cards'); if(el) el.scrollIntoView({behavior:'smooth',block:'center'}); },300);
+  } else if(deal){ toast('That deal has ended — here’s what’s on now'); }
 }
 
 /* ============ INGLEWOOD FIRST ============
@@ -3035,6 +3280,7 @@ function eventDayHome(){
   var shown=evs.length?evs:[nextAnchorEvent()].filter(Boolean);
   if(shown.length) html+='<div class="evday'+(shown.length>1?' multi':'')+'">'+shown.map(function(e){ return evDayCard(!evs.length,e); }).join('')+'</div>';
   html+=sytBannerHTML(shown[0],evs.length>0);
+  if(shown[0]) html+='<button class="crew-btn" onclick="openPlanBuilder(\''+evEsc(shown[0].id)+'\')">&#128111; Send plan to my crew</button>';
   // Every show today is over → the pregame list is stale; lead with after-show spots.
   var allOver=evs.length && evs.every(function(x){ return eventEndsAt(x)<=new Date(); });
   if(allOver) return html+afterHoursHome();
@@ -3097,6 +3343,7 @@ async function initApp(){
   await loadEvents();
   await loadDeals();
   _dataReady=true;
+  await handleDeepLink();
   var _bl=document.getElementById('di-build'); if(_bl)_bl.textContent=DI_BUILD;
   buildHome();buildFilters();buildHero();renderHomeEvents();renderModeHome();renderModePicker();
   var ev=document.getElementById('view-explore');

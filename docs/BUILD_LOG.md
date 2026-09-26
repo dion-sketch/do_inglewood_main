@@ -128,3 +128,34 @@ Checked afterwards: 4 venues, 246 events linked to a venue, 1,248 Inglewood / 27
 1. Open on a phone on a show day in Event Day: the explainer shows, then the browser prompt. The event card shows your walk time.
 2. Tap "Not now", reload: not asked again today.
 3. Explore → 📍 Near me: closest spots first.
+
+---
+
+## Phase 4 — Shareability
+
+**What changed** (`site/index.html`)
+- **Share links now open the app** at the right place:
+  - `?spot=<id>` opens a listing.
+  - `?deal=<id>` opens the listing and scrolls to the deal.
+  - `?plan=<code>` opens a crew plan.
+  - Someone arriving from a friend's link sees that content first; the mode picker waits until their next visit. The link is cleaned from the address bar after opening.
+- **Bring a Friend deals:** the card shows the basic offer plus "Share with a friend to unlock: …". **Share to unlock** uses the phone's share sheet (or copies the link). Once shared, the better offer is unlocked on that phone and is what "Show to staff" shows. Every deal card also has a **Share** button. Shares log `share`.
+- **Story card:** a new **📸 Story** button on every listing makes a 1080×1920 image.
+  - Content: the spot's real photo, the Do Inglewood logo, "PREGAMING AT [Spot] before [Event] 🎤" (or "After the show at…" once the show is over, or "Out in Inglewood at…" on non-event days), plus the site address.
+  - Phones get the share sheet (straight to Instagram/Snap/TikTok stories); desktops download the image.
+  - If a photo can't be used for security reasons, the card is drawn without it instead of failing.
+- **Send plan to my crew:** a button on Event Day Home and on every event page.
+  - Pick a pregame spot (top 4, deals and closest to the venue first), see the show, pick an after-show spot (top 4, nightlife first).
+  - **Send to my crew** saves the plan to `di_shared_plans` (IDs only) and shares a short link.
+  - The crew sees a 3-step timeline; each stop opens its page, with buttons for the game-day plan and re-sharing.
+- The listing Share button now includes a real link (it used to be text only).
+
+**Decisions**
+- Unlocking happens on the sharer's phone once the share sheet completes (or the link is copied). Browsers can't confirm a message was actually sent, so it's on trust. That's fine for a friend deal.
+- Plans can't be edited after sending, so a link never changes under the crew. Send a new one instead.
+- Story images are made on the phone; nothing is uploaded.
+
+**What to test** (on a phone)
+1. Open a Bring a Friend deal → Share to unlock → pick a chat. The card flips to the better offer.
+2. Listing → 📸 Story → share to your Instagram story (or save it).
+3. Event Day → Send plan to my crew → send it to yourself → open the link.
