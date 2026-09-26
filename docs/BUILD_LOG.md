@@ -209,5 +209,46 @@ In this order:
 4. **Deploy the updated `import-businesses` Edge Function** (sets `is_inglewood`, no longer blanks photos).
 5. **Decide on the coordinates backfill** (Admin → Add photos & details). Paid Google calls for ~1,500 rows; needed for walk times to spots.
 6. **Push alerts:** follow `supabase/functions/README_push.md` (VAPID keys, 5 secrets, deploy `send-event-pushes`, vault secret, run `28_push_schedule.sql`). Then send me the **public** VAPID key or paste it into `VAPID_PUBLIC_KEY` in `site/index.html`, and redeploy.
-7. **Duplicate listings:** most spots are listed twice. Tell me if you want a merge tool (it deletes rows).
+7. ~~Duplicate listings~~: corrected in Round 2. It's ~46 pairs, not "most spots", and the app now merges them without deleting anything.
 8. Check the Google API key is restricted to your Netlify domain (it's inside ~1,160 public photo URLs).
+
+---
+
+## Round 2 — Phone feedback (Sep 26)
+
+Rambo tested the preview on his iPhone. The gold "Tonight" card, "Plan my night" and "Pregame near [venue]" are confirmed as the core direction (added to CLAUDE.md as "Core DNA").
+
+**What changed** (`site/index.html` unless noted)
+- **Gold deal markers everywhere:** "🎟 Show Ticket" for Show Your Ticket deals, "★ Deal" for any other deal. Shown on Home rows, pregame, Explore and search results, Specials, similar spots, the game-day planner, crew plans and Surprise Me.
+- **Finding things:**
+  - A search bar sits at the top of Home in every mode, with quick chips: Food · Drinks · Coffee · Parking · Deals · Open Now.
+  - Explore uses the same chips plus **Sort: Closest · Has Deal · Top Rated (15+ reviews) · Open Now**.
+  - On show days, a **Near me / Near the venue** toggle sets where distances are measured from.
+  - Result rows show distance, open/closed and the deal marker.
+  - **Parking** opens a parking guide for each venue (tonight's first, plus Metro/rideshare tips), since no parking lots are listed.
+  - "American" in a business name no longer counts as food (a mortgage company was showing under Food).
+- **Images:**
+  - Every stock "category" photo is gone. A spot shows its licensed venue photo, its own stored photo, or a **branded name card** (dark neon card with the business name and category).
+  - Spots with real photos rank slightly ahead of name cards.
+  - The Home banner only rotates venues with real photos.
+  - **Hollywood Park Casino** shows its name card instead of a blank pink card; it has no licensed photo yet.
+  - An automatic audit loaded all 151 images across every screen: none broken.
+  - Added a browser-tab icon (`favicon.png`, from the existing app icon).
+  - The listing Story button now uses a line icon like the others.
+- **"IMPORTED" removed** from all public screens (admin still sees Free/Verified/Premium). Disclaimers reworded.
+- **4th mode "Show Ticket"**: every live Show Your Ticket deal, closest to tonight's venue first. With none live it falls back to other deals, then pregame picks. The mode bar now shows icon-over-label so all 4 fit.
+  - Note: this mode was **not** in the earlier spec; it's added now.
+- **Duplicates merged in the app, not deleted:** 42 listing pairs (same address, names that start the same, e.g. "3 and Out Sports Bar" / "…& Lounge", the two Hollywood Park Casino rows) show as one card. The kept card is the one that's claimed, higher tier, has a real photo or deals, or whose category matches its name. The other id still works for links, favorites, deals and activity.
+  - Correction: earlier I said "most businesses are listed twice". It's ~46 pairs.
+- **iPhone layout:** the page now sizes to the visible screen, and the tab bar sits above Safari's toolbar and the home bar. Before, the "Specials" label was covered.
+- Fixed a style clash that made the "+ Nearby cities" chip twice as tall as the others.
+
+**Why most spots show name cards:** only ~180 businesses have a photo stored in Supabase. 1,162 only have Google Places photo links, which the app doesn't display: every view is billed by Google, and the link exposes the API key. Fixing that for real needs a decision (see "Left for Rambo").
+
+**What to test**
+1. Home: tap the search bar, type "tacos". Tap each quick chip.
+2. Explore: switch sorts; on a show day, switch Near me / Near the venue.
+3. Tap 🅿️ Parking: tonight's venue guide is first.
+4. Switch to 🎟 Show Ticket mode (after running `27_sample_deals.sql`).
+5. Open Hollywood Park Casino: branded card, no blank.
+6. Nothing says "IMPORTED".
