@@ -491,6 +491,7 @@
 
   /* ============ SHOW YOUR TICKET deals ============ */
   .deal-flag.syt{background:linear-gradient(90deg,#ff2e7e,#ff8a3d);color:#fff;box-shadow:0 2px 10px rgba(255,46,126,.35);margin-top:4px;}
+  .deal-flag.hot{background:linear-gradient(90deg,#ff6a00,#ff2e7e);color:#fff;box-shadow:0 2px 10px rgba(255,106,0,.4);margin-top:4px;animation:pulse 2.2s ease-in-out infinite;}
   .deal-flag.sample{background:var(--panel-2);color:var(--muted);box-shadow:none;border:1px dashed var(--line);margin-left:4px;}
   .syt-banner{margin:14px 20px 0;border-radius:18px;padding:16px 14px 8px;background:linear-gradient(150deg,rgba(255,46,126,.2),rgba(245,197,66,.1) 60%,rgba(20,20,23,1));border:1px solid var(--pink);box-shadow:0 0 24px rgba(255,46,126,.22);}
   .syt-banner .k{font-family:'Barlow Condensed';font-weight:800;font-size:12px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;}
@@ -652,6 +653,10 @@
     <!-- SAVED ITINERARIES -->
     <div class="view" id="view-saved">
       <div class="head-bar"><div class="back" onclick="go('home')">&#8249;</div><div class="logo-mini" role="img" aria-label="Do Inglewood" title="Home" onclick="go('home')"></div><span class="htitle">Saved Spots</span></div>
+      <div id="saved-events-sect" style="padding:14px 16px 0;display:none">
+        <div class="sect-head" style="margin:0 0 10px"><h3>&#127903; Your events</h3><a id="push-status" onclick="pushStatusTap()"></a></div>
+        <div id="saved-events" class="home-ev" style="padding:2px 20px"></div>
+      </div>
       <div id="fav-sect" style="padding:14px 16px 0;display:none">
         <div class="sect-head" style="margin:0 0 10px"><h3>&#9829; Favorite Spots</h3></div>
         <div id="fav-list" class="hscroll"></div>
@@ -917,6 +922,14 @@
       <div class="skip" onclick="locNo()">Not now</div>
     </div>
   </div>
+  <div class="acct-overlay" id="pushOverlay">
+    <div class="acct-sheet">
+      <h3>&#128276; Game-day alerts?</h3>
+      <p id="pushMsg">Two alerts per saved event, max: Show Your Ticket deals about 3 hours before doors, and After Hours picks when it lets out.</p>
+      <button class="ab" id="pushYes" onclick="pushYes()">Turn on alerts</button>
+      <div class="skip" onclick="pushNo()">Not now</div>
+    </div>
+  </div>
   <div class="redeem" id="redeem" role="dialog" aria-modal="true" aria-label="Show this deal to staff">
     <div class="rk" id="rd-k">&#127903; Show your ticket</div>
     <div class="rb" id="rd-biz"></div>
@@ -950,7 +963,7 @@ const SUPABASE_KEY = "sb_publishable_WeSqJHxHWza5rgyq8XcF0g_bYF7VE7R"; // publis
 const SB = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Build stamp — bump on every release so the deployed version is verifiable at a glance
 // (☰ menu → bottom). If the number here doesn't match what's live, an old file was deployed.
-const DI_BUILD = "2026.09.26-modes";
+const DI_BUILD = "2026.09.26-eventday";
 try{ console.log("Do Inglewood — build "+DI_BUILD); }catch(e){}
 
 /* ============ AUTH + OWNER DASHBOARD ============ */
@@ -1781,7 +1794,7 @@ function hasPhoto(p){ return !!(p && realImg(p.img)); }
 function cardHTML(p){
   return `<div class="card" onclick="openListing('${p.k}','home')">
     <div class="img" style="background-image:${bgLayers(p)}">${featuredBadge(p)}${tierBadge(p)}</div>
-    <div class="body"><div class="name">${xmlEsc(p.n)}</div><div class="meta">${starline(p)} · ${xmlEsc(p.price)} ${myDistChip(p)} ${nearbyChip(p)}</div>${dealFlag(p)}${sytFlag(p)}</div>
+    <div class="body"><div class="name">${xmlEsc(p.n)}</div><div class="meta">${starline(p)} · ${xmlEsc(p.price)} ${myDistChip(p)} ${nearbyChip(p)}</div>${poppingFlag(p)}${dealFlag(p)}${sytFlag(p)}</div>
   </div>`;
 }
 function isFallbackPhoto(src){
@@ -1818,9 +1831,11 @@ function buildHome(){
   // Popping: Featured (paid top placement) first, then PAID sponsored spots, then curated favourites,
   // topped up with high-rated photo'd spots
   var used={};
-  var featured=P.filter(p=>isFeatured(p)&&hasPhoto(p)&&!isDealLit(p)&&!p.mdeal);
-  var sponsored=P.filter(p=>isSponsored(p)&&hasPhoto(p)&&!isDealLit(p)&&!p.mdeal&&featured.indexOf(p)<0);
-  var pop=featured.concat(sponsored).concat(popIds.map(findBiz).filter(p=>p&&hasPhoto(p)&&!isDealLit(p)&&!p.mdeal&&featured.indexOf(p)<0&&sponsored.indexOf(p)<0));
+  // Spots that are actually busy right now lead "What's Popping".
+  var hot=P.filter(p=>isPopping(p)&&hasPhoto(p)).sort(function(a,b){return POPPING[b.k].score-POPPING[a.k].score;}).slice(0,6);
+  var featured=P.filter(p=>isFeatured(p)&&hasPhoto(p)&&!isDealLit(p)&&!p.mdeal&&hot.indexOf(p)<0);
+  var sponsored=P.filter(p=>isSponsored(p)&&hasPhoto(p)&&!isDealLit(p)&&!p.mdeal&&featured.indexOf(p)<0&&hot.indexOf(p)<0);
+  var pop=hot.concat(featured).concat(sponsored).concat(popIds.map(findBiz).filter(p=>p&&hasPhoto(p)&&!isDealLit(p)&&!p.mdeal&&featured.indexOf(p)<0&&sponsored.indexOf(p)<0&&hot.indexOf(p)<0));
   if(pop.length<6){ for(var k in PB){ if(pop.length>=10)break; var b=PB[k]; if(hasPhoto(b)&&pop.indexOf(b)<0&&(b.tier>=2||(b.r||0)>=4.4)) pop.push(b); } }
   pop.forEach(function(p){used[p.k]=1;});
   var usedImages={};
@@ -1874,6 +1889,7 @@ function listBadge(p){
   if(isComingSoon(p)) return '<span class="chip chip-special">&#128197; Coming Soon</span>';
   var badges=[];
   if(isFeatured(p)) badges.push('<span class="chip chip-featured">&#11088; Featured</span>');
+  if(isPopping(p)) badges.push(poppingFlag(p));
   if(ticketDealFor(p)) badges.push(sytFlag(p));
   if(isDealLit(p)) badges.push(dealFlag(p));
   else if(isSponsored(p)) badges.push('<span class="chip chip-sponsored">&#11088; Sponsored</span>');
@@ -2058,6 +2074,7 @@ function toggleFav(k,ev){ if(ev&&ev.stopPropagation)ev.stopPropagation(); if(!k)
   if(on)a.push(k); else a.splice(i,1);
   try{ localStorage.setItem('di_favs',JSON.stringify(a)); }catch(e){}
   toast(on?'Saved to favorites ♥':'Removed from favorites');
+  if(on) logActivity(k,'save');
   var h=document.getElementById('ldFav'); if(h){ h.innerHTML=on?'&#9829;':'&#9825;'; h.style.color=on?'var(--pink)':''; }
 }
 function shareBiz(k){ var p=PB[k]; if(!p)return; var text=p.n+' · '+(p.cat||'')+' in Inglewood — found on Do Inglewood 🎟️'; shareLink(p.n,text,appUrl({spot:k})).then(function(ok){ if(ok) logActivity(k,'share'); }); }
@@ -2206,7 +2223,7 @@ function dealBlockHTML(p){
   if(!isDealLit(p)) return '';   // no deal → no box (never show "No deal today")
   return '<div class="deal-slot"><button class="deal-btn" onclick="revealDeal()">&#127903; SEE TODAY\'S DEAL &#8594;</button><div class="deal-reveal" id="deal-reveal"><div class="deal-title">&#127903; Today\'s Deal — '+xmlEsc(p.n)+'</div><div class="deal-copy">'+xmlEsc(p.special)+'</div><div class="deal-note">Valid today · Show this screen when you order</div></div></div>';
 }
-function revealDeal(){ var e=document.getElementById('deal-reveal'); if(e)e.classList.add('on'); }
+function revealDeal(){ var e=document.getElementById('deal-reveal'); if(e)e.classList.add('on'); logActivity(window._curListing,'deal_open'); }
 function openListing(k,from){
   lastList=from||'home';const p=PB[k];
   logActivity(k,'view');
@@ -2515,7 +2532,7 @@ var calY=null, calM=null;
 var VENUE_COORDS={'sofi stadium':[33.9535,-118.3392],'kia forum':[33.9581,-118.3419],'intuit dome':[33.9560,-118.3436],'youtube theater':[33.9537,-118.3398]};
 function distanceMiles(a,b){if(!a||!b||!Number.isFinite(a.lat)||!Number.isFinite(a.lng)||!Number.isFinite(b.lat)||!Number.isFinite(b.lng))return null;var r=Math.PI/180,la=(b.lat-a.lat)*r,lo=(b.lng-a.lng)*r,x=Math.sin(la/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(lo/2)**2;return 3958.8*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
 function eventAnchor(e){var b=e.business_id&&PB[e.business_id];if(Number.isFinite(e.lat)&&Number.isFinite(e.lng))return{lat:e.lat,lng:e.lng};if(b&&Number.isFinite(b.lat)&&Number.isFinite(b.lng))return{lat:b.lat,lng:b.lng};var c=VENUE_COORDS[String(e.venue||'').toLowerCase()];return c?{lat:c[0],lng:c[1]}:null;}
-function plannerCard(p,a,checkMin){var d=distanceMiles(a,p),s=d==null?'Distance unavailable':d.toFixed(1)+' mi';var statusTag='';if(checkMin!=null){var st=hoursStatusAt(p.hrs,checkMin);if(st)statusTag=' · <span style="color:'+(st.open?'var(--green)':'#ff7a7a')+'">'+(st.open?'Open then':'Closed then')+'</span>';}var nameBadge=isFeatured(p)?' <span class="chip chip-featured" style="vertical-align:middle">&#11088; Featured</span>':'';var dealBadge=(isDealLit(p)||ticketDealFor(p))?'<div style="margin-top:4px">'+dealFlag(p)+sytFlag(p)+'</div>':'';return '<div class="evrow" onclick="openListing(\''+evEsc(p.k)+ '\')"><div class="evbody"><div class="evname">'+evEsc(p.n)+nameBadge+'</div><div class="evmeta">'+evEsc(p.cat||'')+' · '+evEsc(s)+statusTag+' · '+evEsc(p.addr||'')+'</div>'+dealBadge+'</div></div>';}
+function plannerCard(p,a,checkMin){var d=distanceMiles(a,p),s=d==null?'Distance unavailable':d.toFixed(1)+' mi';var statusTag='';if(checkMin!=null){var st=hoursStatusAt(p.hrs,checkMin);if(st)statusTag=' · <span style="color:'+(st.open?'var(--green)':'#ff7a7a')+'">'+(st.open?'Open then':'Closed then')+'</span>';}var nameBadge=isFeatured(p)?' <span class="chip chip-featured" style="vertical-align:middle">&#11088; Featured</span>':'';var dealBadge=(isDealLit(p)||ticketDealFor(p)||isPopping(p))?'<div style="margin-top:4px">'+poppingFlag(p)+dealFlag(p)+sytFlag(p)+'</div>':'';return '<div class="evrow" onclick="openListing(\''+evEsc(p.k)+ '\')"><div class="evbody"><div class="evname">'+evEsc(p.n)+nameBadge+'</div><div class="evmeta">'+evEsc(p.cat||'')+' · '+evEsc(s)+statusTag+' · '+evEsc(p.addr||'')+'</div>'+dealBadge+'</div></div>';}
 function plannerSection(title,items,a,checkMin){if(!items.length)return '';items=items.slice().sort(function(x,y){var s=dealSortScore(y)-dealSortScore(x);if(s)return s;var dx=distanceMiles(a,x),dy=distanceMiles(a,y);return(dx==null?Infinity:dx)-(dy==null?Infinity:dy);});return '<div style="padding:12px 16px 0"><div class="sect-head"><h3>'+title+'</h3><span style="font-size:11px;color:var(--muted)">'+items.length+' nearby</span></div>'+items.slice(0,8).map(function(p){return plannerCard(p,a,checkMin);}).join('')+'</div>';}
 var VENUE_PARKING_TIPS={
   'sofi stadium':['Most SoFi Stadium lots require a pre-purchased parking pass — buy one ahead through Ticketmaster or the SoFi app.','Rideshare pickup/drop-off is in a designated lot with a walk to the gates — check the SoFi app for the current zone.'],
@@ -2545,7 +2562,7 @@ function openEvent(id){
   var hotels=P.filter(function(p){return /hotel|lodging/i.test(text(p));});
   var deals=P.filter(function(p){return !!p.special||!!p.mdeal||liveDealsFor(p).length>0;});
   var map='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(e.venue||'Inglewood');
-  document.getElementById('event-detail-body').innerHTML='<div style="padding:18px 16px 0"><div class="evtag '+evKindClass(e)+'">'+evEsc(evLabel(e).toUpperCase())+'</div><h1 style="font-family:\'Barlow Condensed\';font-size:30px;line-height:1.02;margin:9px 0 6px">'+evEsc(e.title)+'</h1><div style="color:var(--muted);font-size:13px;line-height:1.6">'+evEsc(e.date||'')+' · '+evEsc(e.time||'Time TBD')+'<br>📍 '+evEsc(e.venue||'Inglewood')+'</div><div style="display:flex;gap:8px;margin:16px 0;flex-wrap:wrap"><button class="btn btn-gold" onclick="document.getElementById(\'game-day-plan\').scrollIntoView({behavior:\'smooth\'})">Plan my game day</button>'+(e.url?'<a class="btn btn-ghost" href="'+evEsc(e.url)+'" target="_blank" rel="noopener">Tickets</a>':'')+'<a class="btn btn-ghost" href="'+map+'" target="_blank" rel="noopener">Map</a></div></div>'+sytBannerHTML(e,e.date===isoOf(new Date()))+'<button class="crew-btn" onclick="openPlanBuilder(\''+evEsc(e.id)+'\')">&#128111; Send plan to my crew</button><div id="game-day-plan">'+plannerSection('Before the game',before,a,beforeCheck)+plannerSection('After the game',after,a,afterCheck)+plannerSection('Staying over?',hotels,a)+plannerSection('Deals today',deals,a)+parkingTips(e)+'</div>';
+  document.getElementById('event-detail-body').innerHTML='<div style="padding:18px 16px 0"><div class="evtag '+evKindClass(e)+'">'+evEsc(evLabel(e).toUpperCase())+'</div><h1 style="font-family:\'Barlow Condensed\';font-size:30px;line-height:1.02;margin:9px 0 6px">'+evEsc(e.title)+'</h1><div style="color:var(--muted);font-size:13px;line-height:1.6">'+evEsc(e.date||'')+' · '+evEsc(e.time||'Time TBD')+'<br>📍 '+evEsc(e.venue||'Inglewood')+'</div><div style="display:flex;gap:8px;margin:16px 0;flex-wrap:wrap"><button class="btn btn-gold" onclick="document.getElementById(\'game-day-plan\').scrollIntoView({behavior:\'smooth\'})">Plan my game day</button><button class="btn btn-ghost" id="evSaveBtn" onclick="toggleSaveEvent(\''+evEsc(e.id)+'\')">'+(isEventSaved(e.id)?'&#10003; Saved':'&#128276; Save')+'</button>'+(e.url?'<a class="btn btn-ghost" href="'+evEsc(e.url)+'" target="_blank" rel="noopener">Tickets</a>':'')+'<a class="btn btn-ghost" href="'+map+'" target="_blank" rel="noopener">Map</a></div></div>'+sytBannerHTML(e,e.date===isoOf(new Date()))+'<button class="crew-btn" onclick="openPlanBuilder(\''+evEsc(e.id)+'\')">&#128111; Send plan to my crew</button><div id="game-day-plan">'+plannerSection('Before the game',before,a,beforeCheck)+plannerSection('After the game',after,a,afterCheck)+plannerSection('Staying over?',hotels,a)+plannerSection('Deals today',deals,a)+parkingTips(e)+'</div>';
   go('event-detail');
 }
 function renderEvents(){
@@ -2663,6 +2680,7 @@ function renderFavs(){
 }
 function renderSaved(){
   renderFavs();
+  renderSavedEvents();
   var favs=diFavs(); var empty=document.getElementById('saved-empty');
   if(empty) empty.style.display=favs.length?'none':'block';
   var sp=document.getElementById('saved-popular'); if(sp && !favs.length) sp.innerHTML=popularSpots(null,8).map(cardHTML).join('');
@@ -3146,16 +3164,110 @@ function planBack(){ if(PLAN.viewing || !PLAN.event) go('home'); else openEvent(
    Someone arriving from a friend's link sees that first; the mode picker waits
    until their next visit. */
 async function handleDeepLink(){
-  var q=new URLSearchParams(location.search), plan=q.get('plan'), deal=q.get('deal'), spot=q.get('spot');
-  if(!plan && !deal && !spot) return;
+  var q=new URLSearchParams(location.search), plan=q.get('plan'), deal=q.get('deal'), spot=q.get('spot'), ev=q.get('event'), mode=q.get('mode');
+  if(!plan && !deal && !spot && !ev && !mode) return;
   try{ history.replaceState(null,'',location.pathname); }catch(e){}
   var ob=document.getElementById('onboard'); if(ob) ob.style.display='none';
   if(plan){ await openSharedPlan(plan); return; }
+  if(mode && MODES[mode]) setMode(mode);                                   // push: "letting out" → After Hours
+  if(ev && EV.some(function(x){ return x.id===ev; })){ openEvent(ev); return; } // push: pregame alert
   var d=deal&&dealById(deal), k=d?d.business_id:spot;
   if(k && PB[k]){
     openListing(k,'home');
+    if(d){ logActivity(d.business_id,'deal_open',d.id); }
     if(d) setTimeout(function(){ var el=document.getElementById('deal-cards'); if(el) el.scrollIntoView({behavior:'smooth',block:'center'}); },300);
   } else if(deal){ toast('That deal has ended — here’s what’s on now'); }
+}
+
+/* ============ 🔥 POPPING NOW ============
+   Scores come from di_popping_scores() (last 2 hours of anonymous activity).
+   The threshold, minimum visitors and window live in di_settings, so they can be
+   tuned from admin.html without a deploy. Refreshed every 5 minutes. */
+var POPPING={};
+async function loadPopping(){
+  try{
+    var r=await SB.rpc('di_popping_scores'); if(r.error) throw r.error;
+    var m={}; (r.data||[]).forEach(function(x){ m[x.business_id]={score:x.score,hot:!!x.is_popping}; }); POPPING=m;
+  }catch(e){ POPPING={}; }
+}
+function isPopping(p){ return !!(p && POPPING[p.k] && POPPING[p.k].hot); }
+function poppingFlag(p){ return isPopping(p)?'<span class="deal-flag hot">&#128293; Popping now</span>':''; }
+setInterval(function(){ loadPopping().then(function(){ if(document.getElementById('view-home').classList.contains('active')){ buildHome(); renderModeHome(); } }); },5*60*1000);
+
+/* ============ SAVED EVENTS + GAME-DAY PUSH ============
+   Saving an event is the only way into push alerts (opt-in). Push needs the VAPID
+   public key below (not a secret) plus sw.js deployed next to this page; with the
+   key blank, saving events still works and the alert offer is simply not shown.
+   Max 2 alerts per event is enforced by the database (di_push_log). */
+var VAPID_PUBLIC_KEY='';   // paste the public key from `npx web-push generate-vapid-keys`
+function savedEvents(){ try{ return JSON.parse(localStorage.getItem('di_saved_events')||'[]'); }catch(e){ return []; } }
+function isEventSaved(id){ return savedEvents().indexOf(id)>=0; }
+function pushOn(){ try{ return localStorage.getItem('di_push')==='on'; }catch(e){ return false; } }
+function pushSupported(){ return !!(VAPID_PUBLIC_KEY && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window); }
+function isIOS(){ return /iPad|iPhone|iPod/.test(navigator.userAgent||''); }
+function toggleSaveEvent(id){
+  var a=savedEvents(), i=a.indexOf(id), on=i<0;
+  if(on) a.push(id); else a.splice(i,1);
+  try{ localStorage.setItem('di_saved_events',JSON.stringify(a.slice(-50))); }catch(e){}
+  var b=document.getElementById('evSaveBtn'); if(b) b.innerHTML=on?'&#10003; Saved':'&#128276; Save';
+  toast(on?'Saved to Your events':'Removed from Your events');
+  if(pushOn()) syncPush();
+  else if(on) offerPush();
+}
+function offerPush(){
+  if(!pushSupported()) return;
+  try{ if(Notification.permission==='denied' || localStorage.getItem('di_push_no')===isoOf(new Date())) return; }catch(e){}
+  var msg=document.getElementById('pushMsg'), yes=document.getElementById('pushYes');
+  if(isIOS() && !isStandalone()){
+    msg.textContent='On iPhone, alerts work once Do Inglewood is on your Home Screen. Add it, open it from there, and save the event again.';
+    yes.textContent='Show me how'; yes.onclick=function(){ document.getElementById('pushOverlay').classList.remove('on'); showInstall(); };
+  } else {
+    msg.textContent='Two alerts per saved event, max: Show Your Ticket deals about 3 hours before doors, and After Hours picks when it lets out.';
+    yes.textContent='Turn on alerts'; yes.onclick=pushYes;
+  }
+  document.getElementById('pushOverlay').classList.add('on');
+}
+function pushNo(){ document.getElementById('pushOverlay').classList.remove('on'); try{ localStorage.setItem('di_push_no',isoOf(new Date())); }catch(e){} }
+function b64ToBytes(b64){ var pad='='.repeat((4-b64.length%4)%4), s=atob((b64+pad).replace(/-/g,'+').replace(/_/g,'/')), out=new Uint8Array(s.length); for(var i=0;i<s.length;i++) out[i]=s.charCodeAt(i); return out; }
+async function pushYes(){
+  document.getElementById('pushOverlay').classList.remove('on');
+  try{
+    if(await Notification.requestPermission()!=='granted'){ toast('Alerts are off — you can turn them on in your browser settings'); return; }
+    var reg=await navigator.serviceWorker.register('sw.js');
+    await navigator.serviceWorker.ready;
+    var sub=await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64ToBytes(VAPID_PUBLIC_KEY)});
+    var r=await SB.rpc('di_push_save',{p_subscription:sub.toJSON(),p_session:sessionId(),p_event_ids:savedEvents(),p_opted_in:true});
+    if(r.error) throw r.error;
+    try{ localStorage.setItem('di_push','on'); }catch(e){}
+    toast('Alerts on 🔔 — max 2 per event'); renderSavedEvents();
+  }catch(e){ console.warn('push subscribe failed',e); toast('Couldn’t turn on alerts on this device'); }
+}
+// Keep the server's list of saved events in step with this phone.
+async function syncPush(optIn){
+  try{
+    var reg=await navigator.serviceWorker.getRegistration(); var sub=reg&&await reg.pushManager.getSubscription(); if(!sub) return;
+    await SB.rpc('di_push_save',{p_subscription:sub.toJSON(),p_session:sessionId(),p_event_ids:savedEvents(),p_opted_in:optIn!==false});
+  }catch(e){}
+}
+async function pushOff(){
+  await syncPush(false);
+  try{ var reg=await navigator.serviceWorker.getRegistration(); var sub=reg&&await reg.pushManager.getSubscription(); if(sub) await sub.unsubscribe(); }catch(e){}
+  try{ localStorage.removeItem('di_push'); }catch(e){}
+  toast('Alerts off'); renderSavedEvents();
+}
+function pushStatusTap(){ if(pushOn()){ if(confirm('Turn off game-day alerts?')) pushOff(); } else offerPush(); }
+function renderSavedEvents(){
+  var sect=document.getElementById('saved-events-sect'), el=document.getElementById('saved-events'); if(!el) return;
+  var today=isoOf(new Date());
+  var list=savedEvents().map(function(id){ return EV.filter(function(e){ return e.id===id; })[0]; }).filter(function(e){ return e && e.date>=today; })
+    .sort(function(a,b){ return a.date.localeCompare(b.date)||eventStartMin(a)-eventStartMin(b); });
+  sect.style.display=list.length?'block':'none';
+  var st=document.getElementById('push-status');
+  if(st) st.textContent=!pushSupported()?'':(pushOn()?'🔔 Alerts on':'Turn on alerts');
+  el.innerHTML=list.map(function(e){
+    var d=parseD(e.date);
+    return '<div class="home-evcard" onclick="openEvent(\''+evEsc(e.id)+'\')"><div class="d">'+d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})+' · '+evEsc(e.time||'')+'</div><div class="n">'+evEsc(e.title)+'</div><div class="v">📍 '+evEsc(e.venue||'')+'</div></div>';
+  }).join('');
 }
 
 /* ============ INGLEWOOD FIRST ============
@@ -3245,7 +3357,8 @@ function bizText(p){ return ((p.cat||'')+' '+(p.tags||[]).join(' ')+' '+(p.n||''
 var RX_PREGAME=/restaurant|food|bar|lounge|coffee|brunch|mexican|soul|caribbean|american|seafood|pizza|burger|taco|wings/;
 var RX_NIGHT=/lounge|\bbars?\b|nightclub|night club|casino|\bclub\b|cocktail|brewery|wine|hookah/;   // not "Late Night" food
 var RX_FOOD=/restaurant|food|mexican|soul|caribbean|american|seafood|pizza|burger|taco|wings/;
-function popularity(p){ return (Number(p.r)||0)*Math.log10((Number(p.rc)||0)+10); }
+// Reviews give the baseline; live activity (last 2 hours) lifts spots that are busy right now.
+function popularity(p){ var live=POPPING[p.k]; return (Number(p.r)||0)*Math.log10((Number(p.rc)||0)+10)+(live?live.score*0.5+(live.hot?10:0):0); }
 function byDealThenPopular(a,b){ return dealSortScore(b)-dealSortScore(a) || popularity(b)-popularity(a); }
 // Never an empty section: callers fall back to this when their own list is empty.
 function popularSpots(test,limit,used){
@@ -3342,7 +3455,9 @@ async function initApp(){
   normalizeVenuePhotos();
   await loadEvents();
   await loadDeals();
+  await loadPopping();
   _dataReady=true;
+  if(pushOn()) syncPush();
   await handleDeepLink();
   var _bl=document.getElementById('di-build'); if(_bl)_bl.textContent=DI_BUILD;
   buildHome();buildFilters();buildHero();renderHomeEvents();renderModeHome();renderModePicker();

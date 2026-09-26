@@ -159,3 +159,55 @@ Checked afterwards: 4 venues, 246 events linked to a venue, 1,248 Inglewood / 27
 1. Open a Bring a Friend deal → Share to unlock → pick a chat. The card flips to the better offer.
 2. Listing → 📸 Story → share to your Instagram story (or save it).
 3. Event Day → Send plan to my crew → send it to yourself → open the link.
+
+---
+
+## Phase 5 — Popping + notifications
+
+**What changed**
+- `site/index.html`
+  - **Activity logging** (anonymous device id only):
+    - `view` when a listing opens.
+    - `save` when a spot is hearted.
+    - `share` for listing, deal, story and crew-plan shares.
+    - `deal_open` when a deal is revealed or opened from a link.
+    - `redeem` on Show to staff.
+    - Repeats of the same spot/action are sent at most every 30 minutes.
+  - **🔥 Popping now** badge on cards, Explore rows and the planner when `di_popping_scores()` says a spot is hot.
+    - Hot spots lead "What's Popping", and live activity lifts spots in every "Popular right now" list.
+    - Refreshes every 5 minutes.
+  - **Save events:** a 🔔 Save button on every event page. Saved events show under **Your events** in the Saved tab.
+  - **Game-day alerts (opt-in):** saving an event offers alerts (max 2 per event, explained up front).
+    - iPhone users who haven't added the app to their Home Screen are shown how, instead of a prompt that can't work.
+    - The alerts link can turn alerts off.
+    - Alert taps open the event (`?event=`) or After Hours (`?mode=after`).
+- `site/sw.js` (new): shows push alerts and opens the right page when tapped. It doesn't cache anything, so it can never serve an old version of the app.
+- `supabase/functions/send-event-pushes/` (new):
+  - Every 15 minutes it sends the **pregame** alert ~3–4 hrs before doors (lead: Show Your Ticket deals near the venue) and the **after-hours** alert ~3.5 hrs after start.
+  - Only to people who saved that event.
+  - The database refuses a second copy of the same alert.
+  - Dead subscriptions are switched off.
+  - `?dry=1` shows what it would send.
+  - Setup: `supabase/functions/README_push.md`.
+- `supabase/28_push_schedule.sql` (new): schedules the sender every 15 minutes (the secret comes from Supabase Vault, not the file), and trims activity older than 30 days.
+- `tools/admin.html`: the 🔥 badge settings (score, different visitors, look-back minutes) can be changed in the Deals tab.
+- `docs/NATIVE_GEOFENCING.md` (new): what a native "you're near X" alert would take (Capacitor wrap, geofences, store accounts, ~1–2 weeks).
+
+**Decisions**
+- "Doors" is assumed to be 1 hour before the listed start. Events with "TBD" times get no alerts.
+- Each visitor counts once per action per spot, and 🔥 also needs 3 different visitors, so one person tapping repeatedly can't make a spot "pop".
+- Activity is kept 30 days (enough for trends, nothing personal in it anyway).
+
+---
+
+## Left for Rambo (stop list: production SQL, deploys, keys, costs)
+
+In this order:
+1. **Run `supabase/27_sample_deals.sql`** (5 labeled sample deals).
+2. **Deploy the whole `site/` folder** to Netlify, not just `index.html`: `sw.js` and `assets/` must go with it. Check ☰ menu → Build says `2026.09.26-eventday`.
+3. **Then run `supabase/26_hide_private_columns.sql`** (only after step 2 — the old site would break).
+4. **Deploy the updated `import-businesses` Edge Function** (sets `is_inglewood`, no longer blanks photos).
+5. **Decide on the coordinates backfill** (Admin → Add photos & details). Paid Google calls for ~1,500 rows; needed for walk times to spots.
+6. **Push alerts:** follow `supabase/functions/README_push.md` (VAPID keys, 5 secrets, deploy `send-event-pushes`, vault secret, run `28_push_schedule.sql`). Then send me the **public** VAPID key or paste it into `VAPID_PUBLIC_KEY` in `site/index.html`, and redeploy.
+7. **Duplicate listings:** most spots are listed twice. Tell me if you want a merge tool (it deletes rows).
+8. Check the Google API key is restricted to your Netlify domain (it's inside ~1,160 public photo URLs).

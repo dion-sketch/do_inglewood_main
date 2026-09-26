@@ -103,6 +103,16 @@
         <button class="r" onclick="deleteSampleDeals()">Delete sample deals</button>
       </div>
       <div id="deals-list"><div class="mut">Loading…</div></div>
+      <div style="margin-top:22px;padding-top:14px;border-top:1px solid var(--line)">
+        <div class="nm">🔥 "Popping now" badge</div>
+        <div class="mut" style="margin-bottom:10px">A spot gets the badge when recent activity (views 1, deal opens 2, saves 3, shares 4, redeems 5 — each visitor counted once per action) reaches the score below, from at least this many different visitors.</div>
+        <div class="grid2">
+          <div class="fld"><label>Score needed</label><input type="text" id="s_threshold" inputmode="numeric"></div>
+          <div class="fld"><label>Different visitors needed</label><input type="text" id="s_min_sessions" inputmode="numeric"></div>
+          <div class="fld"><label>Look back (minutes)</label><input type="text" id="s_window" inputmode="numeric"></div>
+        </div>
+        <button class="primary" onclick="saveSettings()">Save badge settings</button>
+      </div>
     </div>
 
     <div class="card tabpane hidden" id="pane-events">
@@ -283,7 +293,7 @@ function showTab(t){
   document.querySelectorAll('.tabpane').forEach(function(el){el.classList.add('hidden');});
   $('pane-'+t).classList.remove('hidden');
   if(t==='events') loadEvents();
-  if(t==='deals') loadDeals();
+  if(t==='deals'){ loadDeals(); loadSettings(); }
 }
 
 /* ---------- DEALS (di_deals, from 25_event_day_engagement.sql) ---------- */
@@ -360,6 +370,23 @@ async function toggleDeal(id){
 async function deleteDeal(id){
   if(!confirm('Delete this deal?')) return;
   try{ await api('di_deals?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:HJ()}); loadDeals(); msg('Deleted'); }catch(e){ msg('Error: '+e.message); }
+}
+var SETTING_FIELDS={popping_threshold:'s_threshold',popping_min_sessions:'s_min_sessions',popping_window_minutes:'s_window'};
+async function loadSettings(){
+  try{
+    const rows=await api('di_settings?select=key,value',{headers:H()});
+    rows.forEach(function(r){ var f=SETTING_FIELDS[r.key]; if(f) $(f).value=r.value; });
+  }catch(e){}
+}
+async function saveSettings(){
+  try{
+    for(var key in SETTING_FIELDS){
+      var n=parseInt($(SETTING_FIELDS[key]).value,10);
+      if(!(n>0)){ alert('Use whole numbers above 0.'); return; }
+      await api('di_settings?key=eq.'+key,{method:'PATCH',headers:HJ(),body:JSON.stringify({value:n,updated_at:new Date().toISOString()})});
+    }
+    msg('Badge settings saved — the app picks them up within 5 minutes');
+  }catch(e){ alert('Could not save: '+e.message); }
 }
 async function deleteSampleDeals(){
   if(!confirm('Delete every deal marked Sample?')) return;
