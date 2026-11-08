@@ -518,6 +518,24 @@
   .pk-toggle input{width:18px;height:18px;flex:none;accent-color:#4ea1ff;}
   .pk-attest{display:flex;gap:10px;align-items:flex-start;margin:16px 0;font-size:13px;color:var(--muted);cursor:pointer;line-height:1.45;}
   .back-link{color:var(--pink);font-weight:700;font-size:13px;cursor:pointer;margin-bottom:10px;}
+  /* Live status + follow + owner toggle */
+  .parkcard.is-full{opacity:.62;}
+  .pc-badgerow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:9px;}
+  .pc-status{font-size:12px;font-weight:800;border-radius:20px;padding:4px 11px;border:1px solid var(--line);white-space:nowrap;}
+  .pc-status.open{color:#55e08a;border-color:rgba(85,224,138,.4);background:rgba(85,224,138,.1);}
+  .pc-status.going{color:#ffb84d;border-color:rgba(255,184,77,.45);background:rgba(255,184,77,.12);}
+  .pc-status.full{color:#ff7a7a;border-color:rgba(255,122,122,.45);background:rgba(255,122,122,.12);}
+  .pc-follow{flex:0 0 auto;background:transparent;border:1px solid var(--line);color:var(--txt);border-radius:20px;padding:6px 13px;font-size:12.5px;font-weight:700;cursor:pointer;}
+  .pc-follow.on{border-color:#4ea1ff;color:#8fd0ff;background:rgba(78,161,255,.1);}
+  .pc-pending{font-size:9px;color:var(--gold);border:1px solid rgba(245,197,66,.4);border-radius:10px;padding:1px 6px;margin-left:7px;vertical-align:middle;font-weight:800;}
+  .pc-owner{margin-top:11px;padding-top:11px;border-top:1px solid var(--line);}
+  .pc-owner-l{display:block;font-size:11px;color:var(--muted);font-weight:700;margin-bottom:7px;}
+  .pc-seg{display:flex;gap:6px;}
+  .pc-seg button{flex:1;background:var(--panel-2,#15151a);border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:9px 4px;font-size:11.5px;font-weight:800;cursor:pointer;line-height:1.2;}
+  .pc-seg button.on.open{background:rgba(85,224,138,.16);border-color:#55e08a;color:#8bf0b2;}
+  .pc-seg button.on.going{background:rgba(255,184,77,.18);border-color:#ffb84d;color:#ffd291;}
+  .pc-seg button.on.full{background:rgba(255,122,122,.18);border-color:#ff7a7a;color:#ffb0b0;}
+  .park-mine-h{font-family:'Barlow Condensed';font-weight:800;font-size:16px;color:var(--gold);margin:4px 2px 12px;letter-spacing:.3px;}
   .modebar{display:flex;gap:6px;margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:4px;position:relative;}
   .modebar button{flex:1;border:0;background:transparent;color:var(--muted);font-family:'Barlow Condensed';font-weight:700;font-size:13px;letter-spacing:.2px;padding:6px 2px 7px;border-radius:10px;cursor:pointer;white-space:nowrap;display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1.1;}
   .modebar button .mbi{font-size:17px;line-height:1.2;}
@@ -1057,7 +1075,9 @@ async function onAuthChange(){
     await loadMyBusiness();
     await loadMyReservations();
     await loadOwnerPending();
-  } else { MY_BIZ=null; MY_RESV={}; MY_PENDING=0; }
+    try{ await loadMyParking(); }catch(e){}
+    if(document.getElementById('view-parking').classList.contains('active')) renderParking();
+  } else { MY_BIZ=null; MY_RESV={}; MY_PENDING=0; MY_PARKING=[]; }
   updateAccountUI();
 }
 async function loadMyBusiness(){
@@ -3198,33 +3218,50 @@ function nearSort(list){
    in-app from lat/lng + VENUE_COORDS (never stored). Owners "sign up like a
    business": a listing starts HIDDEN (approved=false) until it's approved in the
    admin tool. It pulls cars off the stadium and moves guests into the community. */
-var PARKING=[];
+var PARKING=[], MY_PARKING=[];
+// Three live states an owner flips in real time. A lot is only "sticky" for the
+// day it was set (status_date) — on a new event day it auto-reverts to Available,
+// so owners don't have to remember to switch it back on.
+var PARK_META={ open:{label:'Available',dot:'&#128994;',cls:'open'}, going:{label:'Going fast',dot:'&#128992;',cls:'going'}, full:{label:'Full tonight',dot:'&#128308;',cls:'full'} };
 // Built-in sample lots so the view is never an empty state. Real coords near the
 // venues so walk/drive times compute even offline; replaced by live di_parking rows.
 var SAMPLE_PARKING=[
-  {id:'spk1',name:'First AME Church Lot',address:'Manchester Blvd, Inglewood',lat:33.9607,lng:-118.3512,price:'$25',spots_total:80,spots_available:55,available:true,notes:'Cash or Venmo · attended, well-lit',sample:true},
-  {id:'spk2',name:'Prairie Ave Corner Lot',address:'S Prairie Ave, Inglewood',lat:33.9532,lng:-118.3470,price:'$35',spots_total:120,spots_available:70,available:true,notes:'Closest to the gates · in/out allowed',sample:true},
-  {id:'spk3',name:'Market Street Business Lot',address:'Market St, Inglewood',lat:33.9609,lng:-118.3540,price:'$30',spots_total:40,spots_available:12,available:true,notes:'Card OK · steps from Downtown Inglewood station',sample:true},
-  {id:'spk4',name:'Driveway on Doty Ave',address:'W Century Blvd, Inglewood',lat:33.9452,lng:-118.3360,price:'$15',spots_total:4,spots_available:2,available:true,notes:'Residential · text when you arrive',sample:true}
+  {id:'spk1',name:'First AME Church Lot',address:'Manchester Blvd, Inglewood',lat:33.9607,lng:-118.3512,price:'$25',spots_total:80,spots_available:55,available:true,status:'open',notes:'Cash or Venmo · attended, well-lit',sample:true},
+  {id:'spk2',name:'Prairie Ave Corner Lot',address:'S Prairie Ave, Inglewood',lat:33.9532,lng:-118.3470,price:'$35',spots_total:120,spots_available:70,available:true,status:'going',notes:'Closest to the gates · in/out allowed',sample:true},
+  {id:'spk3',name:'Market Street Business Lot',address:'Market St, Inglewood',lat:33.9609,lng:-118.3540,price:'$30',spots_total:40,spots_available:12,available:true,status:'open',notes:'Card OK · steps from Downtown Inglewood station',sample:true},
+  {id:'spk4',name:'Driveway on Doty Ave',address:'W Century Blvd, Inglewood',lat:33.9452,lng:-118.3360,price:'$15',spots_total:4,spots_available:0,available:true,status:'full',notes:'Residential · text when you arrive',sample:true}
 ];
 function parkToApp(r){
   return { id:r.id, name:r.name, address:r.address||'',
     lat:(r.latitude!=null&&r.latitude!==''?+r.latitude:null),
     lng:(r.longitude!=null&&r.longitude!==''?+r.longitude:null),
     price:r.price||'', spots_total:r.spots_total, spots_available:r.spots_available,
-    available:r.available!==false, notes:r.notes||'' };
+    available:r.available!==false, notes:r.notes||'',
+    status:r.status||'open', status_date:r.status_date||null, claimed_by:r.claimed_by||null,
+    approved:r.approved!==false };
 }
+// Effective status today: honor what the owner set TODAY, else auto-revert to Available.
+function parkStatusOf(l){ var t=isoOf(new Date()); return (l && l.status_date===t && l.status) ? l.status : 'open'; }
+function isParkOwner(l){ return !!(CURRENT_USER && l && l.claimed_by && l.claimed_by===CURRENT_USER.id); }
 async function loadParking(){
   try{
     var res=await SB.from('di_parking').select('*').order('created_at',{ascending:false});
     if(res.error) throw res.error;
-    if(res.data && res.data.length){
+    if(res.data){
+      // Full lots still show (greyed) so drivers know; only the owner's master off hides a lot.
       PARKING=res.data.filter(function(r){ return r.is_active!==false && r.approved!==false && r.available!==false; }).map(parkToApp);
-      if(PARKING.length){ console.log('✓ Loaded '+PARKING.length+' parking lots live from Supabase'); return true; }
+      if(PARKING.length){ console.log('✓ Loaded '+PARKING.length+' parking lots live from Supabase'); await loadMyParking(); return true; }
     }
   }catch(e){ console.warn('Parking load failed — using sample lots.', e); }
-  if(!PARKING.length) PARKING=SAMPLE_PARKING.slice();
+  if(!PARKING.length) PARKING=SAMPLE_PARKING.map(function(s){ return Object.assign({},s,{status_date:isoOf(new Date())}); });
   return false;
+}
+// An owner's OWN lots (including pending/not-yet-approved) so they can flip status.
+async function loadMyParking(){
+  MY_PARKING=[];
+  if(!CURRENT_USER) return;
+  try{ var res=await SB.from('di_parking').select('*').eq('claimed_by',CURRENT_USER.id).order('created_at',{ascending:false});
+    if(!res.error && res.data) MY_PARKING=res.data.map(parkToApp); }catch(e){}
 }
 // Sort anchor: tonight's venue if there's an event, else SoFi (the default draw).
 function parkingAnchor(){
@@ -3233,42 +3270,112 @@ function parkingAnchor(){
   if(a) return a;
   var c=VENUE_COORDS['sofi stadium']; return {lat:c[0],lng:c[1]};
 }
+/* ---- Follow a lot (can follow several) — rides on the push subscription ---- */
+function parkFollows(){ try{ return JSON.parse(localStorage.getItem('di_parking_follows')||'[]'); }catch(e){ return []; } }
+function isFollowing(id){ return parkFollows().indexOf(String(id))>=0; }
+function toggleFollowPark(id,ev){
+  if(ev&&ev.stopPropagation) ev.stopPropagation();
+  id=String(id);
+  var a=parkFollows(), i=a.indexOf(id), on=i<0;
+  if(on) a.push(id); else a.splice(i,1);
+  try{ localStorage.setItem('di_parking_follows',JSON.stringify(a.slice(-50))); }catch(e){}
+  toast(on?'Following ✓ — we’ll alert you if it’s going fast or gone':'Stopped following');
+  if(pushOn()) syncPush();            // persist follows to the server subscription
+  else if(on) offerPush();            // first follow → offer alerts (handles iOS / install)
+  if(document.getElementById('view-parking').classList.contains('active')) renderParking();
+}
+// Owner flips the live status (Available / Going fast / Full) in real time.
+async function setParkStatus(id,status,ev){
+  if(ev&&ev.stopPropagation) ev.stopPropagation();
+  id=String(id);
+  var today=isoOf(new Date()), nowIso=new Date().toISOString();
+  function apply(l){ if(l && String(l.id)===id){ l.status=status; l.status_date=today; } }
+  MY_PARKING.forEach(apply); PARKING.forEach(apply);
+  renderParking();
+  try{
+    var r=await SB.from('di_parking').update({status:status,status_date:today,status_updated_at:nowIso}).eq('id',id);
+    if(r && r.error){ toast('Could not update: '+r.error.message); return; }
+    toast('Updated ✓ '+(PARK_META[status]?PARK_META[status].label:status)+' — your followers are alerted');
+  }catch(e){ toast('Saved on this device — could not reach the server'); }
+}
 function openParking(){ renderParking(); go('parking'); }
+// One browse card. Read-only status badge + Follow for everyone; live toggles for the owner.
+function parkCardHTML(o,opts){
+  opts=opts||{}; var l=o.l, nv=o.nv, st=parkStatusOf(l), m=PARK_META[st]||PARK_META.open, owner=opts.owner;
+  var walk=nv?('&#128694; '+walkMins(nv.mi)+' min walk to '+xmlEsc(nv.name)):'';
+  var drive=nv?('&#128663; '+driveMins(nv.mi)+' min drive'):'';
+  var dist=nv?(nv.mi<0.1?'Steps away':nv.mi.toFixed(1)+' mi'):'';
+  var spots=(l.spots_available!=null?l.spots_available+' of '+(l.spots_total||'?')+' open':(l.spots_total?l.spots_total+' spots':''));
+  var idJs=String(l.id).replace(/'/g,"\\'");
+  var badge='<span class="pc-status '+m.cls+'">'+m.dot+' '+m.label+'</span>';
+  var pendingTag=(owner && l.approved===false)?'<span class="pc-pending">In review</span>':'';
+  var follow = owner ? '' :
+    '<button class="pc-follow'+(isFollowing(l.id)?' on':'')+'" onclick="toggleFollowPark(\''+idJs+'\',event)">'+
+      (isFollowing(l.id)?'&#9733; Following':'&#9734; Follow')+'</button>';
+  var ownerToggle = owner ? ('<div class="pc-owner"><span class="pc-owner-l">Set availability &mdash; followers get alerted</span><div class="pc-seg">'+
+    ['open','going','full'].map(function(s){ var mm=PARK_META[s];
+      return '<button class="'+(st===s?'on '+s:'')+'" onclick="setParkStatus(\''+idJs+'\',\''+s+'\',event)">'+mm.dot+' '+mm.label+'</button>';
+    }).join('')+'</div></div>') : '';
+  return '<div class="card parkcard'+(st==='full'?' is-full':'')+'">'+
+    '<div class="pc-top"><div class="pc-name">'+xmlEsc(l.name)+(l.sample?' <span class="pc-sample">SAMPLE</span>':'')+pendingTag+'</div>'+
+      (l.price?'<div class="pc-price">'+xmlEsc(l.price)+'</div>':'')+'</div>'+
+    '<div class="pc-badgerow">'+badge+follow+'</div>'+
+    (walk?'<div class="pc-walk">'+walk+'</div>':'')+
+    ([drive,dist,spots].filter(Boolean).length?'<div class="pc-meta">'+[drive,dist,spots].filter(Boolean).join(' &#183; ')+'</div>':'')+
+    (l.notes?'<div class="pc-notes">'+xmlEsc(l.notes)+'</div>':'')+
+    (l.address?'<div class="pc-addr">&#128205; '+xmlEsc(l.address)+'</div>':'')+
+    ownerToggle+
+    '<div class="pc-act"><button class="btn btn-primary" onclick="parkDirections(\''+idJs+'\')">'+ICON.nav+' Directions</button></div>'+
+  '</div>';
+}
 function renderParking(){
   var el=document.getElementById('parking-body'); if(!el) return;
-  if(!PARKING.length) PARKING=SAMPLE_PARKING.slice();
+  if(!PARKING.length) PARKING=SAMPLE_PARKING.map(function(s){ return Object.assign({},s,{status_date:isoOf(new Date())}); });
   var a=parkingAnchor(), e=todaysAnchorEvents()[0];
-  var lots=PARKING.filter(function(l){ return l.available!==false; }).map(function(l){
-    return { l:l, nv:(l.lat!=null?nearestVenue({lat:l.lat,lng:l.lng}):null), mi:distanceMiles(a,{lat:l.lat,lng:l.lng}) };
+  function decorate(l){ return { l:l, nv:(l.lat!=null?nearestVenue({lat:l.lat,lng:l.lng}):null), mi:distanceMiles(a,{lat:l.lat,lng:l.lng}) }; }
+  var myIds={}; MY_PARKING.forEach(function(l){ myIds[String(l.id)]=1; });
+  // Public browse list: closest walk first, but Full lots sink to the bottom. Owner's own lots shown in their section instead.
+  var lots=PARKING.filter(function(l){ return l.available!==false && !myIds[String(l.id)]; }).map(decorate);
+  lots.sort(function(x,y){
+    var fx=parkStatusOf(x.l)==='full'?1:0, fy=parkStatusOf(y.l)==='full'?1:0;
+    if(fx!==fy) return fx-fy;
+    var dx=x.mi==null?Infinity:x.mi, dy=y.mi==null?Infinity:y.mi; return dx-dy;
   });
-  lots.sort(function(x,y){ var dx=x.mi==null?Infinity:x.mi, dy=y.mi==null?Infinity:y.mi; return dx-dy; });
-  var intro = e ? ('Parking near <b style="color:var(--gold)">'+xmlEsc(e.venue)+'</b> tonight &mdash; closest walk first. Walk a little, save a lot.')
-                : 'Event-day parking near the venues &mdash; sorted by walk time to the stadium. Walk a little, save a lot.';
-  var cards=lots.map(function(o){
-    var l=o.l, nv=o.nv;
-    var walk=nv?('&#128694; '+walkMins(nv.mi)+' min walk to '+xmlEsc(nv.name)):'';
-    var drive=nv?('&#128663; '+driveMins(nv.mi)+' min drive'):'';
-    var dist=nv?(nv.mi<0.1?'Steps away':nv.mi.toFixed(1)+' mi'):'';
-    var spots=(l.spots_available!=null?l.spots_available+' of '+(l.spots_total||'?')+' open':(l.spots_total?l.spots_total+' spots':''));
-    return '<div class="card parkcard">'+
-      '<div class="pc-top"><div class="pc-name">'+xmlEsc(l.name)+(l.sample?' <span class="pc-sample">SAMPLE</span>':'')+'</div>'+
-        (l.price?'<div class="pc-price">'+xmlEsc(l.price)+'</div>':'')+'</div>'+
-      (walk?'<div class="pc-walk">'+walk+'</div>':'')+
-      ([drive,dist,spots].filter(Boolean).length?'<div class="pc-meta">'+[drive,dist,spots].filter(Boolean).join(' &#183; ')+'</div>':'')+
-      (l.notes?'<div class="pc-notes">'+xmlEsc(l.notes)+'</div>':'')+
-      (l.address?'<div class="pc-addr">&#128205; '+xmlEsc(l.address)+'</div>':'')+
-      '<div class="pc-act"><button class="btn btn-primary" onclick="parkDirections(\''+String(l.id).replace(/'/g,"\\'")+'\')">'+ICON.nav+' Directions</button></div>'+
-    '</div>';
-  }).join('');
+  var intro = e ? ('Parking near <b style="color:var(--gold)">'+xmlEsc(e.venue)+'</b> tonight &mdash; closest walk first, live status. Follow a lot and we’ll tell you the second it’s going fast or gone.')
+                : 'Event-day parking near the venues &mdash; sorted by walk time, with live status. Follow a lot and we’ll alert you if it fills up.';
+  // Owner's own lots with live controls (even before approval).
+  var mine='';
+  if(MY_PARKING.length){
+    mine='<div class="park-mine-h">&#127359;&#65039; Your parking &mdash; flip it live on event day</div>'+
+      MY_PARKING.filter(function(l){ return l.is_active!==false; }).map(function(l){ return parkCardHTML(decorate(l),{owner:true}); }).join('');
+  }
+  var cards=lots.map(function(o){ return parkCardHTML(o,{owner:false}); }).join('');
   var cta='<div class="park-cta">'+
     '<div class="pcta-h">&#127359;&#65039; Own a lot or driveway?</div>'+
     '<div class="pcta-s">Churches, small businesses &amp; residents near the venues &mdash; list your spaces and earn on event days. It pulls cars off the stadium and sends guests into the community to explore and spend.</div>'+
     '<button class="btn-gold" onclick="openParkingForm()">List your parking &#8594;</button>'+
   '</div>';
-  el.innerHTML='<div class="park-intro">'+intro+'</div>'+
-    (cards||'<div class="park-empty">No lots posted yet &mdash; be the first to list yours.</div>')+
+  el.innerHTML='<div class="park-intro">'+intro+'</div>'+mine+
+    (cards||'<div class="park-empty">No other lots posted yet.</div>')+
     cta+
     '<div class="park-guide-h">No spot yet? Venue parking &amp; transit</div>'+parkingPanelHTML();
+}
+// Realtime: when an owner flips a lot while the app is open, update the list and, if
+// it's a lot this person follows, alert them right here (the push covers them when closed).
+function subscribeParking(){
+  try{
+    SB.channel('di_parking_live').on('postgres_changes',{event:'UPDATE',schema:'public',table:'di_parking'},function(payload){
+      var row=payload&&payload.new; if(!row) return;
+      var before=null;
+      PARKING.forEach(function(l){ if(String(l.id)===String(row.id)){ before=parkStatusOf(l); Object.assign(l,parkToApp(row)); } });
+      MY_PARKING.forEach(function(l){ if(String(l.id)===String(row.id)) Object.assign(l,parkToApp(row)); });
+      var now=parkStatusOf(parkToApp(row));
+      if(isFollowing(row.id) && before && now!==before && (now==='going'||now==='full')){
+        toast((now==='full'?'🔴 Gone for tonight: ':'🟠 Going fast: ')+(row.name||'A lot you follow'));
+      }
+      if(document.getElementById('view-parking').classList.contains('active')) renderParking();
+    }).subscribe();
+  }catch(e){}
 }
 function parkDirections(id){
   var l=PARKING.filter(function(x){ return String(x.id)===String(id); })[0]; if(!l) return;
@@ -3306,11 +3413,13 @@ async function submitParking(){
   if(!addr){ toast('Enter the address'); return; }
   if(!attest){ toast('Please check the certification box'); return; }
   var row={ name:name, address:addr, price:price||null, spots_total:spots, spots_available:spots,
-    available:!!avail, notes:notes||null, approved:false, is_active:true, claimed_by:CURRENT_USER.id };
+    available:!!avail, notes:notes||null, status:'open', status_date:isoOf(new Date()),
+    approved:false, is_active:true, claimed_by:CURRENT_USER.id };
   var r=await SB.from('di_parking').insert(row);
   if(r && r.error){ toast('Could not submit: '+r.error.message); return; }
   toast('Submitted ✓ We’ll review within 72 hours');
-  setTimeout(function(){ renderParking(); go('home'); }, 1600);
+  try{ await loadMyParking(); }catch(e){}
+  setTimeout(function(){ renderParking(); }, 900);
 }
 // Entry from the onboarding "Event Day Parking" bar: go event-first, then open parking.
 function obOpenParking(){
@@ -3514,11 +3623,12 @@ function planBack(){ if(PLAN.viewing || !PLAN.event) go('home'); else openEvent(
    Someone arriving from a friend's link sees that first; the mode picker waits
    until their next visit. */
 async function handleDeepLink(){
-  var q=new URLSearchParams(location.search), plan=q.get('plan'), deal=q.get('deal'), spot=q.get('spot'), ev=q.get('event'), mode=q.get('mode');
-  if(!plan && !deal && !spot && !ev && !mode) return;
+  var q=new URLSearchParams(location.search), plan=q.get('plan'), deal=q.get('deal'), spot=q.get('spot'), ev=q.get('event'), mode=q.get('mode'), park=q.get('park');
+  if(!plan && !deal && !spot && !ev && !mode && !park) return;
   try{ history.replaceState(null,'',location.pathname); }catch(e){}
   var ob=document.getElementById('onboard'); if(ob) ob.style.display='none';
   if(plan){ await openSharedPlan(plan); return; }
+  if(park){ openParking(); return; }                                      // push: parking "going fast / gone" alert
   if(mode && MODES[mode]) setMode(mode);                                   // push: "letting out" → After Hours
   if(ev && EV.some(function(x){ return x.id===ev; })){ openEvent(ev); return; } // push: pregame alert
   var d=deal&&dealById(deal), k=d?d.business_id:spot;
@@ -3569,10 +3679,10 @@ function offerPush(){
   try{ if(Notification.permission==='denied' || localStorage.getItem('di_push_no')===isoOf(new Date())) return; }catch(e){}
   var msg=document.getElementById('pushMsg'), yes=document.getElementById('pushYes');
   if(isIOS() && !isStandalone()){
-    msg.textContent='On iPhone, alerts work once Do Inglewood is on your Home Screen. Add it, open it from there, and save the event again.';
+    msg.textContent='On iPhone, alerts work once Do Inglewood is on your Home Screen. Add it, open it from there, then save the event or follow the lot again.';
     yes.textContent='Show me how'; yes.onclick=function(){ document.getElementById('pushOverlay').classList.remove('on'); showInstall(); };
   } else {
-    msg.textContent='Two alerts per saved event, max: Show Your Ticket deals about 3 hours before doors, and After Hours picks when it lets out.';
+    msg.textContent='Get Show Your Ticket deal alerts for events you save, and “going fast / gone” alerts for parking lots you follow — so you never drive to a full lot.';
     yes.textContent='Turn on alerts'; yes.onclick=pushYes;
   }
   document.getElementById('pushOverlay').classList.add('on');
@@ -3586,17 +3696,17 @@ async function pushYes(){
     var reg=await navigator.serviceWorker.register('sw.js');
     await navigator.serviceWorker.ready;
     var sub=await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64ToBytes(VAPID_PUBLIC_KEY)});
-    var r=await SB.rpc('di_push_save',{p_subscription:sub.toJSON(),p_session:sessionId(),p_event_ids:savedEvents(),p_opted_in:true});
+    var r=await SB.rpc('di_push_save',{p_subscription:sub.toJSON(),p_session:sessionId(),p_event_ids:savedEvents(),p_opted_in:true,p_parking_ids:parkFollows()});
     if(r.error) throw r.error;
     try{ localStorage.setItem('di_push','on'); }catch(e){}
-    toast('Alerts on 🔔 — max 2 per event'); renderSavedEvents();
+    toast('Alerts on 🔔'); renderSavedEvents();
   }catch(e){ console.warn('push subscribe failed',e); toast('Couldn’t turn on alerts on this device'); }
 }
 // Keep the server's list of saved events in step with this phone.
 async function syncPush(optIn){
   try{
     var reg=await navigator.serviceWorker.getRegistration(); var sub=reg&&await reg.pushManager.getSubscription(); if(!sub) return;
-    await SB.rpc('di_push_save',{p_subscription:sub.toJSON(),p_session:sessionId(),p_event_ids:savedEvents(),p_opted_in:optIn!==false});
+    await SB.rpc('di_push_save',{p_subscription:sub.toJSON(),p_session:sessionId(),p_event_ids:savedEvents(),p_opted_in:optIn!==false,p_parking_ids:parkFollows()});
   }catch(e){}
 }
 async function pushOff(){
@@ -3819,6 +3929,7 @@ async function initApp(){
   await loadEvents();
   await loadDeals();
   await loadParking();
+  subscribeParking();
   await loadPopping();
   _dataReady=true;
   if(pushOn()) syncPush();

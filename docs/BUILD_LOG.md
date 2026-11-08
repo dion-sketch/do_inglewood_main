@@ -350,3 +350,35 @@ Verified with headless screenshots (entry bar, sorted lot list, CTA, sign-in gat
 page errors. Committed to claude/do-inglewood-backend-t5n03v. Not deployed yet (deploy the
 whole site/ folder, never index.html alone). Later phases unchanged: reserve/prepay,
 live spots-left, park-&-ride.
+
+## 2026-11-08 — Parking: live status, follow-a-lot, going-fast/gone alerts (BUILT)
+Rambo: owners need to toggle availability in REAL TIME (not just yes/no) — Available /
+Going fast / Full — auto-on for game days, and people driving in from out of town should
+be able to FOLLOW a lot (several) and get pinged the second it's going fast or gone, so
+they don't head to a full lot in traffic. Built:
+- 3-STATE LIVE STATUS on each lot: open / going / full. Owners flip it from a segmented
+  toggle right on their lot card ("Your parking — flip it live on event day"). A Full lot
+  still SHOWS (greyed, sunk to the bottom) so drivers know not to come. Status is only
+  sticky for the day it's set (status_date) → on a new event day it AUTO-REVERTS to
+  Available, which is the "they turn themselves on for game days" behavior, no cron needed.
+- FOLLOW a lot (⭐, can follow many) — stored locally + synced onto the push subscription
+  (parking_ids). Following offers alerts (reuses the event-push opt-in / iOS install flow).
+- REAL-TIME in-app: Supabase realtime on di_parking — when an owner flips a lot while the
+  app is open, the list updates live and a followed lot pings a toast ("🟠 Going fast" /
+  "🔴 Gone for tonight"). Works the moment the app is open.
+- CLOSED-APP PUSH (the en-route promise): new Edge Function `send-parking-pushes` + a
+  3-minute cron (31_parking_push_cron.sql), mirroring send-event-pushes and reusing the
+  SAME VAPID/secret setup. A followed lot going "going"/"full" fires one web push each per
+  day ("Going fast — <lot>" / "Gone for tonight — <lot>", deep-links to ?park=<id>). Dedup
+  via di_parking_push_log (per person/lot/day/kind).
+DATA (Rambo's stop list — run in order when ready):
+  1. supabase/30_parking_status.sql  (status columns, realtime, parking_ids on the push
+     subscription, extends di_push_save, di_parking_push_log). REQUIRED for the toggle.
+  2. Deploy Edge Function send-parking-pushes (Verify JWT OFF), same secrets as events.
+  3. supabase/31_parking_push_cron.sql  (runs the sender; needs push_cron_secret in Vault,
+     same one 28_push_schedule.sql uses).
+Push (both events AND parking) only goes live once VAPID_PUBLIC_KEY is set in index.html +
+the functions are deployed — that's the existing push go-live, now covers parking too. The
+in-app realtime + the owner toggle work as soon as 30_parking_status.sql is run. Verified
+with headless screenshots (owner toggle, follow buttons, status badges, full-lot greyed &
+sunk) — no page errors. Committed to claude/do-inglewood-backend-t5n03v; not deployed.
