@@ -27,6 +27,11 @@ alter table di_parking add constraint di_parking_status_chk
 -- greyed, so drivers know not to head there. Owners may update status (they
 -- already have di_parking_owner_update); approval/active stay admin-only.
 
+-- Make the owner's write access to the new columns explicit (defensive — the
+-- table-level UPDATE grant already covers them, but this documents intent and
+-- survives a stricter grant setup). approved/is_active stay revoked (29_parking).
+grant update (status, status_date, status_updated_at) on di_parking to authenticated;
+
 -- 2) Realtime so followers see a flip live while the app is open -------
 -- (Safe to re-run: ignore "already member of publication" if it errors.)
 do $$

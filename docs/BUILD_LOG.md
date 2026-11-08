@@ -390,3 +390,26 @@ wrong. Changed all parking + business distance labels from "… to <nearest venu
 single consistent "… to the venues." Still compute distance to the NEAREST venue so the
 number is sensible (the four venues cluster within ~0.5 mi), we just don't name it. Touched:
 venueDistLine (business detail), the parking card walk line, and the parking intro.
+
+## 2026-11-08 — Parking audit (findings + fixes)
+Self-audit of the parking system. Fixed now:
+- BUG: the "List your parking" form collected an email that submitParking never stored
+  (di_parking has no email column) — dead/misleading field. Removed it; the lister is
+  signed in, so we verify via their account email (shown on the form, reachable via
+  claimed_by). Keeps email (PII) OFF the public/realtime-readable di_parking row.
+- COPY: aligned leftover "the stadium" strings to "the venues" (parkbar, owner CTA, the
+  two form helper lines) for the consistency Rambo asked for.
+- DEFENSIVE: 30_parking_status.sql now explicitly grants update(status,status_date,
+  status_updated_at) to authenticated, so owner status flips can't fail on a stricter
+  grant setup (table-level grant already covered it; this documents intent).
+Notes / by-design (no change):
+- status_date uses the device's local day client-side and LA day server-side; owners/
+  followers are local (LA) so they agree. Fine for this app.
+- di_parking columns (incl. claimed_by) are publicly readable, same as di_businesses —
+  no PII there now that email isn't stored. Could add a di_my_parking() RPC + column
+  grants later for parity if we ever store private fields.
+- Ordering dependency: the new front-end calls di_push_save with p_parking_ids, which
+  only exists after 30_parking_status.sql runs. Harmless pre-push-go-live (push is gated
+  on VAPID, so those calls never fire yet), but 30 must run before push goes live.
+- Realtime delivery (postgres_changes on di_parking) should be verified on the live
+  project once 30 runs; RLS SELECT (approved+active+available) governs what anon receives.
