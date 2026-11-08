@@ -492,3 +492,25 @@ venues…"); confirmed zero 🅿️ emoji remain; smoke-tested Home/Explore/Even
 Parking — no console errors; quick-chip P renders as the blue badge.
 Still emoji (left for review, can clean next if Rambo likes the direction): the mode-tab
 icons (🏟️/🎟️/☀️) and the food/drink/coffee quick chips.
+
+## 2026-11-08 — Owner tiers + business-license gate + parking split (DESIGN, Rambo)
+Design decisions captured (NOT built yet — pricing is stop-list; L2 + prices still open):
+- BUSINESS LICENSE REQUIRED to claim/list a business. Purpose: proves they're a real
+  business (keeps out illegal spots / a home just selling parking) AND nudges owners to
+  actually get a license, which helps the city economy. Phase-2 vision: a license-helper
+  that lets them fill in the application in-app and print it to take to the city.
+- PARKING SPLIT — two separate things:
+  * A business's everyday customer parking → NOT tracked or shown (doesn't matter).
+  * "Local Event-Day Parking" → the marketplace offering; a toggle on the business
+    dashboard. When ON, the business's lot appears in the single "Parking" destination,
+    tied to the business. Pure lot owners (no storefront) still use "List your parking."
+- TIER LADDER (toggles, monthly subscription stepping up):
+  * L1 Free: claim w/ business license + clean, complete listing.
+  * L2: OPEN — Rambo to define what it unlocks (earlier: "paying monthly, or in good
+    standing with the city" — basic paid tier vs city-verified/partner badge, TBD).
+  * L3: Live Available/Not-available notifications + "Offer Local Event-Day Parking".
+  * L4: Top-of-category placement; rotate/alternate randomly when multiple are on L4.
+- NAMING: public destination stays "Parking"; business-side switch = "Offer Local
+  Event-Day Parking". (Alt: rename destination "Event Parking" — Rambo's call.)
+STILL NEEDED before building: (1) what L2 unlocks, (2) monthly prices per paid level.
+Next step once those land: a clickable, non-charging mockup of the 4-level dashboard.
