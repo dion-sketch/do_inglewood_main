@@ -486,6 +486,38 @@
   .ob-evrow:active{transform:scale(.99);}
   .ob-evrow .t{font-weight:700;font-size:13.5px;}
   .ob-evrow .m{font-size:11.5px;color:var(--muted);}
+  /* Thin Event Day Parking bar — under the two doors, deliberately smaller */
+  .parkbar{margin-top:12px;display:flex;align-items:center;gap:12px;width:100%;background:var(--panel);border:1px solid var(--line);border-left:3px solid #4ea1ff;border-radius:13px;padding:12px 14px;cursor:pointer;color:var(--txt);font:inherit;text-align:left;}
+  .parkbar:active{transform:scale(.99);}
+  .parkbar .pb-ic{font-size:21px;line-height:1;filter:drop-shadow(0 0 10px rgba(78,161,255,.5));}
+  .parkbar .pb-tx{flex:1;display:flex;flex-direction:column;}
+  .parkbar .pb-tx b{font-family:'Barlow Condensed';font-weight:800;font-size:15px;letter-spacing:.3px;}
+  .parkbar .pb-tx span{font-size:11.5px;color:var(--muted);}
+  .parkbar .pb-ar{color:#4ea1ff;font-weight:800;font-size:17px;}
+  /* Parking marketplace view */
+  .park-intro{font-size:13.5px;color:#d4d4dc;line-height:1.45;margin:2px 2px 12px;}
+  .parkcard{width:auto;cursor:default;padding:14px 15px;margin-bottom:11px;}
+  .parkcard .pc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+  .parkcard .pc-name{font-family:'Barlow Condensed';font-weight:800;font-size:18px;line-height:1.05;}
+  .parkcard .pc-sample{font-size:9px;color:var(--muted);vertical-align:middle;}
+  .parkcard .pc-price{flex:0 0 auto;font-family:'Barlow Condensed';font-weight:800;font-size:20px;color:var(--gold);}
+  .parkcard .pc-walk{margin-top:7px;font-size:13.5px;font-weight:700;color:#8fd0ff;}
+  .parkcard .pc-meta{margin-top:4px;font-size:12px;color:var(--muted);}
+  .parkcard .pc-notes{margin-top:7px;font-size:12.5px;color:#d4d4dc;line-height:1.4;}
+  .parkcard .pc-addr{margin-top:6px;font-size:11.5px;color:var(--muted);}
+  .parkcard .pc-act{margin-top:11px;}
+  .parkcard .pc-act .btn{width:100%;padding:11px;font-size:14px;}
+  .park-empty{font-size:13px;color:var(--muted);text-align:center;padding:18px 0;}
+  .park-cta{margin:16px 0 6px;background:linear-gradient(95deg,rgba(78,161,255,.16),rgba(245,197,66,.1));border:1px solid rgba(78,161,255,.45);border-radius:16px;padding:16px;}
+  .park-cta .pcta-h{font-family:'Barlow Condensed';font-weight:800;font-size:18px;}
+  .park-cta .pcta-s{font-size:12.5px;color:#d4d4dc;line-height:1.45;margin:6px 0 12px;}
+  .btn-gold{background:var(--gold);color:#1a1400;font-weight:800;border:0;border-radius:11px;padding:12px 16px;font-size:14px;cursor:pointer;width:100%;}
+  .park-guide-h{font-family:'Barlow Condensed';font-weight:800;font-size:16px;color:var(--muted);margin:22px 2px 12px;text-transform:uppercase;letter-spacing:1px;}
+  .park-guide-h+.parkpanel,.park-guide-h~.parkpanel{margin-left:0;margin-right:0;}
+  .pk-toggle{display:flex;gap:10px;align-items:center;margin:14px 0 2px;font-size:13.5px;cursor:pointer;}
+  .pk-toggle input{width:18px;height:18px;flex:none;accent-color:#4ea1ff;}
+  .pk-attest{display:flex;gap:10px;align-items:flex-start;margin:16px 0;font-size:13px;color:var(--muted);cursor:pointer;line-height:1.45;}
+  .back-link{color:var(--pink);font-weight:700;font-size:13px;cursor:pointer;margin-bottom:10px;}
   .modebar{display:flex;gap:6px;margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:4px;position:relative;}
   .modebar button{flex:1;border:0;background:transparent;color:var(--muted);font-family:'Barlow Condensed';font-weight:700;font-size:13px;letter-spacing:.2px;padding:6px 2px 7px;border-radius:10px;cursor:pointer;white-space:nowrap;display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1.1;}
   .modebar button .mbi{font-size:17px;line-height:1.2;}
@@ -875,6 +907,12 @@
         <button class="btn btn-primary" style="width:100%;font-size:15px;padding:14px" onclick="submitAddBiz()">Submit for Review &#8594;</button>
         <div style="font-size:12px;color:var(--muted);margin-top:12px;text-align:center;line-height:1.5;">Once approved, it appears in the directory and shows up in your dashboard to manage.</div>
       </div>
+    </div>
+
+    <!-- EVENT DAY PARKING MARKETPLACE -->
+    <div class="view" id="view-parking">
+      <div class="head-bar"><div class="back" onclick="go('home')">&#8249;</div><div class="logo-mini" role="img" aria-label="Do Inglewood" title="Home" onclick="go('home')"></div><span class="htitle">Event Day Parking</span></div>
+      <div id="parking-body" style="padding:14px 18px 90px;"></div>
     </div>
 
     <!-- OWNER DASHBOARD -->
@@ -2014,7 +2052,7 @@ function openSearch(){
   go('explore');
   var b=document.getElementById('searchBox'); if(b){ b.focus(); }
 }
-function quickSearch(f){ var b=document.getElementById('searchBox'); if(b) b.value=''; filterTo(f); }
+function quickSearch(f){ if(f==='Parking'){ openParking(); return; } var b=document.getElementById('searchBox'); if(b) b.value=''; filterTo(f); }
 function renderHomeChips(){
   var el=document.getElementById('home-qchips'); if(!el) return;
   var ic={Food:'&#127828;',Drinks:'&#127864;',Coffee:'&#9749;',Parking:'&#127359;&#65039;',Deals:'&#9733;','Open Now':'&#128994;'};
@@ -2405,6 +2443,7 @@ function openListing(k,from){
     <div style="margin-top:12px">
       <div class="ldrow"><span class="k">Category</span><span class="v">${xmlEsc(p.cat)}</span></div>
       <div class="ldrow"><span class="k">Address</span><span class="v">${xmlEsc(p.addr)}${String(p.addr||'').indexOf(',')<0?', Inglewood':''} ${nearbyChip(p)}</span></div>
+      ${venueDistLine(p)}
       ${p.hrs?hoursRow:''}
       ${p.ph?`<div class="ldrow"><span class="k">Phone</span><span class="v"><a href="${telHref(p.ph)}" style="color:var(--pink);text-decoration:none">${xmlEsc(p.ph)}</a></span></div>`:''}
       ${p.web?`<div class="ldrow"><span class="k">Website</span><span class="v"><a href="${webUrl(p.web)}" target="_blank" rel="noopener" style="color:var(--pink);text-decoration:none">${prettyWeb(p.web)} &#8599;</a></span></div>`:''}
@@ -2437,7 +2476,7 @@ function openListing(k,from){
 }
 
 /* NAV */
-const views=['home','explore','events','event-detail','listing','claim','claimform','add','saved','owner','surprise','specials','plan'];
+const views=['home','explore','events','event-detail','listing','claim','claimform','add','parking','saved','owner','surprise','specials','plan'];
 function openAddForm(){
   if(!CURRENT_USER){ toast('Sign in first to add your business'); acctPrompt('signin'); return; }
   var w=document.getElementById('ab_cat_wrap');
@@ -2841,6 +2880,10 @@ function renderModePicker(){
     '<button class="doorcard door-event" onclick="finishOnboard(\'event\')"><span class="dc-ic">&#127903;&#65039;</span><b>Game Day &amp; Concert Deals</b><span class="dc-sub">Pick your event &#8594; nearby deals &#8594; reservations &#8594; ticket alerts</span></button>'+
     '<button class="doorcard door-explore" onclick="finishOnboard(\'anytime\')"><span class="dc-ic">&#127869;&#65039;</span><b>Explore &amp; Save Today</b><span class="dc-sub">Restaurants &#8594; activities &#8594; local deals &#8594; book or explore</span></button>'+
     '</div>';
+  // Thin Event Day Parking bar — the #1 event-day pain, deliberately smaller than the two doors.
+  var parkbar='<button class="parkbar" onclick="obOpenParking()"><span class="pb-ic">&#127359;&#65039;</span>'+
+    '<span class="pb-tx"><b>Event Day Parking</b><span>Find a spot near the stadium &#183; or list yours</span></span>'+
+    '<span class="pb-ar">&#8594;</span></button>';
   var search='<form class="ob-search" onsubmit="return obSearchGo(event)">&#128269;<input id="obSearchInput" type="search" placeholder="Or search spots, food, events&#8230;" autocomplete="off"></form>';
   var evHtml='';
   if(evs.length){
@@ -2848,7 +2891,7 @@ function renderModePicker(){
       return '<button class="ob-evrow" onclick="obOpenEvent(\''+evEsc(e.id)+'\')"><span style="font-size:18px">'+evIcon(e)+'</span><span><span class="t">'+evEsc(e.title)+'</span><br><span class="m">'+evEsc(e.time||'')+' &#183; &#128205; '+evEsc(e.venue||'')+'</span></span></button>';
     }).join('')+'</div>';
   }
-  el.innerHTML=doors+search+evHtml;
+  el.innerHTML=doors+parkbar+search+evHtml;
 }
 function finishOnboard(mode){
   setMode(mode||'anytime',true);
@@ -3003,7 +3046,29 @@ function dealLiveToday(d){
 function liveDealsFor(p){ return p?(DEALS_BY_BIZ[p.k]||[]).filter(dealLiveToday):[]; }
 function ticketDealFor(p){ return liveDealsFor(p).filter(function(d){ return d.deal_type==='show_ticket'; })[0]||null; }
 function walkMins(mi){ return Math.max(1,Math.round(mi*20)); }   // ~3 mph
+function driveMins(mi){ return Math.max(1,Math.round(mi*2.6)); } // ~23 mph on surface streets
 function distanceText(mi){ return mi==null?'':(mi<0.1?'Steps away':mi.toFixed(1)+' mi · '+walkMins(mi)+' min walk'); }
+// Pretty venue names for the VENUE_COORDS keys.
+var VENUE_PRETTY={'sofi stadium':'SoFi Stadium','kia forum':'Kia Forum','intuit dome':'Intuit Dome','youtube theater':'YouTube Theater'};
+// Nearest marquee venue to any lat/lng spot — {name, mi}. Out-of-towners want to know
+// how far a spot (or a parking lot) is from the stadiums; this computes it, never stores it.
+function nearestVenue(p){
+  if(!p||!Number.isFinite(p.lat)||!Number.isFinite(p.lng)) return null;
+  var best=null;
+  Object.keys(VENUE_COORDS).forEach(function(v){
+    var c=VENUE_COORDS[v], mi=distanceMiles({lat:p.lat,lng:p.lng},{lat:c[0],lng:c[1]});
+    if(mi!=null && (!best||mi<best.mi)) best={name:VENUE_PRETTY[v]||v,mi:mi,key:v};
+  });
+  return best;
+}
+// Distance-to-venue line for a business detail page (walk · drive · miles to nearest venue).
+function venueDistLine(p){
+  if(!p||!Number.isFinite(p.lat)||!Number.isFinite(p.lng)) return '';
+  var nv=nearestVenue(p); if(!nv) return '';
+  return '<div class="ldrow"><span class="k">From venue</span><span class="v">'+
+    '&#128694; '+walkMins(nv.mi)+' min &#183; &#128663; '+driveMins(nv.mi)+' min &#183; '+
+    (nv.mi<0.1?'steps':nv.mi.toFixed(1)+' mi')+' to '+xmlEsc(nv.name)+'</span></div>';
+}
 function dealWhen(d){
   var bits=[WINDOW_TEXT[d.valid_window]||''];
   if(d.venue_id) bits.push(VENUE_NAME_BY_ID[d.venue_id]+' tickets');
@@ -3125,6 +3190,134 @@ function nearSort(list){
   list.forEach(function(p){ var d=myDistance(p); if(d==null) without.push(p); else withD.push({p:p,d:d}); });
   withD.sort(function(a,b){ return a.d-b.d; });
   return withD.map(function(x){ return x.p; }).concat(without);
+}
+
+/* ============ EVENT DAY PARKING MARKETPLACE ============
+   Lot owners — churches, small businesses, residents near the venues — list
+   their event-day parking. The hero stat is WALK TIME to the stadium, computed
+   in-app from lat/lng + VENUE_COORDS (never stored). Owners "sign up like a
+   business": a listing starts HIDDEN (approved=false) until it's approved in the
+   admin tool. It pulls cars off the stadium and moves guests into the community. */
+var PARKING=[];
+// Built-in sample lots so the view is never an empty state. Real coords near the
+// venues so walk/drive times compute even offline; replaced by live di_parking rows.
+var SAMPLE_PARKING=[
+  {id:'spk1',name:'First AME Church Lot',address:'Manchester Blvd, Inglewood',lat:33.9607,lng:-118.3512,price:'$25',spots_total:80,spots_available:55,available:true,notes:'Cash or Venmo · attended, well-lit',sample:true},
+  {id:'spk2',name:'Prairie Ave Corner Lot',address:'S Prairie Ave, Inglewood',lat:33.9532,lng:-118.3470,price:'$35',spots_total:120,spots_available:70,available:true,notes:'Closest to the gates · in/out allowed',sample:true},
+  {id:'spk3',name:'Market Street Business Lot',address:'Market St, Inglewood',lat:33.9609,lng:-118.3540,price:'$30',spots_total:40,spots_available:12,available:true,notes:'Card OK · steps from Downtown Inglewood station',sample:true},
+  {id:'spk4',name:'Driveway on Doty Ave',address:'W Century Blvd, Inglewood',lat:33.9452,lng:-118.3360,price:'$15',spots_total:4,spots_available:2,available:true,notes:'Residential · text when you arrive',sample:true}
+];
+function parkToApp(r){
+  return { id:r.id, name:r.name, address:r.address||'',
+    lat:(r.latitude!=null&&r.latitude!==''?+r.latitude:null),
+    lng:(r.longitude!=null&&r.longitude!==''?+r.longitude:null),
+    price:r.price||'', spots_total:r.spots_total, spots_available:r.spots_available,
+    available:r.available!==false, notes:r.notes||'' };
+}
+async function loadParking(){
+  try{
+    var res=await SB.from('di_parking').select('*').order('created_at',{ascending:false});
+    if(res.error) throw res.error;
+    if(res.data && res.data.length){
+      PARKING=res.data.filter(function(r){ return r.is_active!==false && r.approved!==false && r.available!==false; }).map(parkToApp);
+      if(PARKING.length){ console.log('✓ Loaded '+PARKING.length+' parking lots live from Supabase'); return true; }
+    }
+  }catch(e){ console.warn('Parking load failed — using sample lots.', e); }
+  if(!PARKING.length) PARKING=SAMPLE_PARKING.slice();
+  return false;
+}
+// Sort anchor: tonight's venue if there's an event, else SoFi (the default draw).
+function parkingAnchor(){
+  var e=todaysAnchorEvents()[0]||(typeof nextAnchorEvent==='function'?nextAnchorEvent():null);
+  var a=e?eventAnchor(e):null;
+  if(a) return a;
+  var c=VENUE_COORDS['sofi stadium']; return {lat:c[0],lng:c[1]};
+}
+function openParking(){ renderParking(); go('parking'); }
+function renderParking(){
+  var el=document.getElementById('parking-body'); if(!el) return;
+  if(!PARKING.length) PARKING=SAMPLE_PARKING.slice();
+  var a=parkingAnchor(), e=todaysAnchorEvents()[0];
+  var lots=PARKING.filter(function(l){ return l.available!==false; }).map(function(l){
+    return { l:l, nv:(l.lat!=null?nearestVenue({lat:l.lat,lng:l.lng}):null), mi:distanceMiles(a,{lat:l.lat,lng:l.lng}) };
+  });
+  lots.sort(function(x,y){ var dx=x.mi==null?Infinity:x.mi, dy=y.mi==null?Infinity:y.mi; return dx-dy; });
+  var intro = e ? ('Parking near <b style="color:var(--gold)">'+xmlEsc(e.venue)+'</b> tonight &mdash; closest walk first. Walk a little, save a lot.')
+                : 'Event-day parking near the venues &mdash; sorted by walk time to the stadium. Walk a little, save a lot.';
+  var cards=lots.map(function(o){
+    var l=o.l, nv=o.nv;
+    var walk=nv?('&#128694; '+walkMins(nv.mi)+' min walk to '+xmlEsc(nv.name)):'';
+    var drive=nv?('&#128663; '+driveMins(nv.mi)+' min drive'):'';
+    var dist=nv?(nv.mi<0.1?'Steps away':nv.mi.toFixed(1)+' mi'):'';
+    var spots=(l.spots_available!=null?l.spots_available+' of '+(l.spots_total||'?')+' open':(l.spots_total?l.spots_total+' spots':''));
+    return '<div class="card parkcard">'+
+      '<div class="pc-top"><div class="pc-name">'+xmlEsc(l.name)+(l.sample?' <span class="pc-sample">SAMPLE</span>':'')+'</div>'+
+        (l.price?'<div class="pc-price">'+xmlEsc(l.price)+'</div>':'')+'</div>'+
+      (walk?'<div class="pc-walk">'+walk+'</div>':'')+
+      ([drive,dist,spots].filter(Boolean).length?'<div class="pc-meta">'+[drive,dist,spots].filter(Boolean).join(' &#183; ')+'</div>':'')+
+      (l.notes?'<div class="pc-notes">'+xmlEsc(l.notes)+'</div>':'')+
+      (l.address?'<div class="pc-addr">&#128205; '+xmlEsc(l.address)+'</div>':'')+
+      '<div class="pc-act"><button class="btn btn-primary" onclick="parkDirections(\''+String(l.id).replace(/'/g,"\\'")+'\')">'+ICON.nav+' Directions</button></div>'+
+    '</div>';
+  }).join('');
+  var cta='<div class="park-cta">'+
+    '<div class="pcta-h">&#127359;&#65039; Own a lot or driveway?</div>'+
+    '<div class="pcta-s">Churches, small businesses &amp; residents near the venues &mdash; list your spaces and earn on event days. It pulls cars off the stadium and sends guests into the community to explore and spend.</div>'+
+    '<button class="btn-gold" onclick="openParkingForm()">List your parking &#8594;</button>'+
+  '</div>';
+  el.innerHTML='<div class="park-intro">'+intro+'</div>'+
+    (cards||'<div class="park-empty">No lots posted yet &mdash; be the first to list yours.</div>')+
+    cta+
+    '<div class="park-guide-h">No spot yet? Venue parking &amp; transit</div>'+parkingPanelHTML();
+}
+function parkDirections(id){
+  var l=PARKING.filter(function(x){ return String(x.id)===String(id); })[0]; if(!l) return;
+  var dest=(l.lat!=null&&l.lng!=null)?(l.lat+','+l.lng):(l.name+' '+(l.address||'Inglewood CA'));
+  window.open('https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(dest),'_blank');
+}
+// Owner "List your parking" form — mirrors the business self-add flow.
+function openParkingForm(){
+  if(!CURRENT_USER){ toast('Sign in first to list your parking'); acctPrompt('signin'); return; }
+  var el=document.getElementById('parking-body'); if(!el) return;
+  el.innerHTML='<div class="back-link" onclick="renderParking()">&#8249; Back to parking</div>'+
+    '<div style="font-size:13px;color:var(--gold);margin:2px 0 6px;font-weight:600">List your event-day parking &mdash; free.</div>'+
+    '<div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.5">We review every listing (usually within 72 hours) before it goes public &mdash; same as businesses. Walk time to the stadium is shown automatically once your address is on the map.</div>'+
+    '<label class="flbl">Lot name</label><input id="pk_name" class="finput" placeholder="e.g. First AME Church Lot" autocomplete="off">'+
+    '<label class="flbl">Address</label><input id="pk_addr" class="finput" placeholder="Street, Inglewood" autocomplete="off">'+
+    '<div style="display:flex;gap:10px">'+
+      '<div style="flex:1"><label class="flbl">Price</label><input id="pk_price" class="finput" placeholder="$20" autocomplete="off"></div>'+
+      '<div style="flex:1"><label class="flbl"># of spots</label><input id="pk_spots" class="finput" type="number" inputmode="numeric" placeholder="50" autocomplete="off"></div>'+
+    '</div>'+
+    '<label class="flbl">Notes (optional)</label><input id="pk_notes" class="finput" placeholder="Cash or Venmo · gated · attended" autocomplete="off">'+
+    '<label class="pk-toggle"><input id="pk_avail" type="checkbox" checked><span><b>Available</b> <span style="color:var(--muted)">&mdash; turn off and it shows &ldquo;None&rdquo;</span></span></label>'+
+    '<div style="border-top:1px solid var(--line);margin:16px 0 4px"></div>'+
+    '<label class="flbl">Your email (so we can verify you)</label><input id="pk_email" class="finput" type="email" placeholder="you@email.com" autocomplete="off">'+
+    '<label class="pk-attest"><input id="pk_attest" type="checkbox" style="margin-top:2px;width:18px;height:18px;flex:none;accent-color:var(--gold)"><span>I certify I own or manage this parking and the information is accurate.</span></label>'+
+    '<button class="btn btn-primary" style="width:100%;font-size:15px;padding:14px" onclick="submitParking()">Submit for review &#8594;</button>'+
+    '<div style="font-size:12px;color:var(--muted);margin-top:12px;text-align:center;line-height:1.5">Once approved, your lot appears here with its live walk time to the stadium.</div>';
+}
+async function submitParking(){
+  if(!CURRENT_USER){ toast('Sign in first'); acctPrompt('signin'); return; }
+  var name=gv('pk_name'), addr=gv('pk_addr'), price=gv('pk_price'), notes=gv('pk_notes');
+  var spots=parseInt(gv('pk_spots'),10); if(!isFinite(spots)) spots=null;
+  var avail=(document.getElementById('pk_avail')||{}).checked;
+  var attest=(document.getElementById('pk_attest')||{}).checked;
+  if(!name){ toast('Enter a lot name'); return; }
+  if(!addr){ toast('Enter the address'); return; }
+  if(!attest){ toast('Please check the certification box'); return; }
+  var row={ name:name, address:addr, price:price||null, spots_total:spots, spots_available:spots,
+    available:!!avail, notes:notes||null, approved:false, is_active:true, claimed_by:CURRENT_USER.id };
+  var r=await SB.from('di_parking').insert(row);
+  if(r && r.error){ toast('Could not submit: '+r.error.message); return; }
+  toast('Submitted ✓ We’ll review within 72 hours');
+  setTimeout(function(){ renderParking(); go('home'); }, 1600);
+}
+// Entry from the onboarding "Event Day Parking" bar: go event-first, then open parking.
+function obOpenParking(){
+  setMode('event',true);
+  try{ localStorage.setItem('di_onboard_done','1'); }catch(e){}
+  var o=document.getElementById('onboard'); if(o)o.style.display='none';
+  openParking();
 }
 
 /* ============ SHARING — links, Bring a Friend, story cards, crew plans ============ */
@@ -3625,6 +3818,7 @@ async function initApp(){
   normalizeVenuePhotos();
   await loadEvents();
   await loadDeals();
+  await loadParking();
   await loadPopping();
   _dataReady=true;
   if(pushOn()) syncPush();

@@ -321,3 +321,32 @@ Design (keep simple):
 Data go-ahead needed (CLAUDE.md stop list): a few columns (spots/available/price or a
 Parking category) + coordinate backfill. Front-end/display can be built and shown first.
 Later phases: reserve/prepay (Stripe), live spots-left, park-&-ride shuttle.
+
+## 2026-11-08 — Parking marketplace + distance-on-everything (BUILT)
+Rambo gave the go-ahead ("Design and build the system and database"). Shipped:
+- DATABASE: `supabase/29_parking.sql` — new `di_parking` table + RLS that mirrors the
+  business self-add trust model. Public sees only approved + active + available lots; a
+  signed-in owner can add their own lot but ONLY as approved=false (can't self-approve —
+  `revoke update (approved,is_active)`); owners read/update/delete their own rows. Walk/
+  drive time is NEVER stored — it's computed in-app from lat/lng + VENUE_COORDS. Admin
+  approves + geocodes later, exactly like self-added businesses. (Rambo runs this SQL in
+  Supabase → SQL Editor when ready; nothing goes live until he does.)
+- ENTRY: a thin "🅿️ Event Day Parking" bar sits UNDER the two doors (smaller, not a 3rd
+  big box), as asked. Taps into the parking view (and the "Parking" quick chip now opens
+  it too, instead of the old text filter).
+- PARKING VIEW: lots sorted by walk time to tonight's venue (or SoFi by default). Each
+  card leads with the HERO stat — "🚶 5 min walk to Intuit Dome" — then 🚗 drive · miles ·
+  spots open · price (gold) · notes · address · Directions. Built-in SAMPLE lots (real
+  coords near the venues) render even offline so it's never an empty state; live
+  di_parking rows replace them.
+- LIST YOUR PARKING: owner sign-up form (name, address, price, # spots, Available toggle,
+  notes, email, certify) → inserts into di_parking as pending, same as business self-add.
+  Sign-in gated.
+- DISTANCE ON EVERYTHING: added `driveMins()`, `nearestVenue()`, `venueDistLine()`. Every
+  business detail page now shows "From venue: 🚶 X min · 🚗 X min · X mi to <nearest venue>"
+  (only when the spot has coords — degrades silently otherwise). Reuses the existing
+  walk-time/haversine logic.
+Verified with headless screenshots (entry bar, sorted lot list, CTA, sign-in gate) — no
+page errors. Committed to claude/do-inglewood-backend-t5n03v. Not deployed yet (deploy the
+whole site/ folder, never index.html alone). Later phases unchanged: reserve/prepay,
+live spots-left, park-&-ride.
