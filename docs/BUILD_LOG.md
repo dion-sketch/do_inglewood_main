@@ -428,3 +428,21 @@ Note: uploads go to the existing business-photos bucket. If that bucket's Storag
 restricts write paths, parking uploads may need a one-line policy (or a parking-photos
 bucket). Photo is optional + non-blocking, so a listing still submits if upload fails.
 Verified with a headless screenshot (photo banner + owner Change-photo button) — no errors.
+
+## 2026-11-08 — Home cleanup: 4 modes → 3, clearer names, no filler "Open now"
+Rambo was confused by the home tabs/sections. Fixed the three he called out:
+- "Show Ticket" read like a box office. Renamed the tab to "Ticket Deals" and the card
+  badge to "🎟 Ticket Deal"; sharpened the banner: "got a same-day game or concert ticket?
+  Flash it for a discount. You keep your ticket — this just unlocks the deal."
+- "Anytime" and "After Hours" overlapped — nobody plans nightlife ahead. Removed After
+  Hours as a 4th tab. Anytime is now time-aware: after dark (7 PM–4 AM) it surfaces
+  "🌙 Out tonight" + "Late-night eats" on its own; daytime shows "Popular in Inglewood."
+  Old saved 'after' mode + the after_hours push (?mode=after) now resolve to Anytime,
+  which shows nightlife since it's late. Event-Day "letting out" nudge now points to
+  Anytime ("See nightlife →").
+- "Open now" surfaced 24h hotels/casino as filler. Dropped it; replaced with "Popular in
+  Inglewood" (real local spots, deals first), hotels excluded from home popular rows
+  (they stay in Explore/search for hotel guests).
+Modes are now Event Day / Ticket Deals / Anytime. CLAUDE.md DNA updated (was "4 modes").
+Verified with headless screenshots: 3 tabs, day rows (Deals + Popular), after-dark rows
+(Deals + Out tonight + Late-night eats) — no page errors.

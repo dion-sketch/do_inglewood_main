@@ -1925,12 +1925,12 @@ function dealOfferText(p){
 }
 // The bright gold deal badge — shown on every card with an active special (Explore,
 // game-day planner, Surprise Me, Specials, Home). Game Day specials get their own label.
-// One gold marker on every card that has a deal: "🎟 Show Ticket" for Show Your Ticket
-// deals, "★ Deal" for anything else (owner special, member deal, admin deal).
+// One gold marker on every card that has a deal: "🎟 Ticket Deal" for Show Your Ticket
+// deals (a discount for flashing your event ticket), "★ Deal" for anything else.
 function hasAnyDeal(p){ return !!p && (isDealLit(p) || liveDealsFor(p).length>0 || !!(p.mdeal && p.tier>=2)); }
 function dealMark(p){
   var t=ticketDealFor(p);
-  if(t) return '<span class="deal-flag">&#127903; Show Ticket</span>'+(t.is_sample?'<span class="deal-flag sample">Sample</span>':'');
+  if(t) return '<span class="deal-flag">&#127903; Ticket Deal</span>'+(t.is_sample?'<span class="deal-flag sample">Sample</span>':'');
   return hasAnyDeal(p)?'<span class="deal-flag">&#9733; Deal</span>':'';
 }
 function dealFlag(p){ return dealMark(p); }
@@ -3820,12 +3820,13 @@ function mapAddress(p){ var a=String(p.addr||''); return p.n+', '+a+(a.indexOf('
    A pick made today always wins; otherwise a show today at an anchor venue
    switches Home to Event Day on its own. */
 var MODES={
-  event:{label:'Event Day',ic:'&#127967;&#65039;',pitch:'Pregame spots, parking &amp; Show Your Ticket deals'},
-  ticket:{label:'Show Ticket',ic:'&#127903;&#65039;',pitch:'Every Show Your Ticket deal — flash today’s ticket and save'},
-  anytime:{label:'Anytime',ic:'&#9728;&#65039;',pitch:'Specials first, then what’s open right now'},
-  after:{label:'After Hours',ic:'&#127769;',pitch:'Adults after the show: lounges, late-night eats, casino'}
+  event:{label:'Event Day',ic:'&#127967;&#65039;',pitch:'Pregame spots, parking &amp; ticket deals'},
+  ticket:{label:'Ticket Deals',ic:'&#127903;&#65039;',pitch:'Flash today’s game or concert ticket and save — it’s a discount, not a box office'},
+  anytime:{label:'Anytime',ic:'&#9728;&#65039;',pitch:'Deals and the best local spots — nightlife shows up on its own after dark'}
 };
-var MODE_ORDER=['event','ticket','anytime','after'];
+// Three tabs now. "After Hours" was folded into Anytime: nobody plans a club ahead,
+// so when it's actually late, Anytime surfaces nightlife + late-night eats on its own.
+var MODE_ORDER=['event','ticket','anytime'];
 var ANCHOR_VENUES={'sofi stadium':1,'kia forum':1,'intuit dome':1,'youtube theater':1};
 var EVENT_LENGTH_MIN=210;      // a show is assumed to run ~3.5 hours from its listed start
 var DEFAULT_START_MIN=19*60;   // events without a usable time ("TBD") are treated as 7 PM
@@ -3851,13 +3852,10 @@ function setMode(m){
   renderModeHome();
 }
 function currentMode(){
-  var s=modeState(), now=new Date(), today=isoOf(now);
-  if(s && s.day===today && MODES[s.mode]) return s.mode;        // picked today → respect it
-  if(todaysAnchorEvents().length) return 'event';                 // show day → Event Day
-  if(!s || !MODES[s.mode]) return 'anytime';
-  // After Hours is for the night it was picked; next daytime opens on Anytime.
-  if(s.mode==='after' && now.getHours()>=5 && now.getHours()<17) return 'anytime';
-  return s.mode;
+  var s=modeState();
+  if(s && s.day===isoOf(new Date()) && MODES[s.mode]) return s.mode;  // picked today → respect it ('after' no longer a mode)
+  if(todaysAnchorEvents().length) return 'event';                     // show day → Event Day
+  return 'anytime';
 }
 // Once today's show has likely ended, Event Day suggests After Hours (dismissable for the day).
 function afterHoursSuggestion(){
@@ -3883,6 +3881,10 @@ function popularSpots(test,limit,used){
   return P.filter(function(p){ return hasPhoto(p) && !(used&&used[p.k]) && (!test||test(p)); }).sort(byDealThenPopular).slice(0,limit||8);
 }
 function openLate(p){ var st=hoursStatusAt(p.hrs,23*60); return !!(st&&st.open); }
+// "After dark" — when Anytime should surface nightlife on its own (7 PM–4 AM).
+function isLateNow(){ var h=new Date().getHours(); return h>=19 || h<4; }
+// Hotels/lodging are for the Hotels tab & search, not the home "popular" rows.
+function notHotel(p){ return p.cat!=='Hotels' && !(p.tags||[]).includes('Hotels') && !(p.tags||[]).includes('Stay'); }
 function likelyOpenAt(p,checkMin){ if(checkMin==null) return true; var st=hoursStatusAt(p.hrs,checkMin); return !st||st.open!==false; }
 // Pregame spots for an event: food & drink likely open ~2.5 hrs before the start,
 // deals first, then closest to the venue, then most popular.
@@ -3907,7 +3909,7 @@ function evDayCard(isNext,e){
 }
 function eventDayHome(){
   var used={}, html='', evs=todaysAnchorEvents(), sug=afterHoursSuggestion();
-  if(sug) html+='<div class="suggest-bar"><span style="flex:1"><b>'+evEsc(sug.title)+'</b> is letting out. Keep the night going?</span><button onclick="setMode(\'after\')">After Hours &#8594;</button><button class="x" aria-label="Dismiss" onclick="dismissAfterHours()">&times;</button></div>';
+  if(sug) html+='<div class="suggest-bar"><span style="flex:1"><b>'+evEsc(sug.title)+'</b> is letting out. Keep the night going?</span><button onclick="setMode(\'anytime\')">See nightlife &#8594;</button><button class="x" aria-label="Dismiss" onclick="dismissAfterHours()">&times;</button></div>';
   var shown=evs.length?evs:[nextAnchorEvent()].filter(Boolean);
   if(shown.length) html+='<div class="evday'+(shown.length>1?' multi':'')+'">'+shown.map(function(e){ return evDayCard(!evs.length,e); }).join('')+'</div>';
   html+=sytBannerHTML(shown[0],evs.length>0);
@@ -3925,30 +3927,37 @@ function anytimeHome(){
   var used={}, html='';
   var deals=markUsed(P.filter(function(p){ return hasLiveDeal(p); }).sort(byDealThenPopular).slice(0,8),used);
   html+=deals.length?homeRow('&#127903; Today’s Deals',deals,'<a onclick="go(\'specials\')">See all</a>')
-                    :homeRow('&#128293; Popular right now',markUsed(popularSpots(null,8,used),used));
-  var open=markUsed(nearSort(popularSpots(function(p){ var o=openNow(p.hrs); return !!(o&&o.open); },10,used)),used);
-  html+=homeRow(USER_LOC?'Open now near you':'Open now',open,'<a onclick="go(\'explore\')">Explore</a>');
+                    :homeRow('&#128293; Popular right now',markUsed(popularSpots(notHotel,8,used),used));
+  if(isLateNow()){
+    // After dark, Anytime becomes the night out — no separate mode to pick.
+    html+=afterHoursRows(used);
+  } else {
+    var pop=markUsed(nearSort(popularSpots(notHotel,10,used)),used);
+    html+=homeRow(USER_LOC?'Popular near you':'Popular in Inglewood',pop,'<a onclick="go(\'explore\')">Explore</a>');
+  }
   return html;
 }
 // Show Ticket mode: every live Show Your Ticket deal, closest to tonight's venue first.
 // Never empty — with none live today it falls back to other deals, then pregame picks.
 function ticketHome(){
   var used={}, evs=todaysAnchorEvents(), e=evs[0]||nextAnchorEvent();
-  var html='<div class="suggest-bar" style="background:linear-gradient(95deg,rgba(245,197,66,.16),rgba(255,46,126,.1));border-color:rgba(245,197,66,.55)"><span style="flex:1">&#127903; <b>Show Your Ticket</b> — got a same-day ticket for SoFi, Kia Forum, Intuit Dome or YouTube Theater? Show it at these spots.</span></div>';
+  var html='<div class="suggest-bar" style="background:linear-gradient(95deg,rgba(245,197,66,.16),rgba(255,46,126,.1));border-color:rgba(245,197,66,.55)"><span style="flex:1">&#127903; <b>Ticket Deals</b> — got a same-day game or concert ticket? Flash it at these spots for a discount. You keep your ticket — this just unlocks the deal.</span></div>';
   var banner=sytBannerHTML(evs[0]||null,evs.length>0,40);
   if(banner) return html+banner;
   var deals=markUsed(P.filter(function(p){ return hasAnyDeal(p); }).sort(byDealThenPopular).slice(0,10),used);
   if(deals.length) return html+homeRow('&#9733; Deals today',deals,'<a onclick="filterTo(\'Deals\')">See all</a>');
   return html+(e?homeRow('Pregame near '+evEsc(e.venue),pregameSpots(e,8,used)):homeRow('&#128293; Popular right now',popularSpots(null,8)));
 }
-function afterHoursHome(){
-  var used={}, html='';
+// Nightlife rows, reused by Anytime after dark and by Event Day once shows let out.
+function afterHoursRows(used){
+  used=used||{};
   var night=markUsed(popularSpots(function(p){ return RX_NIGHT.test(bizText(p)) && openLate(p); },8,used),used);
   if(!night.length) night=markUsed(popularSpots(function(p){ return RX_NIGHT.test(bizText(p)); },8,used),used);
-  html+=homeRow('&#127769; After the show',nearSort(night),'<a onclick="filterTo(\'Lounges\')">See all</a>');
+  var html=homeRow('&#127769; Out tonight',nearSort(night),'<a onclick="filterTo(\'Lounges\')">See all</a>');
   html+=homeRow('Late-night eats',markUsed(popularSpots(function(p){ return RX_FOOD.test(bizText(p)) && openLate(p); },8,used),used));
-  return html||homeRow('&#128293; Popular right now',popularSpots(null,8));
+  return html;
 }
+function afterHoursHome(){ return afterHoursRows({}) || homeRow('&#128293; Popular right now',popularSpots(null,8)); }
 function renderModeBar(){
   var el=document.getElementById('modebar'); if(!el) return;
   var cur=currentMode();
@@ -3961,7 +3970,7 @@ function renderModeHome(){
   renderModeBar();
   var el=document.getElementById('mode-home'); if(!el) return;
   var m=currentMode();
-  el.innerHTML=m==='event'?eventDayHome():m==='ticket'?ticketHome():(m==='after'?afterHoursHome():anytimeHome());
+  el.innerHTML=m==='event'?eventDayHome():m==='ticket'?ticketHome():anytimeHome();
   _modeSig=m+'|'+(afterHoursSuggestion()?1:0);
   if(m==='event') setTimeout(maybeAskForEventDay,800);
 }
