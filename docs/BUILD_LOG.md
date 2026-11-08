@@ -413,3 +413,18 @@ Notes / by-design (no change):
   on VAPID, so those calls never fire yet), but 30 must run before push goes live.
 - Realtime delivery (postgres_changes on di_parking) should be verified on the live
   project once 30 runs; RLS SELECT (approved+active+available) governs what anon receives.
+
+## 2026-11-08 — Parking: lot photos (parity with businesses)
+Rambo asked if lot owners can add photos like other listings — they couldn't (di_parking
+had no photo field at all). Added it, mirroring the business photo flow:
+- di_parking.photo_url column (30_parking_status.sql), owner-updatable.
+- Upload reuses the SAME Storage bucket as businesses (business-photos), path
+  parking/<uid>/<lotid>_<ts>. Two ways in: a Photo picker on the "List your parking" form
+  (held, uploaded after insert), and an "Add/Change photo" button on the owner's own lot
+  card for later.
+- Card shows a real photo as a top banner when present; no photo → clean text card (never
+  a stock/generic image, per style rules). realImg() guards it.
+Note: uploads go to the existing business-photos bucket. If that bucket's Storage policy
+restricts write paths, parking uploads may need a one-line policy (or a parking-photos
+bucket). Photo is optional + non-blocking, so a listing still submits if upload fails.
+Verified with a headless screenshot (photo banner + owner Change-photo button) — no errors.

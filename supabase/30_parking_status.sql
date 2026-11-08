@@ -17,6 +17,9 @@
 alter table di_parking add column if not exists status text default 'open';   -- 'open' | 'going' | 'full'
 alter table di_parking add column if not exists status_date date;             -- Los Angeles day the status was last set
 alter table di_parking add column if not exists status_updated_at timestamptz;
+-- A real photo of the lot (like businesses) — public URL in the business-photos
+-- Storage bucket. Owners can add/change it; builds trust ("this is the gated church lot").
+alter table di_parking add column if not exists photo_url text;
 
 alter table di_parking drop constraint if exists di_parking_status_chk;
 alter table di_parking add constraint di_parking_status_chk
@@ -30,7 +33,7 @@ alter table di_parking add constraint di_parking_status_chk
 -- Make the owner's write access to the new columns explicit (defensive — the
 -- table-level UPDATE grant already covers them, but this documents intent and
 -- survives a stricter grant setup). approved/is_active stay revoked (29_parking).
-grant update (status, status_date, status_updated_at) on di_parking to authenticated;
+grant update (status, status_date, status_updated_at, photo_url) on di_parking to authenticated;
 
 -- 2) Realtime so followers see a flip live while the app is open -------
 -- (Safe to re-run: ignore "already member of publication" if it errors.)
