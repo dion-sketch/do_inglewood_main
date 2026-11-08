@@ -252,3 +252,13 @@ Rambo tested the preview on his iPhone. The gold "Tonight" card, "Plan my night"
 4. Switch to 🎟 Show Ticket mode (after running `27_sample_deals.sql`).
 5. Open Hollywood Park Casino: branded card, no blank.
 6. Nothing says "IMPORTED".
+
+## 2026-11-08 — Home "Happening This Week" cards open the event
+Fix (Rambo noticed on phone): tapping a concert/game in the home "Happening This Week"
+row used to navigate to that day's calendar (`go('events');selectDay(date)`), so you
+couldn't click into a specific concert to see its deals. Now each home event card opens
+the event detail directly (`openEvent(id)`), which already shows the Show Your Ticket
+deals, "Plan my game day," and nearby pregame spots. The Events-tab rows and the Event
+Day banner card already used `openEvent`; this just makes the home cards consistent.
+Decision: direct-to-event is right — it's the Event Day DNA (purposeful, deal-first),
+fewer taps to the deals. One-line change in renderHomeEvents().

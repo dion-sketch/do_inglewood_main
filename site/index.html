@@ -2766,7 +2766,7 @@ function renderHomeEvents(){
   sect.style.display='';
   document.getElementById('home-events').innerHTML=up.map(function(e){
     var d=parseD(e.date);
-    return '<div class="home-evcard" onclick="go(\'events\');selectDay(\''+e.date+'\')">'+
+    return '<div class="home-evcard" onclick="openEvent(\''+evEsc(e.id)+'\')">'+
       '<div class="d">'+d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})+' · '+evEsc(e.time||'')+'</div>'+
       '<div class="n">'+evEsc(e.title)+'</div><div class="v">📍 '+evEsc(e.venue||'')+'</div></div>';
   }).join('');
