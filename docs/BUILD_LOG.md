@@ -446,3 +446,24 @@ Rambo was confused by the home tabs/sections. Fixed the three he called out:
 Modes are now Event Day / Ticket Deals / Anytime. CLAUDE.md DNA updated (was "4 modes").
 Verified with headless screenshots: 3 tabs, day rows (Deals + Popular), after-dark rows
 (Deals + Out tonight + Late-night eats) — no page errors.
+
+## 2026-11-08 — Supervisor cleanup sweep (consistency + home de-duplication)
+Deep inspection in the spirit of Rambo's label/redundancy/filler feedback. Fixed:
+- Stale push-overlay copy still named "After Hours" → now describes the real alerts
+  (saved-event Show-Your-Ticket reminders + followed-parking "going fast/gone").
+- Hero caption "1,100+ businesses near SoFi, Intuit Dome & the Forum" → "1,000+ Inglewood
+  spots near the venues" (fresher count + the consistent "the venues" wording).
+- Leftover internal comments naming the removed "After Hours" / old "Show Ticket" mode.
+- Event push sender's after-hours message dropped the removed "After Hours" brand and
+  points ?mode=anytime (which shows nightlife when late) instead of the dead ?mode=after.
+- HOME DE-DUP (the big one): the Anytime home stacked "Today's Deals" THREE times (mode
+  row + neon banner + a static "Today's Deals" section) and TWO popular rows ("Popular in
+  Inglewood" + "What's Popping"). Now: one "Today's Deals" (the mode card row with See-all
+  → Specials), one popular row ("What's Popping"). Removed the duplicate static Today's
+  Deals section (buildHome hides it), the duplicate daytime popular row (anytimeHome), and
+  retired the redundant "Today's Deals" neon banner (CSS). Verified all 3 modes render
+  with no errors; home reads Deals → venue image → Explore/Surprise → What's Popping →
+  Stadium District.
+Left intentionally (flagged, not auto-changed): "Specials" (nav/page brand) vs "Deals"
+(rows/chips) wording — a branding call; Member Deals section — monetization (stop list);
+"Explore Inglewood" shown as both a button and a lower section — minor.

@@ -72,7 +72,8 @@
   .planactivity h2{font-family:'Barlow Condensed';font-weight:800;font-size:27px;line-height:.95;margin-top:3px;}
   .planactivity p{font-size:12.5px;font-weight:500;margin-top:6px;opacity:.85;max-width:78%;line-height:1.4;}
   .planactivity .pa-go{position:absolute;right:16px;bottom:16px;width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;font-size:20px;}
-  .deals-banner{display:block;margin:16px 20px 4px;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:var(--panel);cursor:pointer;box-shadow:0 10px 26px rgba(255,46,126,.22);}
+  /* Retired: duplicated the mode's "Today's Deals" card row (same label, same screen). */
+  .deals-banner{display:none;margin:16px 20px 4px;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:var(--panel);cursor:pointer;box-shadow:0 10px 26px rgba(255,46,126,.22);}
   .deals-banner img{display:block;width:100%;height:auto;aspect-ratio:2035/773;object-fit:cover;}
   .deals-banner:active{transform:scale(.99);}
   .surprise-banner{display:block;margin:10px 20px 0;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--panel);cursor:pointer;box-shadow:0 8px 20px rgba(255,46,126,.16);}
@@ -458,7 +459,7 @@
   .home-evcard .n{font-size:14.5px;font-weight:700;margin-top:6px;line-height:1.25;}
   .home-evcard .v{font-size:12px;color:var(--muted);margin-top:5px;}
 
-  /* ============ MODES (Event Day / Anytime / After Hours) ============ */
+  /* ============ MODES (Event Day / Ticket Deals / Anytime) ============ */
   .modepick{display:grid;gap:12px;width:100%;max-width:340px;margin-top:22px;text-align:left;}
   .modecard{position:relative;display:flex;gap:14px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;cursor:pointer;color:var(--txt);font:inherit;text-align:left;width:100%;}
   .modecard:active{transform:scale(.98);}
@@ -676,7 +677,7 @@
       <div class="mode-home" id="mode-home"></div>
 
       <div class="heroimg" id="heroimg">
-        <div class="cap"><b>What's happening in the city</b><span>1,100+ Inglewood businesses near SoFi, Intuit Dome &amp; the Forum</span></div>
+        <div class="cap"><b>What's happening in the city</b><span>1,000+ Inglewood spots near the venues</span></div>
       </div>
 
       <!-- TODAY'S DEALS -->
@@ -1030,7 +1031,7 @@
   <div class="acct-overlay" id="pushOverlay">
     <div class="acct-sheet">
       <h3>&#128276; Event alerts?</h3>
-      <p id="pushMsg">Two alerts per saved event, max: Show Your Ticket deals about 3 hours before doors, and After Hours picks when it lets out.</p>
+      <p id="pushMsg">We only alert you about what you save or follow: Show Your Ticket deal reminders for events you save, and “going fast / gone” for parking lots you follow — so you never drive to a full lot.</p>
       <button class="ab" id="pushYes" onclick="pushYes()">Turn on alerts</button>
       <div class="skip" onclick="pushNo()">Not now</div>
     </div>
@@ -2006,9 +2007,10 @@ function buildHome(){
   document.getElementById('near-cards').innerHTML=allocateHomeCards(near,usedImages).map(cardHTML).join('');
   const spec=P.filter(p=>isDealLit(p)&&hasPhoto(p)&&!used[p.k]).sort(function(a,b){return dealSortScore(b)-dealSortScore(a);}).slice(0,6);
   spec.forEach(function(p){used[p.k]=1;});
-  var sc=document.getElementById('special-cards'); var offersSect=sc.closest('.sect');
-  if(spec.length){ sc.innerHTML=allocateHomeCards(spec,usedImages).map(cardHTML).join(''); if(offersSect)offersSect.style.display=''; }
-  else if(offersSect){ offersSect.style.display='none'; }   // hide "Today's Offers" until a paid business posts a real special
+  // The static "Today's Deals" row duplicated the mode's own Today's Deals row and the
+  // deals banner right above it — keep those two, retire this one.
+  var sc=document.getElementById('special-cards'); var offersSect=sc?sc.closest('.sect'):null;
+  if(offersSect) offersSect.style.display='none';
   // Member Deals — the download magnet
   const deals=P.filter(p=>p.mdeal&&hasPhoto(p)&&!used[p.k]).sort(function(a,b){return dealSortScore(b)-dealSortScore(a);}).slice(0,6);
   deals.forEach(function(p){used[p.k]=1;});
@@ -3685,7 +3687,7 @@ async function handleDeepLink(){
   var ob=document.getElementById('onboard'); if(ob) ob.style.display='none';
   if(plan){ await openSharedPlan(plan); return; }
   if(park){ openParking(); return; }                                      // push: parking "going fast / gone" alert
-  if(mode && MODES[mode]) setMode(mode);                                   // push: "letting out" → After Hours
+  if(mode && MODES[mode]) setMode(mode);                                   // push deep-link (old ?mode=after resolves to Anytime)
   if(ev && EV.some(function(x){ return x.id===ev; })){ openEvent(ev); return; } // push: pregame alert
   var d=deal&&dealById(deal), k=d?d.business_id:spot;
   if(k && PB[k]){
@@ -3814,7 +3816,7 @@ function nearbyChip(p){ return isInglewood(p)?'':'<span class="chip chip-nearby"
 // Address for maps: add "Inglewood, CA" only when the address has no city of its own.
 function mapAddress(p){ var a=String(p.addr||''); return p.n+', '+a+(a.indexOf(',')<0?', Inglewood CA':''); }
 
-/* ============ MODES — Event Day / Anytime / Adults After Hours ============
+/* ============ MODES — Event Day / Ticket Deals / Anytime ============
    The mode decides what Home leads with. Saved on this device as
    di_mode = {mode, day}, where `day` is the date the person last picked a mode.
    A pick made today always wins; otherwise a show today at an anchor venue
@@ -3857,7 +3859,7 @@ function currentMode(){
   if(todaysAnchorEvents().length) return 'event';                     // show day → Event Day
   return 'anytime';
 }
-// Once today's show has likely ended, Event Day suggests After Hours (dismissable for the day).
+// Once today's show has likely ended, Event Day nudges toward nightlife via Anytime (dismissable for the day).
 function afterHoursSuggestion(){
   if(currentMode()!=='event') return null;
   var now=new Date();
@@ -3928,16 +3930,12 @@ function anytimeHome(){
   var deals=markUsed(P.filter(function(p){ return hasLiveDeal(p); }).sort(byDealThenPopular).slice(0,8),used);
   html+=deals.length?homeRow('&#127903; Today’s Deals',deals,'<a onclick="go(\'specials\')">See all</a>')
                     :homeRow('&#128293; Popular right now',markUsed(popularSpots(notHotel,8,used),used));
-  if(isLateNow()){
-    // After dark, Anytime becomes the night out — no separate mode to pick.
-    html+=afterHoursRows(used);
-  } else {
-    var pop=markUsed(nearSort(popularSpots(notHotel,10,used)),used);
-    html+=homeRow(USER_LOC?'Popular near you':'Popular in Inglewood',pop,'<a onclick="go(\'explore\')">Explore</a>');
-  }
+  // After dark, Anytime becomes the night out on its own. Daytime leans on the shared
+  // feed below (What's Popping / The Stadium District) instead of a duplicate popular row.
+  if(isLateNow()) html+=afterHoursRows(used);
   return html;
 }
-// Show Ticket mode: every live Show Your Ticket deal, closest to tonight's venue first.
+// Ticket Deals mode: every live Show Your Ticket deal, closest to tonight's venue first.
 // Never empty — with none live today it falls back to other deals, then pregame picks.
 function ticketHome(){
   var used={}, evs=todaysAnchorEvents(), e=evs[0]||nextAnchorEvent();
@@ -3974,7 +3972,7 @@ function renderModeHome(){
   _modeSig=m+'|'+(afterHoursSuggestion()?1:0);
   if(m==='event') setTimeout(maybeAskForEventDay,800);
 }
-// Re-check every few minutes so Event Day turns on / the After Hours nudge appears
+// Re-check every few minutes so Event Day turns on / the nightlife nudge appears
 // without a reload — but only repaint when something actually changed.
 setInterval(function(){
   var sig=currentMode()+'|'+(afterHoursSuggestion()?1:0);

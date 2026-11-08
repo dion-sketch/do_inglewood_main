@@ -68,8 +68,8 @@ async function message(ev: any, kind: Kind) {
   }
   return {
     title: `${ev.title} is letting out 🌙`,
-    body: `After Hours near ${ev.venue}: lounges, late-night eats and the casino.`,
-    url: `${APP_URL}?mode=after`,
+    body: `Out near ${ev.venue}: lounges, late-night eats and the casino.`,
+    url: `${APP_URL}?mode=anytime`,
     tag: `after-${ev.id}`,
   };
 }
