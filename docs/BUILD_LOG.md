@@ -474,3 +474,10 @@ status carry the moment, so the "Event Day" qualifier was redundant; also matche
 "Parking" quick chip. Renamed the thin bar (now "Parking · Live spots near the venues ·
 or list yours" — "Live" leans into the real-time feel), the view header, and the sign-up
 helper ("List your parking — free"). Internal comments/ids left as-is.
+
+## 2026-11-08 — Parking P icon → real blue badge, subtitle wording
+Rambo: the parking "P" was the powder-blue emoji (🅿️) and read "Live spots." Replaced the
+emoji everywhere with a solid blue (#1273ff) rounded "P" badge (.pbadge / the bar's .pb-ic)
+— bar, quick chip, venue-guide headers, "Your parking" and "Own a lot" headers. Bar
+subtitle now "Available spots near venues · or list yours" (was "Live spots near the
+venues"). No more washed-out emoji tile.

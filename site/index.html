@@ -490,7 +490,9 @@
   /* Thin Event Day Parking bar — under the two doors, deliberately smaller */
   .parkbar{margin-top:12px;display:flex;align-items:center;gap:12px;width:100%;background:var(--panel);border:1px solid var(--line);border-left:3px solid #4ea1ff;border-radius:13px;padding:12px 14px;cursor:pointer;color:var(--txt);font:inherit;text-align:left;}
   .parkbar:active{transform:scale(.99);}
-  .parkbar .pb-ic{font-size:21px;line-height:1;filter:drop-shadow(0 0 10px rgba(78,161,255,.5));}
+  .parkbar .pb-ic{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;background:#1273ff;color:#fff;font-family:'Barlow Condensed';font-weight:800;font-size:20px;line-height:1;box-shadow:0 0 12px rgba(18,115,255,.45);}
+  /* Blue "P" badge used wherever parking shows an icon — a real blue, not the powder-blue emoji */
+  .pbadge{display:inline-flex;align-items:center;justify-content:center;width:1.15em;height:1.15em;border-radius:4px;background:#1273ff;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.92em;line-height:1;vertical-align:-.15em;}
   .parkbar .pb-tx{flex:1;display:flex;flex-direction:column;}
   .parkbar .pb-tx b{font-family:'Barlow Condensed';font-weight:800;font-size:15px;letter-spacing:.3px;}
   .parkbar .pb-tx span{font-size:11.5px;color:var(--muted);}
@@ -2084,7 +2086,7 @@ function openSearch(){
 function quickSearch(f){ if(f==='Parking'){ openParking(); return; } var b=document.getElementById('searchBox'); if(b) b.value=''; filterTo(f); }
 function renderHomeChips(){
   var el=document.getElementById('home-qchips'); if(!el) return;
-  var ic={Food:'&#127828;',Drinks:'&#127864;',Coffee:'&#9749;',Parking:'&#127359;&#65039;',Deals:'&#9733;','Open Now':'&#128994;'};
+  var ic={Food:'&#127828;',Drinks:'&#127864;',Coffee:'&#9749;',Parking:'<span class="pbadge">P</span>',Deals:'&#9733;','Open Now':'&#128994;'};
   el.innerHTML=QUICK.map(function(f){ return '<div class="qchip" onclick="quickSearch(\''+f+'\')">'+ic[f]+' '+f+'</div>'; }).join('');
 }
 // No parking lots are listed, so "Parking" shows the venue parking guide (tonight's venue first).
@@ -2093,7 +2095,7 @@ function parkingPanelHTML(){
   var venues=Object.keys(VENUE_PARKING_TIPS).sort(function(a,b){ return (tonight.indexOf(b)>=0)-(tonight.indexOf(a)>=0); });
   return venues.map(function(v){
     var name=VENUE_NAME_BY_ID[VENUE_ID_BY_NAME[v]]||v;
-    return '<div class="parkpanel"><h4>&#127359;&#65039; '+xmlEsc(name)+(tonight.indexOf(v)>=0?' <span style="font-size:12px;color:var(--gold)">· tonight</span>':'')+'</h4>'+
+    return '<div class="parkpanel"><h4><span class="pbadge">P</span> '+xmlEsc(name)+(tonight.indexOf(v)>=0?' <span style="font-size:12px;color:var(--gold)">· tonight</span>':'')+'</h4>'+
       VENUE_PARKING_TIPS[v].map(function(t){ return '<div class="t">• '+xmlEsc(t)+'</div>'; }).join('')+'</div>';
   }).join('')+'<div class="parkpanel"><h4>&#128647; Skip the lot</h4><div class="t">• Metro K Line stops at Downtown Inglewood and Fairview Heights — a short walk or shuttle to the venues.</div><div class="t">• Rideshare zones fill fast after shows; walk a few blocks away from the venue for a quicker pickup.</div></div>';
 }
@@ -2910,8 +2912,8 @@ function renderModePicker(){
     '<button class="doorcard door-explore" onclick="finishOnboard(\'anytime\')"><span class="dc-ic">&#127869;&#65039;</span><b>Explore &amp; Save Today</b><span class="dc-sub">Restaurants &#8594; activities &#8594; local deals &#8594; book or explore</span></button>'+
     '</div>';
   // Thin Event Day Parking bar — the #1 event-day pain, deliberately smaller than the two doors.
-  var parkbar='<button class="parkbar" onclick="obOpenParking()"><span class="pb-ic">&#127359;&#65039;</span>'+
-    '<span class="pb-tx"><b>Parking</b><span>Live spots near the venues &#183; or list yours</span></span>'+
+  var parkbar='<button class="parkbar" onclick="obOpenParking()"><span class="pb-ic">P</span>'+
+    '<span class="pb-tx"><b>Parking</b><span>Available spots near venues &#183; or list yours</span></span>'+
     '<span class="pb-ar">&#8594;</span></button>';
   var search='<form class="ob-search" onsubmit="return obSearchGo(event)">&#128269;<input id="obSearchInput" type="search" placeholder="Or search spots, food, events&#8230;" autocomplete="off"></form>';
   var evHtml='';
@@ -3385,12 +3387,12 @@ function renderParking(){
   // Owner's own lots with live controls (even before approval).
   var mine='';
   if(MY_PARKING.length){
-    mine='<div class="park-mine-h">&#127359;&#65039; Your parking &mdash; flip it live on event day</div>'+
+    mine='<div class="park-mine-h"><span class="pbadge">P</span> Your parking &mdash; flip it live on event day</div>'+
       MY_PARKING.filter(function(l){ return l.is_active!==false; }).map(function(l){ return parkCardHTML(decorate(l),{owner:true}); }).join('');
   }
   var cards=lots.map(function(o){ return parkCardHTML(o,{owner:false}); }).join('');
   var cta='<div class="park-cta">'+
-    '<div class="pcta-h">&#127359;&#65039; Own a lot or driveway?</div>'+
+    '<div class="pcta-h"><span class="pbadge">P</span> Own a lot or driveway?</div>'+
     '<div class="pcta-s">Churches, small businesses &amp; residents near the venues &mdash; list your spaces and earn on event days. It pulls cars off the venues and sends guests into the community to explore and spend.</div>'+
     '<button class="btn-gold" onclick="openParkingForm()">List your parking &#8594;</button>'+
   '</div>';
