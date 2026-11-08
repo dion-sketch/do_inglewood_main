@@ -3085,9 +3085,11 @@ function nearestVenue(p){
 function venueDistLine(p){
   if(!p||!Number.isFinite(p.lat)||!Number.isFinite(p.lng)) return '';
   var nv=nearestVenue(p); if(!nv) return '';
-  return '<div class="ldrow"><span class="k">From venue</span><span class="v">'+
+  // One consistent label — "the venues" — never a specific one. People may be headed
+  // to the Forum, not the Dome, and two events can run at once; we don't chase it.
+  return '<div class="ldrow"><span class="k">From venues</span><span class="v">'+
     '&#128694; '+walkMins(nv.mi)+' min &#183; &#128663; '+driveMins(nv.mi)+' min &#183; '+
-    (nv.mi<0.1?'steps':nv.mi.toFixed(1)+' mi')+' to '+xmlEsc(nv.name)+'</span></div>';
+    (nv.mi<0.1?'steps':nv.mi.toFixed(1)+' mi')+' to the venues</span></div>';
 }
 function dealWhen(d){
   var bits=[WINDOW_TEXT[d.valid_window]||''];
@@ -3302,7 +3304,7 @@ function openParking(){ renderParking(); go('parking'); }
 // One browse card. Read-only status badge + Follow for everyone; live toggles for the owner.
 function parkCardHTML(o,opts){
   opts=opts||{}; var l=o.l, nv=o.nv, st=parkStatusOf(l), m=PARK_META[st]||PARK_META.open, owner=opts.owner;
-  var walk=nv?('&#128694; '+walkMins(nv.mi)+' min walk to '+xmlEsc(nv.name)):'';
+  var walk=nv?('&#128694; '+walkMins(nv.mi)+' min walk to the venues'):'';
   var drive=nv?('&#128663; '+driveMins(nv.mi)+' min drive'):'';
   var dist=nv?(nv.mi<0.1?'Steps away':nv.mi.toFixed(1)+' mi'):'';
   var spots=(l.spots_available!=null?l.spots_available+' of '+(l.spots_total||'?')+' open':(l.spots_total?l.spots_total+' spots':''));
@@ -3341,7 +3343,7 @@ function renderParking(){
     if(fx!==fy) return fx-fy;
     var dx=x.mi==null?Infinity:x.mi, dy=y.mi==null?Infinity:y.mi; return dx-dy;
   });
-  var intro = e ? ('Parking near <b style="color:var(--gold)">'+xmlEsc(e.venue)+'</b> tonight &mdash; closest walk first, live status. Follow a lot and we’ll tell you the second it’s going fast or gone.')
+  var intro = e ? ('Parking near <b style="color:var(--gold)">the venues</b> tonight &mdash; closest walk first, live status. Follow a lot and we’ll tell you the second it’s going fast or gone.')
                 : 'Event-day parking near the venues &mdash; sorted by walk time, with live status. Follow a lot and we’ll alert you if it fills up.';
   // Owner's own lots with live controls (even before approval).
   var mine='';

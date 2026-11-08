@@ -382,3 +382,11 @@ the functions are deployed — that's the existing push go-live, now covers park
 in-app realtime + the owner toggle work as soon as 30_parking_status.sql is run. Verified
 with headless screenshots (owner toggle, follow buttons, status badges, full-lot greyed &
 sunk) — no page errors. Committed to claude/do-inglewood-backend-t5n03v; not deployed.
+
+## 2026-11-08 — Parking/distance: generic "the venues" label (consistency)
+Rambo: don't name a specific venue on the walk/drive lines — someone may be headed to the
+Forum, not the Dome, and two events can run at the same time, so a named destination can be
+wrong. Changed all parking + business distance labels from "… to <nearest venue name>" to a
+single consistent "… to the venues." Still compute distance to the NEAREST venue so the
+number is sensible (the four venues cluster within ~0.5 mi), we just don't name it. Touched:
+venueDistLine (business detail), the parking card walk line, and the parking intro.
