@@ -301,3 +301,23 @@ the money local. The "Parking" one-tap need becomes a real feature.
   or venue tie-in).
 - Design-for-later (not Phase 1 blockers): liability/insurance, payments & payout, local
   permit rules, lot verification/trust.
+
+## 2026-11-08 — Parking marketplace + distance-on-everything (REFINED, Rambo prioritized)
+Rambo prioritizes this NOW (not deferred). Strategy: event-day parking pulls cars off
+the stadium into neighborhood lots → less congestion AND guests land in the community
+with time to explore/spend. Fixes the two biggest merchant complaints at once.
+Design (keep simple):
+- Parking lots = a LISTING TYPE that reuses the existing business/sign-up system: a lot
+  owner (church/shop/resident) signs up "like a regular business," category = Parking,
+  with fields: spots, price, Available Yes/No toggle (off = "None"). HERO = walk time to
+  the nearest venue. Some hosts have only ~5 spots — fine.
+- Entry: a THIN "🅿️ Event Day Parking" bar UNDER the two main doors (small, not a third
+  big box) → opens parking near tonight's venue, sorted by walk time: "$20 · 18 min walk
+  to SoFi · 5 spots."
+- DISTANCE ON EVERYTHING: every listing (businesses too) shows a small line —
+  🚶 walk X · 🚗 drive X · distance from SoFi/Forum/Intuit. Reuse the existing walk-time /
+  distance logic from the "Near me" feature; needs lat/lng on every spot (backfill from
+  Google where missing).
+Data go-ahead needed (CLAUDE.md stop list): a few columns (spots/available/price or a
+Parking category) + coordinate backfill. Front-end/display can be built and shown first.
+Later phases: reserve/prepay (Stripe), live spots-left, park-&-ride shuttle.
