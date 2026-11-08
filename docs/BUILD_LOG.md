@@ -467,3 +467,10 @@ Deep inspection in the spirit of Rambo's label/redundancy/filler feedback. Fixed
 Left intentionally (flagged, not auto-changed): "Specials" (nav/page brand) vs "Deals"
 (rows/chips) wording — a branding call; Member Deals section — monetization (stop list);
 "Explore Inglewood" shown as both a button and a lower section — minor.
+
+## 2026-11-08 — Rename "Event Day Parking" → "Parking"
+Rambo: just call it "Parking." The app is already event-centric and the subtitle + live
+status carry the moment, so the "Event Day" qualifier was redundant; also matches the
+"Parking" quick chip. Renamed the thin bar (now "Parking · Live spots near the venues ·
+or list yours" — "Live" leans into the real-time feel), the view header, and the sign-up
+helper ("List your parking — free"). Internal comments/ids left as-is.

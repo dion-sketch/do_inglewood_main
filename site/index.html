@@ -937,7 +937,7 @@
 
     <!-- EVENT DAY PARKING MARKETPLACE -->
     <div class="view" id="view-parking">
-      <div class="head-bar"><div class="back" onclick="go('home')">&#8249;</div><div class="logo-mini" role="img" aria-label="Do Inglewood" title="Home" onclick="go('home')"></div><span class="htitle">Event Day Parking</span></div>
+      <div class="head-bar"><div class="back" onclick="go('home')">&#8249;</div><div class="logo-mini" role="img" aria-label="Do Inglewood" title="Home" onclick="go('home')"></div><span class="htitle">Parking</span></div>
       <div id="parking-body" style="padding:14px 18px 90px;"></div>
     </div>
 
@@ -2911,7 +2911,7 @@ function renderModePicker(){
     '</div>';
   // Thin Event Day Parking bar — the #1 event-day pain, deliberately smaller than the two doors.
   var parkbar='<button class="parkbar" onclick="obOpenParking()"><span class="pb-ic">&#127359;&#65039;</span>'+
-    '<span class="pb-tx"><b>Event Day Parking</b><span>Find a spot near the venues &#183; or list yours</span></span>'+
+    '<span class="pb-tx"><b>Parking</b><span>Live spots near the venues &#183; or list yours</span></span>'+
     '<span class="pb-ar">&#8594;</span></button>';
   var search='<form class="ob-search" onsubmit="return obSearchGo(event)">&#128269;<input id="obSearchInput" type="search" placeholder="Or search spots, food, events&#8230;" autocomplete="off"></form>';
   var evHtml='';
@@ -3427,7 +3427,7 @@ function openParkingForm(){
   var el=document.getElementById('parking-body'); if(!el) return;
   _pkPhotoFile=null;
   el.innerHTML='<div class="back-link" onclick="renderParking()">&#8249; Back to parking</div>'+
-    '<div style="font-size:13px;color:var(--gold);margin:2px 0 6px;font-weight:600">List your event-day parking &mdash; free.</div>'+
+    '<div style="font-size:13px;color:var(--gold);margin:2px 0 6px;font-weight:600">List your parking &mdash; free.</div>'+
     '<div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.5">We review every listing (usually within 72 hours) before it goes public &mdash; same as businesses. Walk time to the venues is shown automatically once your address is on the map.</div>'+
     '<label class="flbl">Lot name</label><input id="pk_name" class="finput" placeholder="e.g. First AME Church Lot" autocomplete="off">'+
     '<label class="flbl">Address</label><input id="pk_addr" class="finput" placeholder="Street, Inglewood" autocomplete="off">'+
