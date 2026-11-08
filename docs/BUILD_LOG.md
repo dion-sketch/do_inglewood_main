@@ -274,3 +274,16 @@ Special"→"Event Day Special"; parking tips "most games"/"on game days"→"most
 "on event days"; events filter chip "Games"→"Sports"; crew-plan button "Game-day plan"→
 "Full plan". Left authentic business review/deal quotes (e.g. "Show your game ticket")
 and internal ids/field names (game_day_special, #game-day-plan) unchanged.
+
+## 2026-11-08 — Two-door entry ("Two ways in, one platform underneath")
+Simplified the 4-card mode picker ("What's the move?") into two branded doors
+("What brings you here today?"):
+- 🎟 Game Day & Concert Deals → event-first ('event' mode; absorbs Event Day +
+  Show Ticket + After Hours behavior).
+- 🍽 Explore & Save Today → everyday ('anytime' mode).
+Added a search bar under the doors (obSearchGo → enters everyday + runs the query) and,
+on event days, a "Happening today" list of tonight's anchor events (obOpenEvent →
+event-first + opens that event). Last choice stays remembered on-device (di_mode, no
+account); the inside mode tabs remain so visitors can switch anytime (no dead ends).
+Kept our neon gold/pink branding, not the plain mockup. The 4 modes still power the
+content ranking underneath — this just simplifies the front door.
