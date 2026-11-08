@@ -287,3 +287,17 @@ event-first + opens that event). Last choice stays remembered on-device (di_mode
 account); the inside mode tabs remain so visitors can switch anytime (no dead ends).
 Kept our neon gold/pink branding, not the plain mockup. The 4 modes still power the
 content ranking underneath — this just simplifies the front door.
+
+## 2026-11-08 — IDEA (planned): Event-day Parking Marketplace
+Rambo's idea: let lot owners (churches, businesses, residents near the venues) list
+parking for event days — de-escalate traffic, let visitors skip $60 venue lots, keep
+the money local. The "Parking" one-tap need becomes a real feature.
+- Phase 1 (simple, buildable): a parking LISTING. Host adds lot: location, total spots,
+  price, walk time to venue, and an Available Yes/No toggle (or spots-left count). On
+  event days, a Parking screen lists AVAILABLE lots near tonight's venue, sorted by
+  closest/cheapest → tap for directions + call/reserve. Park & walk. No payments/shuttle.
+  (Needs a Supabase table, e.g. di_parking — production SQL = Rambo's go-ahead per CLAUDE.md.)
+- Phase 2+: reserve/prepay a spot (Stripe), live spots-left, park-&-ride shuttle (partner
+  or venue tie-in).
+- Design-for-later (not Phase 1 blockers): liability/insurance, payments & payout, local
+  permit rules, lot verification/trust.
