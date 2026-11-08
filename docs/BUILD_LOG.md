@@ -514,3 +514,39 @@ Design decisions captured (NOT built yet — pricing is stop-list; L2 + prices s
   Event-Day Parking". (Alt: rename destination "Event Parking" — Rambo's call.)
 STILL NEEDED before building: (1) what L2 unlocks, (2) monthly prices per paid level.
 Next step once those land: a clickable, non-charging mockup of the 4-level dashboard.
+
+## 2026-11-08 — DEEP DIVE / LOCKED: everything from today (DNA updated)
+Rambo asked to lock today's decisions into the DNA (CLAUDE.md updated). Summary of the day:
+
+BUILT & pushed (live once he deploys + runs SQL; nothing turned on yet):
+- Parking marketplace: "Parking" surface (renamed from "Event Day Parking"). Lot cards sorted
+  by walk time to the venues; price, drive time, distance, spots; Directions. Thin Parking
+  bar under the two entry doors. "List your parking" owner form (+ lot photo upload, reusing
+  the business-photos bucket).
+- Parking live status: 3-state Available / Going fast / Full, owner toggles on their lot card,
+  auto-resets to Available each new event day (status_date). Follow a lot (several) → in-app
+  realtime alerts now + web-push sender (send-parking-pushes) ready for push go-live.
+  SQL: 29_parking.sql, 30_parking_status.sql, 31_parking_push_cron.sql.
+- "the venues" everywhere (never name a specific venue in walk/distance copy). Distance-on-
+  everything: walk/drive/distance to nearest venue on business detail pages too.
+- Home cleanup: 4 modes → 3 (Event Day / Ticket Deals / Anytime); removed "After Hours"
+  (Anytime shows nightlife after dark on its own); "Show Ticket" → "Ticket Deals" (+ badge);
+  dropped filler "Open now"/hotels row; de-duplicated the home feed (one Today's Deals, one
+  popular row; retired the duplicate deals banner).
+- Icons: emoji "tiles" → clean custom line-icons (gold ticket, pink dining) + solid blue "P"
+  badge for parking (not the powder-blue emoji).
+
+DESIGNED & LOCKED (NOT built — pricing is stop-list; billing OFF until Rambo says go):
+- Business license REQUIRED to claim/list any business (platform trust + nudges city licensing;
+  Phase 2 license-helper to fill + print).
+- Owner tiers (4): Free (forever; license + listing + post deals + walk-to-venues) /
+  Pro $69 (featured deal, gallery, menu, member deal — CITY discounts this one) /
+  Live $99 (reservations + real-time Available/Not-available) /
+  Premium $149 (top-of-category rotating + promo notifications + special ads + Offer Local
+  Event-Day Parking). Deals stay FREE (app's fuel). Dashboard = owner's control center;
+  reservations their way (phone / own system / app's built-in requests); paid = more control.
+- Parking lives in Premium (reputable lots); tiny home driveways self-select out via the
+  license gate + economics.
+
+Full details in CLAUDE.md and the dated entries above. Next build (on Rambo's go): wire the
+Live on/off toggles + the 4-tier dashboard; keep billing off until he says.
