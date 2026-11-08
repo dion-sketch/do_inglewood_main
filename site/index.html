@@ -664,12 +664,12 @@
       <div class="filterbar" id="evfilters"></div>
       <div id="cal"></div>
       <div id="events-list"></div>
-      <div class="ev-note">Marquee events are pulled from Inglewood's venues &amp; the City calendar. Businesses can post their own game-day specials &amp; nights here. Confirm times with the venue before you go.</div>
+      <div class="ev-note">Marquee events are pulled from Inglewood's venues &amp; the City calendar. Businesses can post their own event specials &amp; nights here. Confirm times with the venue before you go.</div>
     </div>
 
     <!-- EVENT DETAIL / GAME-DAY PLANNER -->
     <div class="view" id="view-event-detail">
-      <div class="head-bar"><div class="back" onclick="go('events')">&#8249;</div><div class="logo-mini" role="img" aria-label="Do Inglewood" title="Home" onclick="go('home')"></div><span class="htitle">Game Day</span></div>
+      <div class="head-bar"><div class="back" onclick="go('events')">&#8249;</div><div class="logo-mini" role="img" aria-label="Do Inglewood" title="Home" onclick="go('home')"></div><span class="htitle">Event</span></div>
       <div id="event-detail-body"></div>
     </div>
 
@@ -947,7 +947,7 @@
   </div>
   <div class="acct-overlay" id="pushOverlay">
     <div class="acct-sheet">
-      <h3>&#128276; Game-day alerts?</h3>
+      <h3>&#128276; Event alerts?</h3>
       <p id="pushMsg">Two alerts per saved event, max: Show Your Ticket deals about 3 hours before doors, and After Hours picks when it lets out.</p>
       <button class="ab" id="pushYes" onclick="pushYes()">Turn on alerts</button>
       <div class="skip" onclick="pushNo()">Not now</div>
@@ -1075,8 +1075,8 @@ function renderOwner(){
       : '<div class="deal-slot dim"><div style="font-weight:800;font-family:\'Barlow Condensed\';font-size:16px">Your deal slot is dark.</div><div style="font-size:12px;color:var(--muted);margin:3px 0 10px">Light it up to land in Today\'s Deals.</div><button class="claimbtn" onclick="focusDealEditor()">Add Today\'s Deal</button></div>')
     : '';
   var gameDayToggle = Object.prototype.hasOwnProperty.call(b,'game_day_special')
-    ? '<label class="mut" style="display:flex;align-items:center;gap:8px;margin:8px 0 4px;font-size:12.5px"><input type="checkbox" id="ob_gameday"'+(b.game_day_special?' checked':'')+'> &#127944; Highlight as a Game Day Special (shows on event pages near SoFi, Kia Forum, Intuit Dome)</label>'
-    : '<div class="mut" style="font-size:12px;margin:8px 0 4px">Game Day Special toggle appears after the featured/game-day database migration runs.</div>';
+    ? '<label class="mut" style="display:flex;align-items:center;gap:8px;margin:8px 0 4px;font-size:12.5px"><input type="checkbox" id="ob_gameday"'+(b.game_day_special?' checked':'')+'> &#127944; Highlight as an Event Day Special (shows on event pages near SoFi, Kia Forum, Intuit Dome)</label>'
+    : '<div class="mut" style="font-size:12px;margin:8px 0 4px">Event Day Special toggle appears after the featured database migration runs.</div>';
   var specialBlock = paid
     ? '<label class="flbl">Today\'s Deal <span style="color:var(--muted);font-weight:500">(featured offer)</span></label><input id="ob_special" class="finput" oninput="previewOwnerDeal(this.value)" placeholder="e.g. Free dessert with any entree today" value="'+String(b.special||'').replace(/"/g,'&quot;')+'"><div id="deal-preview" class="deal-preview"></div>'+gameDayToggle+
       '<label class="flbl">&#11088; Do Member deal <span style="color:var(--muted);font-weight:500">(discount for app members — draws customers in)</span></label><input id="ob_mdeal" class="finput" placeholder="e.g. 10% off for Do Members" value="'+String(b.mdeal||b.member_deal||'').replace(/"/g,'&quot;')+'">'
@@ -2605,6 +2605,8 @@ function evKind(e){
 }
 function evIcon(e){ return EVICON[evKind(e)]||EVICON.ticket; }
 function evLabel(e){ var L={basketball:'Basketball',football:'Football',concert:'Concert',comedy:'Comedy',community:'Community'}; return L[evKind(e)]||(e&&e.category)||'Event'; }
+// The right word for this event: "game" for sports, "show" for a concert/comedy, else "event".
+function evNoun(e){ var k=evKind(e); if(k==='basketball'||k==='football') return 'game'; if(k==='concert'||k==='comedy') return 'show'; return 'event'; }
 function evKindClass(e){ var k=evKind(e); return (k==='basketball'||k==='football')?'sports':(k==='community'?'community':'concert'); }
 function evEmoji(c){return ({Concert:'🎤',Sports:'🏈',Community:'🎪',Comedy:'🎭',Special:'🍸'})[c]||'🎟️';}
 function evTagClass(c){return ({Concert:'concert',Sports:'sports',Community:'community',Special:'special'})[c]||'concert';}
@@ -2626,7 +2628,7 @@ function buildEvFilters(){
   var host=document.getElementById('evfilters'); if(!host) return;
   var kinds={}; EV.forEach(function(e){ kinds[evKind(e)]=1; });
   var chips=[['all','All']];
-  if(kinds.basketball||kinds.football) chips.push(['games','Games']);
+  if(kinds.basketball||kinds.football) chips.push(['games','Sports']);
   if(kinds.concert) chips.push(['concerts','Concerts']);
   if(kinds.comedy) chips.push(['comedy','Comedy']);
   if(kinds.community) chips.push(['community','Community']);
@@ -2659,13 +2661,13 @@ function plannerSection(title,items,a,checkMin){if(!items.length)return '';items
 var VENUE_PARKING_TIPS={
   'sofi stadium':['Most SoFi Stadium lots require a pre-purchased parking pass — buy one ahead through Ticketmaster or the SoFi app.','Rideshare pickup/drop-off is in a designated lot with a walk to the gates — check the SoFi app for the current zone.'],
   'kia forum':['Kia Forum has on-site lots plus overflow parking on nearby side streets and church lots — arrive early on sellout nights.','Rideshare pickup/drop-off is just off Prairie Ave, a short walk from the main entrance.'],
-  'intuit dome':['Intuit Dome parking is reservation-only for most games — book a spot in advance through the Clippers/Intuit Dome app.','Rideshare drop-off has its own dedicated lot separate from parking.'],
+  'intuit dome':['Intuit Dome parking is reservation-only for most events — book a spot in advance through the Clippers/Intuit Dome app.','Rideshare drop-off has its own dedicated lot separate from parking.'],
   'youtube theater':['YouTube Theater shares the Hollywood Park lots with SoFi Stadium — check which lot your ticket references before you drive.']
 };
 function parkingTips(e){
   var v=String(e.venue||'').toLowerCase();
   var tips=(VENUE_PARKING_TIPS[v]||[]).concat([
-    'Arrive 90+ minutes before kickoff/doors — lots and nearby streets fill up fast on game days.',
+    'Arrive 90+ minutes before kickoff/doors — lots and nearby streets fill up fast on event days.',
     'Metro K Line serves Downtown Inglewood and Fairview Heights stations near the venues — a car-free option worth checking for sold-out events.',
     'Traffic on Century, Prairie, and Manchester backs up hard right before and after events — give yourself extra time either way.'
   ]);
@@ -2684,7 +2686,7 @@ function openEvent(id){
   var hotels=P.filter(function(p){return /hotel|lodging/i.test(text(p));});
   var deals=P.filter(function(p){return !!p.special||!!p.mdeal||liveDealsFor(p).length>0;});
   var map='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(e.venue||'Inglewood');
-  document.getElementById('event-detail-body').innerHTML='<div style="padding:18px 16px 0"><div class="evtag '+evKindClass(e)+'">'+evEsc(evLabel(e).toUpperCase())+'</div><h1 style="font-family:\'Barlow Condensed\';font-size:30px;line-height:1.02;margin:9px 0 6px">'+evEsc(e.title)+'</h1><div style="color:var(--muted);font-size:13px;line-height:1.6">'+evEsc(e.date||'')+' · '+evEsc(e.time||'Time TBD')+'<br>📍 '+evEsc(e.venue||'Inglewood')+'</div><div style="display:flex;gap:8px;margin:16px 0;flex-wrap:wrap"><button class="btn btn-gold" onclick="document.getElementById(\'game-day-plan\').scrollIntoView({behavior:\'smooth\'})">Plan my game day</button><button class="btn btn-ghost" id="evSaveBtn" onclick="toggleSaveEvent(\''+evEsc(e.id)+'\')">'+(isEventSaved(e.id)?'&#10003; Saved':'&#128276; Save')+'</button>'+(e.url?'<a class="btn btn-ghost" href="'+evEsc(e.url)+'" target="_blank" rel="noopener">Tickets</a>':'')+'<a class="btn btn-ghost" href="'+map+'" target="_blank" rel="noopener">Map</a></div></div>'+sytBannerHTML(e,e.date===isoOf(new Date()))+'<button class="crew-btn" onclick="openPlanBuilder(\''+evEsc(e.id)+'\')">&#128111; Send plan to my crew</button><div id="game-day-plan">'+plannerSection('Before the game',before,a,beforeCheck)+plannerSection('After the game',after,a,afterCheck)+plannerSection('Staying over?',hotels,a)+plannerSection('Deals today',deals,a)+parkingTips(e)+'</div>';
+  document.getElementById('event-detail-body').innerHTML='<div style="padding:18px 16px 0"><div class="evtag '+evKindClass(e)+'">'+evEsc(evLabel(e).toUpperCase())+'</div><h1 style="font-family:\'Barlow Condensed\';font-size:30px;line-height:1.02;margin:9px 0 6px">'+evEsc(e.title)+'</h1><div style="color:var(--muted);font-size:13px;line-height:1.6">'+evEsc(e.date||'')+' · '+evEsc(e.time||'Time TBD')+'<br>📍 '+evEsc(e.venue||'Inglewood')+'</div><div style="display:flex;gap:8px;margin:16px 0;flex-wrap:wrap"><button class="btn btn-gold" onclick="document.getElementById(\'game-day-plan\').scrollIntoView({behavior:\'smooth\'})">Plan my day</button><button class="btn btn-ghost" id="evSaveBtn" onclick="toggleSaveEvent(\''+evEsc(e.id)+'\')">'+(isEventSaved(e.id)?'&#10003; Saved':'&#128276; Save')+'</button>'+(e.url?'<a class="btn btn-ghost" href="'+evEsc(e.url)+'" target="_blank" rel="noopener">Tickets</a>':'')+'<a class="btn btn-ghost" href="'+map+'" target="_blank" rel="noopener">Map</a></div></div>'+sytBannerHTML(e,e.date===isoOf(new Date()))+'<button class="crew-btn" onclick="openPlanBuilder(\''+evEsc(e.id)+'\')">&#128111; Send plan to my crew</button><div id="game-day-plan">'+plannerSection('Before the '+evNoun(e),before,a,beforeCheck)+plannerSection('After the '+evNoun(e),after,a,afterCheck)+plannerSection('Staying over?',hotels,a)+plannerSection('Deals today',deals,a)+parkingTips(e)+'</div>';
   go('event-detail');
 }
 function renderEvents(){
@@ -3260,7 +3262,7 @@ function renderPlanView(plan){
   if(after) html+='<div class="plan-step"><div class="num">'+(++n)+'</div><div class="lbl">After the show</div>'+planStopCard(after,e,after.cat)+'</div>';
   document.getElementById('plan-body').innerHTML='<div class="eyebrow">&#128111; Your crew’s plan</div><h2>'+(e?evEsc(e.title):'Night out in Inglewood')+'</h2>'+
     '<div class="subcopy">Tap a stop for directions, deals and hours.</div>'+html+
-    '<div class="plan-cta">'+(e?'<button class="btn btn-primary" onclick="openEvent(\''+evEsc(e.id)+'\')">Game-day plan &amp; parking</button>':'')+
+    '<div class="plan-cta">'+(e?'<button class="btn btn-primary" onclick="openEvent(\''+evEsc(e.id)+'\')">Full plan &amp; parking</button>':'')+
     '<button class="btn btn-ghost" onclick="shareLink(\'Our plan\',\'Here’s the plan 👇\',appUrl({plan:\''+evEsc(plan.id)+'\'}))">Share this plan</button></div>';
   go('plan');
 }
@@ -3367,7 +3369,7 @@ async function pushOff(){
   try{ localStorage.removeItem('di_push'); }catch(e){}
   toast('Alerts off'); renderSavedEvents();
 }
-function pushStatusTap(){ if(pushOn()){ if(confirm('Turn off game-day alerts?')) pushOff(); } else offerPush(); }
+function pushStatusTap(){ if(pushOn()){ if(confirm('Turn off event alerts?')) pushOff(); } else offerPush(); }
 function renderSavedEvents(){
   var sect=document.getElementById('saved-events-sect'), el=document.getElementById('saved-events'); if(!el) return;
   var today=isoOf(new Date());

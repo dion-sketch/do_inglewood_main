@@ -262,3 +262,15 @@ deals, "Plan my game day," and nearby pregame spots. The Events-tab rows and the
 Day banner card already used `openEvent`; this just makes the home cards consistent.
 Decision: direct-to-event is right — it's the Event Day DNA (purposeful, deal-first),
 fewer taps to the deals. One-line change in renderHomeEvents().
+
+## 2026-11-08 — Stop calling everything a "game"
+Rambo's note: not every event is a game — concerts, comedy, community events shouldn't
+say "game day." Added evNoun(e): "game" for sports, "show" for concert/comedy, "event"
+otherwise. Event detail now reads "Before the show / After the show" for a concert,
+"Before the game" for sports, etc. Other interface copy made event-neutral: header
+"Game Day"→"Event"; "Plan my game day"→"Plan my day"; push "Game-day alerts?"→"Event
+alerts?"; For-Business "game-day specials"→"event specials"; owner toggle "Game Day
+Special"→"Event Day Special"; parking tips "most games"/"on game days"→"most events"/
+"on event days"; events filter chip "Games"→"Sports"; crew-plan button "Game-day plan"→
+"Full plan". Left authentic business review/deal quotes (e.g. "Show your game ticket")
+and internal ids/field names (game_day_special, #game-day-plan) unchanged.
