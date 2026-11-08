@@ -481,3 +481,14 @@ emoji everywhere with a solid blue (#1273ff) rounded "P" badge (.pbadge / the ba
 — bar, quick chip, venue-guide headers, "Your parking" and "Own a lot" headers. Bar
 subtitle now "Available spots near venues · or list yours" (was "Live spots near the
 venues"). No more washed-out emoji tile.
+
+## 2026-11-08 — Entry-card icons: emoji tiles → clean custom icons + audit
+Rambo didn't like the emoji "tiles." Following the blue-P fix, replaced the two entry-card
+emoji (🎟️ / 🍽️) with clean stroked SVG icons in each card's theme color — a gold ticket for
+"Game Day & Concert Deals", a pink fork & knife for "Explore & Save Today". Now the whole
+entry screen is one icon system (gold ticket / pink dining / blue P), no washed-out emoji.
+Audit pass: dropped the last user-facing "Event-day parking" (intro now "Parking near the
+venues…"); confirmed zero 🅿️ emoji remain; smoke-tested Home/Explore/Events/Specials/Saved/
+Parking — no console errors; quick-chip P renders as the blue badge.
+Still emoji (left for review, can clean next if Rambo likes the direction): the mode-tab
+icons (🏟️/🎟️/☀️) and the food/drink/coffee quick chips.

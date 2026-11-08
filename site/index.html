@@ -472,13 +472,14 @@
   .doors{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px;}
   .doorcard{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:9px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px 12px;cursor:pointer;color:var(--txt);font:inherit;min-height:176px;transition:transform .12s ease,border-color .2s,box-shadow .2s;}
   .doorcard:active{transform:scale(.97);}
-  .doorcard .dc-ic{font-size:32px;line-height:1;}
+  .doorcard .dc-ic{line-height:1;}
+  .doorcard .dc-ic svg{width:34px;height:34px;display:block;}
   .doorcard b{display:block;font-family:'Barlow Condensed';font-weight:800;font-size:19px;line-height:1.04;letter-spacing:.3px;}
   .doorcard .dc-sub{display:block;font-size:11.5px;color:var(--muted);line-height:1.35;}
   .door-event{border-color:rgba(245,197,66,.5);box-shadow:0 10px 26px rgba(245,197,66,.14);}
-  .door-event .dc-ic{filter:drop-shadow(0 0 12px rgba(245,197,66,.55));}
+  .door-event .dc-ic{color:var(--gold);filter:drop-shadow(0 0 10px rgba(245,197,66,.5));}
   .door-explore{border-color:rgba(255,46,126,.45);box-shadow:0 10px 26px rgba(255,46,126,.14);}
-  .door-explore .dc-ic{filter:drop-shadow(0 0 12px rgba(255,46,126,.5));}
+  .door-explore .dc-ic{color:var(--pink);filter:drop-shadow(0 0 10px rgba(255,46,126,.45));}
   .ob-search{margin-top:14px;display:flex;align-items:center;gap:9px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;color:var(--muted);}
   .ob-search input{flex:1;border:none;background:transparent;color:var(--txt);font-size:14px;outline:none;}
   .ob-evttl{font-family:'Barlow Condensed';font-weight:800;font-size:12px;letter-spacing:1.6px;color:var(--gold);text-transform:uppercase;margin:18px 2px 8px;text-align:left;}
@@ -2908,8 +2909,8 @@ function renderModePicker(){
   if(sub) sub.innerHTML=evs.length?('Tonight: <b style="color:var(--gold)">'+xmlEsc(evs[0].title)+'</b> at '+xmlEsc(evs[0].venue)+(evs[0].time?' · '+xmlEsc(evs[0].time):'')):'Two ways in — pick one, switch anytime.';
   // Two doors: event-first (Game Day & Concert Deals) vs everyday (Explore & Save Today).
   var doors='<div class="doors">'+
-    '<button class="doorcard door-event" onclick="finishOnboard(\'event\')"><span class="dc-ic">&#127903;&#65039;</span><b>Game Day &amp; Concert Deals</b><span class="dc-sub">Pick your event &#8594; nearby deals &#8594; reservations &#8594; ticket alerts</span></button>'+
-    '<button class="doorcard door-explore" onclick="finishOnboard(\'anytime\')"><span class="dc-ic">&#127869;&#65039;</span><b>Explore &amp; Save Today</b><span class="dc-sub">Restaurants &#8594; activities &#8594; local deals &#8594; book or explore</span></button>'+
+    '<button class="doorcard door-event" onclick="finishOnboard(\'event\')"><span class="dc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2 2 2 0 0 0 0 4 2 2 0 0 1-2 2H5a2 2 0 0 1-2-2 2 2 0 0 0 0-4z"/><line x1="15" y1="6" x2="15" y2="18" stroke-dasharray="2 2"/></svg></span><b>Game Day &amp; Concert Deals</b><span class="dc-sub">Pick your event &#8594; nearby deals &#8594; reservations &#8594; ticket alerts</span></button>'+
+    '<button class="doorcard door-explore" onclick="finishOnboard(\'anytime\')"><span class="dc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v6a2 2 0 0 0 4 0V3"/><line x1="8" y1="9" x2="8" y2="21"/><path d="M16.5 3C15 3 14 5 14 7.5S15 12 16.5 12"/><line x1="16.5" y1="3" x2="16.5" y2="21"/></svg></span><b>Explore &amp; Save Today</b><span class="dc-sub">Restaurants &#8594; activities &#8594; local deals &#8594; book or explore</span></button>'+
     '</div>';
   // Thin Event Day Parking bar — the #1 event-day pain, deliberately smaller than the two doors.
   var parkbar='<button class="parkbar" onclick="obOpenParking()"><span class="pb-ic">P</span>'+
@@ -3383,7 +3384,7 @@ function renderParking(){
     var dx=x.mi==null?Infinity:x.mi, dy=y.mi==null?Infinity:y.mi; return dx-dy;
   });
   var intro = e ? ('Parking near <b style="color:var(--gold)">the venues</b> tonight &mdash; closest walk first, live status. Follow a lot and we’ll tell you the second it’s going fast or gone.')
-                : 'Event-day parking near the venues &mdash; sorted by walk time, with live status. Follow a lot and we’ll alert you if it fills up.';
+                : 'Parking near the venues &mdash; sorted by walk time, with live status. Follow a lot and we’ll alert you if it fills up.';
   // Owner's own lots with live controls (even before approval).
   var mine='';
   if(MY_PARKING.length){
