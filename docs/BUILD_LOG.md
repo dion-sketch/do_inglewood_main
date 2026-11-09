@@ -588,3 +588,16 @@ Verified with headless renders of all 4 tiers — no console errors.
   "follow a business" model + a sender (real feature, not a quick follow); special ads is largely
   covered by Premium's existing top-of-category placement, so the button says so. To build later.
 SQL to run now: 32_owner_tiers.sql (tiers/live-status/license) + 33_biz_parking_link.sql. Billing off.
+
+## 2026-11-09 — Listing page redesign: "big and full" (Apple-Maps density)
+Rambo compared his listing to Apple Maps' business page (felt bigger/fuller/less templated).
+The data was already there — it was laid out thin. Rebuilt the top of openListing:
+- Taller image-forward hero (270px) with a bottom gradient.
+- 4-stat strip under the name: 🚶 walk-to-venues · ★ rating+count · price · live/open status
+  (statStrip()), styled like Apple's Hours/rating/Accepts/Cost row.
+- Bigger, bolder action buttons; Directions is the filled primary; Reserve replaces Story
+  when bookable.
+- "Good to know" amenity grid (goodToKnow()) built from real flags: Show-Ticket deal, deal,
+  member deal, takes reservations, open late, Event Day special, $/person, drive-to-venues,
+  owner-managed, nearby. Adds the density that reads as real, not AI/template.
+Verified with a rich sample render — no errors. Pure front-end; no SQL.

@@ -145,7 +145,20 @@
   .head-bar{padding:14px 20px 10px;display:flex;align-items:center;gap:12px;position:sticky;top:0;background:var(--bg);z-index:5;border-bottom:1px solid var(--line);}
   .back{width:34px;height:34px;border-radius:50%;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;flex:0 0 auto;position:relative;z-index:30;}
   .actrow{display:flex;gap:8px;margin:14px 0 2px;}
-  .actpill{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px;border:1px solid rgba(245,197,66,.5);border-radius:12px;background:rgba(255,255,255,.03);font-size:10.5px;color:var(--gold);cursor:pointer;text-decoration:none;font-weight:700;}
+  .actpill{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:13px 4px;border:1px solid rgba(245,197,66,.5);border-radius:13px;background:rgba(255,255,255,.03);font-size:11.5px;color:var(--gold);cursor:pointer;text-decoration:none;font-weight:800;}
+  .actpill .ai svg,.actpill .ai{width:20px;height:20px;}
+  .actpill.primary{background:var(--grad);color:#1a0010;border:0;}
+  /* Listing: Apple-style 4-stat strip + "Good to know" grid */
+  .statstrip{display:flex;border:1px solid var(--line);border-radius:14px;background:var(--panel);margin-top:14px;overflow:hidden;}
+  .statstrip .stat{flex:1;text-align:center;padding:12px 6px;border-left:1px solid var(--line);}
+  .statstrip .stat:first-child{border-left:0;}
+  .statstrip .stat .v{font-family:'Barlow Condensed';font-weight:800;font-size:18px;line-height:1;}
+  .statstrip .stat .l{font-size:10px;color:var(--muted);margin-top:5px;text-transform:uppercase;letter-spacing:.6px;}
+  .gtk{margin-top:18px;}
+  .gtk-h{font-family:'Barlow Condensed';font-weight:800;font-size:19px;margin-bottom:9px;}
+  .gtk-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .gtk-i{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#e4e4ea;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:10px 12px;line-height:1.3;}
+  .gtk-i svg{width:16px;height:16px;flex:0 0 auto;}
   .actpill .ai{font-size:18px;}
   .actpill:active{transform:scale(.96);color:var(--pink);border-color:var(--pink);}
   .head-bar h2{font-family:'Barlow Condensed';font-weight:700;font-size:22px;}
@@ -274,7 +287,8 @@
   .da .ic{width:38px;height:38px;border-radius:50%;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--txt);}
 
   /* LISTING DETAIL */
-  .ldhero{height:215px;background-size:cover;background-position:center;position:relative;background-color:#222;}
+  .ldhero{height:270px;background-size:cover;background-position:center;position:relative;background-color:#222;}
+  .ldhero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(10,10,12,.55));pointer-events:none;}
   .ldhero .back{position:absolute;top:14px;left:16px;z-index:2;}
   .ldhero .fav{position:absolute;top:14px;right:16px;z-index:2;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;}
   .ldhero::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,transparent 45%,var(--bg));}
@@ -2516,6 +2530,35 @@ function dealBlockHTML(p){
   return '<div class="deal-slot"><button class="deal-btn" onclick="revealDeal()">&#127903; SEE TODAY\'S DEAL &#8594;</button><div class="deal-reveal" id="deal-reveal"><div class="deal-title">&#127903; Today\'s Deal — '+xmlEsc(p.n)+'</div><div class="deal-copy">'+xmlEsc(p.special)+'</div><div class="deal-note">Valid today · Show this screen when you order</div></div></div>';
 }
 function revealDeal(){ var e=document.getElementById('deal-reveal'); if(e)e.classList.add('on'); logActivity(window._curListing,'deal_open'); }
+// Apple-Maps-style stat strip: distance to venues · rating · price · live status.
+function statStrip(p){
+  var cells=[];
+  var nv=(Number.isFinite(p.lat)&&Number.isFinite(p.lng))?nearestVenue(p):null;
+  if(nv) cells.push(['&#128694; '+walkMins(nv.mi)+'<small style="font-size:11px">m</small>','To venues']);
+  cells.push([(p.r!=null&&p.r!=='')?('&#9733; '+p.r):'New',(p.rc?((p.rc>999?(p.rc/1000).toFixed(1)+'k':p.rc)+' reviews'):'Rating')]);
+  if(p.price) cells.push([xmlEsc(p.price),'Price']);
+  var st=bizLive(p)||((openNow(p.hrs)||{}).open?'open':'closed');
+  cells.push([st==='open'?'<span style="color:var(--green)">Open</span>':(st==='busy'?'<span style="color:#ffb84d">Busy</span>':'<span style="color:#ff7a7a">Closed</span>'),'Now']);
+  return '<div class="statstrip">'+cells.map(function(c){ return '<div class="stat"><div class="v">'+c[0]+'</div><div class="l">'+c[1]+'</div></div>'; }).join('')+'</div>';
+}
+// "Good to know" amenity grid, built from what we actually know about the spot.
+function goodToKnow(p){
+  var items=[];
+  if(ticketDealFor(p)) items.push('&#127903; Show-Ticket deal');
+  if(p.special) items.push('&#9733; '+xmlEsc(dealOfferText(p)||'Deal today'));
+  if(p.mdeal) items.push('&#11088; Do Member deal');
+  if(p.book||canReserveNow(p)) items.push(ICON.cal+' Takes reservations');
+  else if(isReservable(p)&&p.ph) items.push(ICON.phone+' Call to book');
+  if(openLate(p)) items.push('&#127769; Open late');
+  if(p.gameDay) items.push('&#127944; Event Day special');
+  if(p.cpp) items.push('&#128176; ~$'+p.cpp+' / person');
+  var nv=(Number.isFinite(p.lat)&&Number.isFinite(p.lng))?nearestVenue(p):null;
+  if(nv) items.push('&#128663; '+driveMins(nv.mi)+' min drive to venues');
+  if(p.tier>=2) items.push('&#10003; Owner-managed listing');
+  if(!isInglewood(p)) items.push('&#128205; Just outside Inglewood');
+  if(!items.length) return '';
+  return '<div class="gtk"><div class="gtk-h">Good to know</div><div class="gtk-grid">'+items.map(function(i){ return '<div class="gtk-i">'+i+'</div>'; }).join('')+'</div></div>';
+}
 function openListing(k,from){
   lastList=from||'home';const p=PB[k];
   logActivity(k,'view');
@@ -2539,18 +2582,18 @@ function openListing(k,from){
     :'<div class="ldrow"><span class="k">Hours</span><span class="v">'+xmlEsc(p.hrs)+(p.tier<2?' <span style="color:var(--gold);font-size:11px">· confirm</span>':'')+'</span></div>');
   document.getElementById('ldbody').innerHTML=`
     <h2>${xmlEsc(p.n)}</h2>
-    <div class="ldmeta"><span style="font-size:13px">${starline(p)}</span><span class="pricelv">${xmlEsc(p.price)}</span>${p.cat?`<span style="font-size:12px;color:var(--muted)">${xmlEsc(p.cat)}</span>`:''}${badge}</div>
-    ${tagsRow}
+    <div class="ldmeta"><span style="font-size:12px;color:var(--muted)">${xmlEsc(p.cat||'')}</span>${badge}</div>
+    ${statStrip(p)}
+    <div class="actrow">
+      <div class="actpill primary" onclick="openDirections('${p.k}')"><span class="ai">${ICON.nav}</span>Directions</div>
+      ${p.ph?`<a class="actpill" href="${telHref(p.ph)}"><span class="ai">${ICON.phone}</span>Call</a>`:''}
+      ${p.web?`<a class="actpill" href="${webUrl(p.web)}" target="_blank" rel="noopener"><span class="ai">${ICON.globe}</span>Website</a>`:''}
+      ${(p.book||canReserveNow(p))?`<div class="actpill" onclick="reserveStop('${p.k}')"><span class="ai">${ICON.cal}</span>Reserve</div>`:`<div class="actpill" onclick="shareBiz('${p.k}')"><span class="ai">${ICON.share}</span>Share</div>`}
+    </div>
     ${statusLine}
     <div id="deal-cards">${dealCardsHTML(p)}</div>
     ${dealBlockHTML(p)}
-    <div class="actrow">
-      <div class="actpill" onclick="openDirections('${p.k}')"><span class="ai">${ICON.nav}</span>Directions</div>
-      ${p.ph?`<a class="actpill" href="${telHref(p.ph)}"><span class="ai">${ICON.phone}</span>Call</a>`:''}
-      ${p.web?`<a class="actpill" href="${webUrl(p.web)}" target="_blank" rel="noopener"><span class="ai">${ICON.globe}</span>Website</a>`:''}
-      <div class="actpill" onclick="shareBiz('${p.k}')"><span class="ai">${ICON.share}</span>Share</div>
-      <div class="actpill" onclick="makeStory('${p.k}')"><span class="ai">${ICON.camera}</span>Story</div>
-    </div>
+    ${goodToKnow(p)}
     ${(p.photos&&p.photos.length)?`<div style="display:flex;gap:8px;overflow-x:auto;margin:12px 0;padding-bottom:4px">${p.photos.map(u=>`<img src="${String(u).replace(/"/g,'&quot;')}" loading="lazy" style="height:120px;border-radius:12px;flex:0 0 auto">`).join('')}</div>`:''}
     ${p.special?`<div class="specialbox"><div class="st">&#127863; Active Special</div><div class="sd">${xmlEsc(p.special)}</div></div>`:''}
     ${p.mdeal?(CURRENT_USER
