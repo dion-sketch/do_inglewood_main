@@ -601,3 +601,11 @@ The data was already there — it was laid out thin. Rebuilt the top of openList
   member deal, takes reservations, open late, Event Day special, $/person, drive-to-venues,
   owner-managed, nearby. Adds the density that reads as real, not AI/template.
 Verified with a rich sample render — no errors. Pure front-end; no SQL.
+
+## 2026-11-09 — Fullness pass across the lists
+Extended the listing-page fullness to the rest of the app. Added venueChip() — a compact
+"🚶 Xm to the venues" chip (the app's signature) — to the business cards (cardHTML, used on
+Home rows / Specials / Saved) and the Explore rows (exploreRow). Now every spot everywhere
+shows how far it is from the venues, alongside rating · price · deal · open/closed. Events
+screen already has good density (calendar + day list + coming-up) and parking cards already
+show walk time, so those were left. Front-end only; verified across Home/Explore — no errors.
