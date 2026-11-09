@@ -574,3 +574,17 @@ TODO/fast-follow: Free-posted deal currently shows only in the owner editor; sur
 basic "★ Deal" on cards (vs Pro's featured glow) needs a featured-vs-basic split. Premium
 parking-offer toggle + promo notifications + special ads are stubs to be wired next.
 Verified with headless renders of all 4 tiers — no console errors.
+
+## 2026-11-09 — Fast-follows: Free-deal badge, business parking toggle, Premium buttons
+- FREE DEAL: a Free business's posted special now shows as a basic "★ Deal" badge on cards
+  (hasAnyDeal includes p.special); Pro+ still gets the featured glow (isDealLit stays tier>=2).
+  Verified: Free+special → ★ Deal; Free no special → nothing; Pro+special → featured.
+- BUSINESS PARKING (Premium): the "Offer Local Event-Day Parking" toggle now works —
+  toggleBizParking creates/reactivates a di_parking row tied to the business (business_id),
+  using the business's name/address/coords, submitted as pending (admin approves like any lot);
+  toggling off sets available=false. Reflects b.offers_parking. Needs SQL 33_biz_parking_link.sql
+  (adds offers_parking to di_businesses + business_id to di_parking).
+- PROMO NOTIFICATIONS + SPECIAL ADS: left as honest Premium buttons — promo notifications needs a
+  "follow a business" model + a sender (real feature, not a quick follow); special ads is largely
+  covered by Premium's existing top-of-category placement, so the button says so. To build later.
+SQL to run now: 32_owner_tiers.sql (tiers/live-status/license) + 33_biz_parking_link.sql. Billing off.

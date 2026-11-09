@@ -1145,6 +1145,32 @@ async function ownerWrite(patch){
 function liveStatusOf(b){ b=b||MY_BIZ||{}; var t=isoOf(new Date()); return (b.live_status_date===t && b.live_status)?b.live_status:''; }
 // Public app-shaped object's live status (p.live/p.liveDate), today only.
 function bizLive(p){ if(!p||!p.live||!p.liveDate) return ''; return (p.liveDate===isoOf(new Date()))?p.live:''; }
+// Premium: offer this business's lot in the Parking page (creates/toggles a di_parking row).
+async function toggleBizParking(on){
+  if(!MY_BIZ){ return; }
+  try{
+    if(on){
+      var ex=await SB.from('di_parking').select('id').eq('business_id',MY_BIZ.id).limit(1);
+      if(ex.data && ex.data.length){
+        await SB.from('di_parking').update({available:true,is_active:true}).eq('business_id',MY_BIZ.id);
+      } else {
+        var row={ name:MY_BIZ.name+' — Lot', address:MY_BIZ.address||null,
+          latitude:(MY_BIZ.latitude!=null?MY_BIZ.latitude:null), longitude:(MY_BIZ.longitude!=null?MY_BIZ.longitude:null),
+          price:null, spots_total:null, spots_available:null, available:true,
+          status:'open', status_date:isoOf(new Date()), notes:'Event-day parking at '+MY_BIZ.name,
+          approved:false, is_active:true, claimed_by:CURRENT_USER.id, business_id:MY_BIZ.id };
+        var r=await SB.from('di_parking').insert(row);
+        if(r && r.error){ toast('Could not add parking: '+r.error.message); return; }
+      }
+      await ownerWrite({offers_parking:true}); MY_BIZ.offers_parking=true;
+      toast('Parking submitted ✓ — shows in the Parking page once approved');
+    } else {
+      await SB.from('di_parking').update({available:false}).eq('business_id',MY_BIZ.id);
+      await ownerWrite({offers_parking:false}); MY_BIZ.offers_parking=false;
+      toast('Event-day parking turned off');
+    }
+  }catch(e){ toast('Could not update parking on this device'); }
+}
 async function setLiveStatus(status){
   if(!MY_BIZ) return;
   var today=isoOf(new Date());
@@ -1224,9 +1250,9 @@ function renderOwner(){
   // Premium tools: parking offer + promo notifications + special ads.
   var premiumBlock = premium ? '<div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line)">'+
     '<div style="font-weight:800;font-family:\'Barlow Condensed\';font-size:15px">&#128081; Premium tools</div>'+
-    '<label class="pk-toggle" style="margin-top:9px"><input type="checkbox" id="ob_offer_parking" onchange="toast(\'Adding your lot to the Parking page — coming soon\')"><span><span class="pbadge">P</span> <b>Offer Local Event-Day Parking</b> &mdash; your lot joins the Parking page</span></label>'+
-    '<button type="button" class="btn btn-ghost" style="width:100%;margin-top:9px" onclick="toast(\'Promo notifications — coming soon\')">&#128276; Send a promo notification to followers</button>'+
-    '<button type="button" class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="toast(\'Special ads — coming soon\')">&#128227; Set up a special ad</button>'+
+    '<label class="pk-toggle" style="margin-top:9px"><input type="checkbox" id="ob_offer_parking"'+(b.offers_parking?' checked':'')+' onchange="toggleBizParking(this.checked)"><span><span class="pbadge">P</span> <b>Offer Local Event-Day Parking</b> &mdash; your lot joins the Parking page</span></label>'+
+    '<button type="button" class="btn btn-ghost" style="width:100%;margin-top:9px" onclick="toast(\'Promo notifications are coming — customers will follow your spot first\')">&#128276; Send a promo notification to followers</button>'+
+    '<button type="button" class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="toast(\'You are already top of your category as Premium — boosted ad slots coming soon\')">&#128227; Set up a special ad</button>'+
   '</div>' : '';
   // The 4-tier ladder — always shown; upgrades don't charge (billing off).
   var planLadder = '<div style="margin-top:22px;padding-top:16px;border-top:1px solid var(--line)">'+
@@ -1985,7 +2011,8 @@ function dealOfferText(p){
 // game-day planner, Surprise Me, Specials, Home). Game Day specials get their own label.
 // One gold marker on every card that has a deal: "🎟 Ticket Deal" for Show Your Ticket
 // deals (a discount for flashing your event ticket), "★ Deal" for anything else.
-function hasAnyDeal(p){ return !!p && (isDealLit(p) || liveDealsFor(p).length>0 || !!(p.mdeal && p.tier>=2)); }
+// A Free business's posted special shows as a basic ★ Deal; Pro+ gets the featured glow (isDealLit).
+function hasAnyDeal(p){ return !!p && (isDealLit(p) || liveDealsFor(p).length>0 || !!(p.mdeal && p.tier>=2) || !!(p && p.special)); }
 function dealMark(p){
   var t=ticketDealFor(p);
   if(t) return '<span class="deal-flag">&#127903; Ticket Deal</span>'+(t.is_sample?'<span class="deal-flag sample">Sample</span>':'');
