@@ -494,6 +494,27 @@
   .parkbar .pb-ic{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;background:#1273ff;color:#fff;font-family:'Barlow Condensed';font-weight:800;font-size:20px;line-height:1;box-shadow:0 0 12px rgba(18,115,255,.45);}
   /* Blue "P" badge used wherever parking shows an icon — a real blue, not the powder-blue emoji */
   .pbadge{display:inline-flex;align-items:center;justify-content:center;width:1.15em;height:1.15em;border-radius:4px;background:#1273ff;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.92em;line-height:1;vertical-align:-.15em;}
+  /* Owner: live-status segmented control */
+  .live-seg{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+  .live-seg button{flex:1;min-width:92px;background:var(--panel-2,#15151a);border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:10px 4px;font-size:12.5px;font-weight:800;cursor:pointer;}
+  .live-seg button.on.open{background:rgba(85,224,138,.16);border-color:#55e08a;color:#8bf0b2;}
+  .live-seg button.on.busy{background:rgba(255,184,77,.18);border-color:#ffb84d;color:#ffd291;}
+  .live-seg button.on.closed{background:rgba(255,122,122,.18);border-color:#ff7a7a;color:#ffb0b0;}
+  .live-seg button.clr{flex:0 0 auto;min-width:0;color:var(--muted);}
+  /* Owner: plan ladder */
+  .plan-row{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:12px 13px;margin-bottom:9px;}
+  .plan-row.on{border-width:1px;}
+  .plan-row.on.free{border-color:rgba(85,224,138,.5);}
+  .plan-row.on.pro{border-color:rgba(245,197,66,.55);}
+  .plan-row.on.live{border-color:rgba(18,115,255,.6);box-shadow:0 8px 22px rgba(18,115,255,.12);}
+  .plan-row.on.premium{border-color:rgba(255,46,126,.6);box-shadow:0 8px 22px rgba(255,46,126,.14);}
+  .plan-row .pr-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
+  .plan-row .pr-nm{font-family:'Barlow Condensed';font-weight:800;font-size:18px;}
+  .plan-row .pr-cur{font-size:10px;color:#55e08a;font-weight:800;}
+  .plan-row .pr-pr{font-family:'Barlow Condensed';font-weight:800;font-size:18px;}
+  .plan-row .pr-pr small{font-size:11px;color:var(--muted);}
+  .plan-row .pr-bl{font-size:12px;color:#d4d4dc;line-height:1.45;margin-top:4px;}
+  .plan-row .pr-up{margin-top:10px;width:100%;border:0;border-radius:10px;padding:10px;background:var(--grad);color:#1a0010;font-family:'Barlow Condensed';font-weight:800;font-size:14px;letter-spacing:.3px;cursor:pointer;}
   .parkbar .pb-tx{flex:1;display:flex;flex-direction:column;}
   .parkbar .pb-tx b{font-family:'Barlow Condensed';font-weight:800;font-size:15px;letter-spacing:.3px;}
   .parkbar .pb-tx span{font-size:11.5px;color:var(--muted);}
@@ -928,6 +949,10 @@
         <label class="flbl">Your role</label>
         <select id="ab_role" class="finput"><option>Owner</option><option>Manager</option><option>Authorized representative</option></select>
 
+        <label class="flbl">Business license # <span style="color:var(--pink);font-weight:700">required</span></label>
+        <input id="ab_license" class="finput" placeholder="City of Inglewood business license number" autocomplete="off">
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.45;">Required — it proves you're a licensed business. Don't have one yet? We'll soon help you file for one right here.</div>
+
         <label style="display:flex;gap:10px;align-items:flex-start;margin:16px 0;font-size:13px;color:var(--muted);cursor:pointer;line-height:1.45;">
           <input id="ab_attest" type="checkbox" style="margin-top:2px;width:18px;height:18px;flex:none;accent-color:var(--gold)">
           <span>I certify that I am the owner or an authorized representative of this business, and the information above is accurate.</span>
@@ -1116,6 +1141,19 @@ async function ownerWrite(patch){
   if(!MY_BIZ) return {error:{message:'No business linked'}};
   return await SB.from('di_businesses').update(patch).eq('id',MY_BIZ.id);
 }
+// Live status (Live tier): effective only for the day it was set, else off.
+function liveStatusOf(b){ b=b||MY_BIZ||{}; var t=isoOf(new Date()); return (b.live_status_date===t && b.live_status)?b.live_status:''; }
+// Public app-shaped object's live status (p.live/p.liveDate), today only.
+function bizLive(p){ if(!p||!p.live||!p.liveDate) return ''; return (p.liveDate===isoOf(new Date()))?p.live:''; }
+async function setLiveStatus(status){
+  if(!MY_BIZ) return;
+  var today=isoOf(new Date());
+  MY_BIZ.live_status=status||null; MY_BIZ.live_status_date=status?today:null;
+  renderOwner();
+  var r=await ownerWrite({live_status:status||null, live_status_date:status?today:null});
+  if(r&&r.error){ toast('Could not update: '+r.error.message); return; }
+  toast(status?('Status set — customers see it now'):'Live status cleared');
+}
 async function sendMagicLink(){
   var email=gv('authEmail'); if(!email){ toast('Enter your email'); return; }
   var r=await SB.auth.signInWithOtp({email:email,options:{emailRedirectTo:location.href.split('#')[0]}});
@@ -1137,19 +1175,18 @@ function renderOwner(){
   if(!CURRENT_USER){ host.innerHTML='<div class="ev-empty"><div class="big">&#128100;</div>Sign in to manage your business.<br><button class="btn btn-primary" style="margin-top:14px" onclick="acctPrompt(\'signin\')">Sign In</button></div>'; return; }
   if(!MY_BIZ){ host.innerHTML='<div class="ev-empty"><div class="big">&#127978;</div>No business linked to your account yet.<br>Claim a listing that\'s already here, or add a new one — we approve it (within 72 hours), then it shows here to manage.<br><button class="btn btn-primary" style="margin-top:14px" onclick="go(\'claim\')">Claim a Business</button><br><button class="btn btn-ghost" style="margin-top:8px" onclick="openAddForm()">Add a New Business</button></div>'; return; }
   var b=MY_BIZ;
-  var tier=(b.tier||1), paid=tier>=2, large=!!b.is_large;
-  var planTag=large?'Enterprise':'Verified', pv=priceFor(2,large), pp=priceFor(3,large);
+  var t=tierOf(b), pro=t>=2, live=t>=3, premium=t>=4, paid=pro;   // paid == Pro+ (Pro features)
   function fld(lbl,id,v){ return '<label class="flbl">'+lbl+'</label><input id="'+id+'" class="finput" value="'+String(v==null?'':v).replace(/"/g,'&quot;')+'">'; }
   function lockRow(title){ return '<div style="display:flex;align-items:center;gap:8px;padding:11px 12px;border:1px dashed var(--line);border-radius:11px;margin-bottom:8px;color:var(--muted);font-size:13px"><span>'+title+'</span><span style="margin-left:auto;font-size:11px;color:var(--gold);font-weight:700">'+planTag+'</span></div>'; }
-  var badge=tier>=3?'<span class="chip chip-sponsored">&#11088; Premium</span>':(tier>=2?'<span class="chip chip-verified">Verified</span>':'<span class="chip chip-import">Free</span>')+(large?' <span class="chip chip-verified">Enterprise</span>':'');
+  var badge='<span class="chip '+(premium?'chip-sponsored':(pro?'chip-verified':'chip-import'))+'">'+tierName(t)+'</span>';
   // Gallery: a Verified feature. Free tier gets one main photo only.
   var galleryBlock = paid
     ? '<div style="font-size:12px;color:var(--muted);margin:10px 0 4px">More photos <span style="opacity:.7">(up to 7 total)</span></div>'+
       '<div id="ob_gallery" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">'+galleryThumbs(b.photos||[])+'</div>'+
       '<label class="btn btn-ghost" style="display:inline-block;cursor:pointer;margin-bottom:6px">&#10133; Add more photos<input type="file" accept="image/*" multiple style="display:none" onchange="uploadExtraPhotos(this.files)"></label>'
     : '';
-  // Reservation + menu + special fields: Verified features. Free tier sees a locked list.
-  var reservBlock = paid
+  // Reservations are a Live-tier feature (menu/special/gallery are Pro).
+  var reservBlock = live
     ? '<div style="font-size:12px;font-weight:800;font-family:\'Barlow Condensed\';letter-spacing:1px;text-transform:uppercase;color:var(--gold);margin:18px 0 6px">'+ICON.cal+' Reservations</div>'+
       '<div style="font-size:12px;color:var(--muted);margin-bottom:8px">Already take bookings online? Paste your link and the Reserve button sends customers straight there.</div>'+
       '<label class="flbl">Booking link <span style="color:var(--muted);font-weight:500">(optional)</span></label><input id="ob_book" class="finput" placeholder="OpenTable / Resy / Booksy / your website" value="'+String(b.booking_url||'').replace(/"/g,'&quot;')+'">'+
@@ -1165,36 +1202,52 @@ function renderOwner(){
   var gameDayToggle = Object.prototype.hasOwnProperty.call(b,'game_day_special')
     ? '<label class="mut" style="display:flex;align-items:center;gap:8px;margin:8px 0 4px;font-size:12.5px"><input type="checkbox" id="ob_gameday"'+(b.game_day_special?' checked':'')+'> &#127944; Highlight as an Event Day Special (shows on event pages near SoFi, Kia Forum, Intuit Dome)</label>'
     : '<div class="mut" style="font-size:12px;margin:8px 0 4px">Event Day Special toggle appears after the featured database migration runs.</div>';
-  var specialBlock = paid
-    ? '<label class="flbl">Today\'s Deal <span style="color:var(--muted);font-weight:500">(featured offer)</span></label><input id="ob_special" class="finput" oninput="previewOwnerDeal(this.value)" placeholder="e.g. Free dessert with any entree today" value="'+String(b.special||'').replace(/"/g,'&quot;')+'"><div id="deal-preview" class="deal-preview"></div>'+gameDayToggle+
-      '<label class="flbl">&#11088; Do Member deal <span style="color:var(--muted);font-weight:500">(discount for app members — draws customers in)</span></label><input id="ob_mdeal" class="finput" placeholder="e.g. 10% off for Do Members" value="'+String(b.mdeal||b.member_deal||'').replace(/"/g,'&quot;')+'">'
-    : '<input id="ob_special" type="hidden" value="'+String(b.special||'').replace(/"/g,'&quot;')+'"><input id="ob_mdeal" type="hidden" value="'+String(b.mdeal||b.member_deal||'').replace(/"/g,'&quot;')+'">';
+  // Any tier can POST a deal (the app's fuel stays free); Pro makes it a FEATURED glow + adds the member deal.
+  var specialBlock = '<label class="flbl">Today\'s Deal <span style="color:var(--muted);font-weight:500">(your offer)</span></label><input id="ob_special" class="finput" oninput="previewOwnerDeal(this.value)" placeholder="e.g. Free dessert with any entree today" value="'+String(b.special||'').replace(/"/g,'&quot;')+'"><div id="deal-preview" class="deal-preview"></div>'+
+    (pro
+      ? gameDayToggle+'<label class="flbl">&#11088; Do Member deal <span style="color:var(--muted);font-weight:500">(discount for app members)</span></label><input id="ob_mdeal" class="finput" placeholder="e.g. 10% off for Do Members" value="'+String(b.mdeal||b.member_deal||'').replace(/"/g,'&quot;')+'">'
+      : '<div class="mut" style="font-size:11.5px;margin:6px 0 2px">Upgrade to <b>Pro</b> to feature your deal in Today’s Deals + add a Member deal.</div><input id="ob_mdeal" type="hidden" value="'+String(b.mdeal||b.member_deal||'').replace(/"/g,'&quot;')+'">');
   var menuBlock = paid
     ? '<div style="font-size:12px;color:var(--muted);margin:16px 0 6px">&#127860; Menu — show your best dishes</div>'+
       '<div id="ob_menu">'+menuRowsHTML(b.menu||[])+'</div>'+
       '<button type="button" class="btn btn-ghost" style="margin-bottom:2px" onclick="addMenuRow()">+ Add dish</button>'
     : '<div id="ob_menu" style="display:none"></div>';
-  var upsell = paid ? '' :
-    '<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--line)">'+
-      '<div style="font-weight:800;font-size:15px;font-family:\'Barlow Condensed\';margin-bottom:8px">Unlock more with '+planTag+'</div>'+
-      lockRow('Add more photos (gallery)')+lockRow('Add your menu')+lockRow('Turn on reservations')+lockRow('Post a special / offer')+
-      '<button class="btn btn-primary" style="width:100%;margin-top:4px;padding:12px" onclick="startUpgrade(2)">Go '+planTag+' &#183; $'+pv+'/mo</button>'+
-      '<button class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="startUpgrade(3)">Go '+(large?'Enterprise Premium':'Premium')+' &#183; $'+pp+'/mo &#183; top placement</button>'+
-      '<div style="font-size:11px;color:var(--muted);margin-top:8px">'+(large?'Enterprise plans are billed by our team — tap and we’ll email your invoice.':'Secure checkout by Stripe. We activate your upgrade once your payment is confirmed — usually within a few hours.')+'</div>'+
+  // Live tier: the real-time status customers see. setLiveStatus saves on tap.
+  var liveBlock = live ? (function(){
+    var cur=liveStatusOf(b), opts=[['open','&#128994; Open'],['busy','&#128992; Busy / wait'],['closed','&#128308; Closed now']];
+    return '<div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line)">'+
+      '<div style="font-weight:800;font-family:\'Barlow Condensed\';font-size:15px">&#128308; Live status <span style="font-size:11px;color:var(--muted);font-weight:600">&#183; customers see this now</span></div>'+
+      '<div class="live-seg">'+opts.map(function(o){ return '<button class="'+(cur===o[0]?'on '+o[0]:'')+'" onclick="setLiveStatus(\''+o[0]+'\')">'+o[1]+'</button>'; }).join('')+(cur?'<button class="clr" onclick="setLiveStatus(\'\')">Clear</button>':'')+'</div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-top:6px">Flip it when you’re slammed or closing early. Clears on its own each new day.</div>'+
     '</div>';
-  var premiumUp = (paid && tier<3) ?
-    '<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--line)">'+
-      '<div style="font-weight:800;font-size:15px;font-family:\'Barlow Condensed\';margin-bottom:4px">Go Premium</div>'+
-      '<div style="font-size:12px;color:var(--muted);margin-bottom:10px">Top of your category, Sponsored badge, event-weekend promotion.</div>'+
-      '<button class="btn btn-ghost" style="width:100%" onclick="startUpgrade(3)">Go '+(large?'Enterprise Premium':'Premium')+' &#183; $'+pp+'/mo</button>'+
-    '</div>' : '';
+  })() : '';
+  // Premium tools: parking offer + promo notifications + special ads.
+  var premiumBlock = premium ? '<div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line)">'+
+    '<div style="font-weight:800;font-family:\'Barlow Condensed\';font-size:15px">&#128081; Premium tools</div>'+
+    '<label class="pk-toggle" style="margin-top:9px"><input type="checkbox" id="ob_offer_parking" onchange="toast(\'Adding your lot to the Parking page — coming soon\')"><span><span class="pbadge">P</span> <b>Offer Local Event-Day Parking</b> &mdash; your lot joins the Parking page</span></label>'+
+    '<button type="button" class="btn btn-ghost" style="width:100%;margin-top:9px" onclick="toast(\'Promo notifications — coming soon\')">&#128276; Send a promo notification to followers</button>'+
+    '<button type="button" class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="toast(\'Special ads — coming soon\')">&#128227; Set up a special ad</button>'+
+  '</div>' : '';
+  // The 4-tier ladder — always shown; upgrades don't charge (billing off).
+  var planLadder = '<div style="margin-top:22px;padding-top:16px;border-top:1px solid var(--line)">'+
+    '<div style="font-weight:800;font-size:16px;font-family:\'Barlow Condensed\';margin-bottom:10px">Your plan</div>'+
+    [1,2,3,4].map(function(n){ var T=TIERS[n], here=(t===n);
+      return '<div class="plan-row'+(here?' on '+T.cls:'')+'">'+
+        '<div class="pr-top"><span class="pr-nm">'+T.name+(here?' <span class="pr-cur">● current</span>':'')+(n===2?' <span class="chip chip-import" style="font-size:9px">City can cover yr 1</span>':'')+'</span><span class="pr-pr">'+(T.price?('$'+T.price+'<small>/mo</small>'):'$0')+'</span></div>'+
+        '<div class="pr-bl">'+T.blurb+'</div>'+
+        (n>t ? '<button class="pr-up" onclick="startUpgrade('+n+')">Upgrade to '+T.name+' &#8594;</button>' : '')+
+      '</div>';
+    }).join('')+
+    '<div style="font-size:11px;color:var(--muted);margin-top:8px">Billing isn’t on yet — upgrades don’t charge; we’ll email you to activate.</div>'+
+  '</div>';
   var pendBanner = MY_PENDING>0
     ? '<div class="pendbanner" onclick="scrollToRequests()"><span class="pb-n">'+MY_PENDING+'</span><span class="pb-t"><span class="pb-label">'+(MY_PENDING===1?'New table request':'New table requests')+'</span><span class="pb-sub">Tap to review &amp; accept or decline &darr;</span></span></div>'
     : '';
   host.innerHTML =
     pendBanner+
     '<div style="font-weight:800;font-size:20px;font-family:\'Barlow Condensed\'">'+(b.name||'')+' '+badge+'</div>'+
-    '<div style="font-size:12px;color:var(--muted);margin:4px 0 14px">'+(paid?'Edit your listing — changes go live instantly.':'Your free listing is live. Edit your info &amp; photo below; upgrade to add more.')+'</div>'+
+    '<div style="font-size:12px;color:var(--muted);margin:4px 0 6px">'+(paid?'Edit your listing — changes go live instantly.':'Your free listing is live. Edit your info &amp; photo below; upgrade to add more.')+'</div>'+
+    '<div style="font-size:11.5px;margin:0 0 14px;color:'+(b.business_license?'var(--green)':'var(--muted)')+'">'+(b.business_license?'&#10003; Business license on file':'&#9888; No business license on file yet')+'</div>'+
     '<div style="height:150px;border-radius:12px;background:#0f0f15 center/cover no-repeat;background-image:url(\''+(b.photo_url||'')+'\');border:1px solid var(--line);margin-bottom:8px"></div>'+
     '<label class="btn btn-ghost" style="display:inline-block;cursor:pointer;margin-bottom:6px">&#128247; Upload main photo<input type="file" accept="image/*" style="display:none" onchange="uploadMainPhoto(this.files[0])"></label>'+
     galleryBlock+
@@ -1204,9 +1257,9 @@ function renderOwner(){
     fld('Phone','ob_phone',b.phone)+fld('Website','ob_web',b.website)+fld('Price ($, $$, $$$)','ob_price',b.price_level)+
     fld('Avg per person ($)','ob_cpp',b.avg_per_person)+
     '<label class="flbl">Description</label><textarea id="ob_desc" class="finput" rows="3">'+String(b.review_quote||'').replace(/</g,'&lt;')+'</textarea>'+
-    reservBlock+dealSlot+specialBlock+menuBlock+
+    reservBlock+dealSlot+specialBlock+menuBlock+liveBlock+premiumBlock+
     '<button class="btn btn-primary" style="width:100%;margin-top:16px;padding:14px" onclick="saveMyBiz()">Save changes</button>'+
-    upsell+premiumUp+'<div id="owner-resv"></div>';
+    planLadder+'<div id="owner-resv"></div>';
   catResvHint('ob_cat','ob_cat_hint');
   previewOwnerDeal(b.special||'');
   renderOwnerResv();
@@ -1616,6 +1669,7 @@ function dbToApp(r){
     q:r.review_quote, tier:r.tier||1, special:r.special||null, mdeal:r.member_deal||null,
     book:r.booking_url||null, prov:r.reservation_provider||null,
     featured:!!r.featured, gameDay:!!r.game_day_special,
+    live:(r.live_status||null), liveDate:(r.live_status_date||null),
     claimed:!!r.claimed_by,
     inglewood:(r.is_inglewood===true||r.is_inglewood===false)?r.is_inglewood:null,
     real:!!(venuePhoto(r.name)||realPhotoUrl(r)),
@@ -1829,7 +1883,7 @@ function notifyResv(id,event){
 // Only the columns the public app shows — never owner emails/phones, Stripe ids or drafts.
 // Until every migration is live some of these may not exist yet, so a "column does not
 // exist" error falls back to select('*') once instead of breaking the app.
-const BIZ_COLS='id,name,category,tags,address,phone,website,google_place_id,rating,rating_count,price_level,avg_per_person,hours,review_quote,tier,special,member_deal,booking_url,reservation_provider,featured,game_day_special,claimed_by,photo_url,photos,menu,latitude,longitude,is_active,approved,is_inglewood';
+const BIZ_COLS='id,name,category,tags,address,phone,website,google_place_id,rating,rating_count,price_level,avg_per_person,hours,review_quote,tier,special,member_deal,booking_url,reservation_provider,featured,game_day_special,claimed_by,photo_url,photos,menu,latitude,longitude,is_active,approved,is_inglewood,live_status,live_status_date';
 var _bizCols=BIZ_COLS;
 function isMissingColumn(err){ return !!err && (err.code==='42703' || err.code==='PGRST204' || /column .* does not exist|schema cache/i.test(err.message||'')); }
 /* Duplicate listings (a curated copy + a Google copy of the same place, e.g.
@@ -1918,7 +1972,7 @@ function matchFilter(p,f){
 }
 
 function starline(p){ if(p.r==null||p.r===''){return '<span style="color:var(--muted)">New spot</span>';} return `<span class="star">&#9733;</span> ${p.r} · ${p.rc>999?(p.rc/1000).toFixed(1)+'k':(p.rc||0)}`;}
-function isSponsored(p){ return !!(p && p.tier>=3); }
+function isSponsored(p){ return !!(p && p.tier>=4); }   // top placement = Premium (tier 4)
 function isFeatured(p){ return !!(p && p.featured); }
 function isDealLit(p){ return !!(p && p.tier>=2 && String(p.special||'').trim()); }
 function isGameDaySpecial(p){ return !!(p && p.gameDay && isDealLit(p)); }
@@ -2444,7 +2498,10 @@ function openListing(k,from){
   const badge=p.tier>=2?'<span class="chip chip-verified">Verified</span>':'';
   var _o=openNow(p.hrs);
   var _statusParts=[];
-  if(_o) _statusParts.push('<span style="color:'+(_o.open?'var(--green)':'#ff7a7a')+';font-weight:700">&#9679; '+_o.label+'</span>');
+  // Live status the owner set today (Live tier) takes priority over computed hours.
+  var _lv=bizLive(p);
+  if(_lv) _statusParts.push('<span style="color:'+(_lv==='open'?'var(--green)':(_lv==='busy'?'#ffb84d':'#ff7a7a'))+';font-weight:700">&#9679; '+(_lv==='open'?'Open now':(_lv==='busy'?'Busy · short wait':'Closed right now'))+'</span>');
+  else if(_o) _statusParts.push('<span style="color:'+(_o.open?'var(--green)':'#ff7a7a')+';font-weight:700">&#9679; '+_o.label+'</span>');
   if(p.book||canReserveNow(p)) _statusParts.push('<span style="color:var(--gold);font-weight:700">'+ICON.cal+' '+(bookNoun(p)==='Table'?'Reservations':'Appointments')+' available</span>');
   else if(isReservable(p)&&p.ph) _statusParts.push('<span style="color:var(--muted);font-weight:700">'+ICON.phone+' Call to book</span>');
   var statusLine=_statusParts.length?'<div style="font-size:12.5px;margin-top:8px;display:flex;gap:14px;flex-wrap:wrap">'+_statusParts.join('')+'</div>':'';
@@ -2535,9 +2592,11 @@ async function submitAddBiz(){
   var web=gv('ab_web').trim(), desc=gv('ab_desc').trim();
   var first=gv('ab_first').trim(), last=gv('ab_last').trim(), email=gv('ab_email').trim(), role=(document.getElementById('ab_role')||{}).value;
   var attest=(document.getElementById('ab_attest')||{}).checked;
+  var license=gv('ab_license').trim();
   if(!name){ toast('Enter your business name'); return; }
   if(!cat){ toast('Pick a category'); return; }
   if(!addr){ toast('Enter your address'); return; }
+  if(!license){ toast('A business license number is required to list'); return; }
   if(!first||!last){ toast('Enter your first and last name'); return; }
   if(!email){ toast('Enter your email'); return; }
   if(!attest){ toast('Please check the certification box'); return; }
@@ -2545,6 +2604,7 @@ async function submitAddBiz(){
   var provEl=document.getElementById('ab_prov');
   var row={ id:id, name:name, category:cat, address:addr, hours:hours||null, phone:phone||null,
     website:web||null, review_quote:desc||null, tier:1, is_large:false, approved:false, is_active:true,
+    business_license:license||null,
     booking_url:(gv('ab_book')||'').trim()||null, reservation_provider:(provEl&&provEl.value)||null,
     notify_email:(gv('ab_notify')||'').trim()||email||null,
     claimed_by:CURRENT_USER.id };
@@ -2582,20 +2642,21 @@ function openClaimForm(bizKey, tier){
   document.getElementById('claimTierNote').textContent=notes[window._claimTier]||notes[1];
   go('claimform');
 }
-// Price by feature tier (2=Verified,3=Premium) and business size (large=Enterprise).
-function priceFor(tier,large){ return large ? (tier>=3?800:500) : (tier>=3?169:69); }
-function planName(large){ return large?'Enterprise':''; }
-// Owner starts a paid upgrade from their dashboard (Verified=2 / Premium=3).
+// Owner plan ladder: 1 Free · 2 Pro $69 · 3 Live $99 · 4 Premium $149.
+var TIERS={
+  1:{name:'Free',  price:0,   cls:'free',    blurb:'Verified with your business license, basic listing, post a deal, walk & drive to the venues.'},
+  2:{name:'Pro',   price:69,  cls:'pro',     blurb:'Featured deal (glows in Today’s Deals), photo gallery, menu, Do Member deal.'},
+  3:{name:'Live',  price:99,  cls:'live',    blurb:'Reservations & table requests + real-time Available / Busy / Closed status customers can see.'},
+  4:{name:'Premium',price:149,cls:'premium', blurb:'Top of your category (rotating), promo notifications, special ads, and Offer Local Event-Day Parking.'}
+};
+function tierOf(b){ return Math.max(1,Math.min(4,(b&&b.tier)||1)); }
+function tierName(t){ return (TIERS[t]||TIERS[1]).name; }
+function priceFor(tier,large){ return (TIERS[tier]||{price:0}).price; }   // large/Enterprise retired in the 4-tier model
+function planName(large){ return ''; }
+// Upgrade is a no-charge placeholder until Rambo turns billing on.
 function startUpgrade(tier){
   if(!MY_BIZ){ toast('Claim your business first'); return; }
-  // Large businesses (hotels / chains) are billed by our team — no self-serve link yet.
-  if(MY_BIZ.is_large){ toast('Enterprise plan — we’ll email you an invoice to activate.'); return; }
-  var link=STRIPE_LINKS[tier]; if(!link){ toast('Upgrade unavailable'); return; }
-  var email=(CURRENT_USER&&CURRENT_USER.email)||'';
-  // Encode the target tier so the Stripe webhook can auto-activate the right plan.
-  var url=link+'?client_reference_id='+encodeURIComponent(MY_BIZ.id+'|'+tier)+'&prefilled_email='+encodeURIComponent(email);
-  toast('Opening secure checkout…');
-  setTimeout(function(){ window.location.href=url; }, 500);
+  toast('Plans aren’t billing yet — we’ll email you to activate '+tierName(tier)+' soon.');
 }
 function bizKeyFromName(name){
   var t=(name||'').trim().toLowerCase();

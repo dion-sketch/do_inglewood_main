@@ -550,3 +550,27 @@ DESIGNED & LOCKED (NOT built — pricing is stop-list; billing OFF until Rambo s
 
 Full details in CLAUDE.md and the dated entries above. Next build (on Rambo's go): wire the
 Live on/off toggles + the 4-tier dashboard; keep billing off until he says.
+
+## 2026-11-09 — BUILT: 4-tier owner dashboard + Live status + license gate
+Wired the locked tier model into the real owner dashboard (billing OFF — upgrades don't charge).
+- Tiers: 1 Free · 2 Pro $69 · 3 Live $99 · 4 Premium $149 (TIERS config; tierName/priceFor).
+  isSponsored (top placement) moved to tier>=4 (Premium).
+- Feature gating: Free posts a deal (special editor available to all) + basic listing; Pro adds
+  featured deal + gallery + menu + member deal; Live adds reservations + the real-time status
+  toggle; Premium adds the parking-offer toggle + promo-notifications + special-ads (the last
+  two are "coming soon" stubs for now).
+- Live status: owner flips Open / Busy / Closed on their dashboard (setLiveStatus → di_businesses.
+  live_status + live_status_date). Auto-clears each new day (liveStatusOf/bizLive). Shows on the
+  public listing (takes priority over computed hours).
+- Plan ladder: all 4 tiers shown, current highlighted, upgrade buttons = no-charge placeholder
+  ("we'll email you to activate"); Pro tagged "City can cover yr 1".
+- Business license: required field on the add-business form (submitAddBiz stores business_license,
+  blocks submit without it). Dashboard shows "✓ Business license on file" / warning. License is
+  PRIVATE (not in the public column grant).
+- SQL: supabase/32_owner_tiers.sql — adds business_license (private), live_status + live_status_date
+  (public-readable), owner update grants. RUN THIS before the dashboard's live-status + license
+  persist. Billing stays off until Rambo says go.
+TODO/fast-follow: Free-posted deal currently shows only in the owner editor; surfacing it as a
+basic "★ Deal" on cards (vs Pro's featured glow) needs a featured-vs-basic split. Premium
+parking-offer toggle + promo notifications + special ads are stubs to be wired next.
+Verified with headless renders of all 4 tiers — no console errors.
